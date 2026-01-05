@@ -1,0 +1,7 @@
+{
+  "name": "Finity AI SEO Article Writer",
+  "description": "A high-performance SEO article writer and researcher powered by Gemini, designed for seamless WordPress integration logic.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
