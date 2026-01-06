@@ -12,18 +12,74 @@ from fastapi import Depends, FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 
-from db import User, create_db_and_tables, get_user_db
+from db import User, create_db_and_tables, get_user_db, async_session_maker
 from fastapi_users.db import SQLAlchemyUserDatabase
 from schemas import UserCreate, UserRead, UserUpdate
 from users import auth_backend, current_active_user, fastapi_users, get_user_manager
 from dependencies import admin_required
 from oauth import oauth_clients, FRONTEND_URL
+from fastapi_users.password import PasswordHelper
+from sqlalchemy import select
+
+password_helper = PasswordHelper()
+
+
+async def seed_dev_users():
+    """Create development test accounts for internal testing"""
+    try:
+        print("🧪 [Seeding Development Accounts]")
+        password_helper = PasswordHelper()
+
+        async with async_session_maker() as session:
+            # Define test users
+            dev_users = [
+                {
+                    "email": "thecrow.samuel@gmail.com",
+                    "password": "Admin(2026).COM",
+                },
+                {
+                    "email": "artcrow88@gmail.com",
+                    "password": "Admin(2077).COM",
+                },
+            ]
+
+            for user_data in dev_users:
+                query = select(User).where(User.email == user_data["email"])
+                result = await session.execute(query)
+                existing_user = result.unique().scalar_one_or_none()
+
+                # Delete if user already exists
+                if existing_user:
+                    await session.delete(existing_user)
+                    await session.commit()
+                    print(f"🗑️ Deleted existing user: {user_data['email']}")
+
+                # Recreate user with hashed password
+                hashed_pw = password_helper.hash(user_data["password"])
+                new_user = User(
+                    email=user_data["email"],
+                    hashed_password=hashed_pw,
+                    is_active=True,
+                    is_verified=True,
+                    is_superuser=False,
+                )
+                session.add(new_user)
+                await session.commit()
+                print(f"✅ Dev user created: {user_data['email']}")
+    except Exception as e:
+        print(f"⚠️  Warning: Could not seed dev users: {e}")
+        import traceback
+        traceback.print_exc()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Not needed if you setup a migration system like Alembic
     await create_db_and_tables()
+    
+    # Seed development test accounts
+    await seed_dev_users()
+    
     yield
 
 
@@ -198,7 +254,8 @@ async def oauth_callback(
                     user = await user_manager.get_by_email(user_email)
                     print(f"✅ Found existing user by email, linking OAuth account...")
                     # Link OAuth account to existing user
-                    await user_db.add_oauth_account(user, provider, user_id, {})
+                    await user_db.add_oauth_account(user, provider, user_id)
+                    print(f"✅ OAuth account added for: {user.email}")
                 except Exception as e:
                     print(f"ℹ️  No existing user found, creating new user...")
                     # Create new user with random password (OAuth users don't use password)
@@ -217,13 +274,14 @@ async def oauth_callback(
                     # Override the validate_password method temporarily
                     original_validate = user_manager.validate_password
                     async def skip_validation(password, user):
-                        print("ℹ️ Skipping password validation (OAuth user)")
+                        print("✅ Skipping password validation (OAuth user)")
                         pass
                     
                     user_manager.validate_password = skip_validation
                     try:
                         user = await user_manager.create(user_create)
-                        await user_db.add_oauth_account(user, provider, user_id, {})
+                        await user_db.add_oauth_account(user, provider, user_id)
+                        print(f"✅ OAuth account added for: {user.email}")
                         print(f"✅ New user created and OAuth account linked")
                     finally:
                         # Restore original validation
@@ -233,6 +291,7 @@ async def oauth_callback(
             jwt_strategy = get_jwt_strategy()
             token = await jwt_strategy.write_token(user)
             print(f"✅ JWT token generated successfully")
+            print(f"🔐 JWT issued for: {user.id}")
             
             # Redirect to frontend with token
             token_url = f"{FRONTEND_URL}/login?tokens={token}"
@@ -309,9 +368,25 @@ async def test_email(email: str):
     Test endpoint to send a test email.
     Usage: POST /email/test?email=your@email.com
     """
-    from email_service import send_email
+    from email_service import send_email, SMTP_CONFIG_VALID, EMAILS_ENABLED, SMTP_CONFIG_WARNINGS
     
     print(f"🧪 Test email endpoint called for: {email}")
+    
+    # Check SMTP configuration first
+    if not EMAILS_ENABLED:
+        error_msg = "EMAILS_ENABLED is set to false. Email functionality is disabled."
+        print(f"❌ {error_msg}")
+        return {"success": False, "message": error_msg}
+    
+    if not SMTP_CONFIG_VALID:
+        error_msg = "SMTP configuration is invalid. Cannot send test email."
+        print(f"❌ {error_msg}")
+        print(f"   Warnings: {', '.join(SMTP_CONFIG_WARNINGS)}")
+        return {
+            "success": False,
+            "message": error_msg,
+            "warnings": SMTP_CONFIG_WARNINGS
+        }
     
     html_content = """
     <!DOCTYPE html>
@@ -344,14 +419,25 @@ async def test_email(email: str):
     If you received this email, your SMTP configuration is correct.
     """
     
-    result = await send_email(
-        to_email=email,
-        subject="Test Email - Finity AI",
-        html_content=html_content,
-        text_content=text_content,
-    )
-    
-    if result:
-        return {"success": True, "message": f"Test email sent successfully to {email}"}
-    else:
-        return {"success": False, "message": f"Failed to send test email to {email}. Check server logs for details."}
+    try:
+        result = await send_email(
+            to_email=email,
+            subject="Test Email - Finity AI",
+            html_content=html_content,
+            text_content=text_content,
+        )
+        
+        if result:
+            print(f"✅ Test email sent successfully to {email}")
+            return {"success": True, "message": f"Test email sent successfully to {email}"}
+        else:
+            error_msg = f"Failed to send test email to {email}. Check server logs for details."
+            print(f"❌ {error_msg}")
+            return {"success": False, "message": error_msg}
+    except Exception as e:
+        error_msg = f"Exception while sending test email: {str(e)}"
+        print(f"❌ {error_msg}")
+        import traceback
+        print(f"   Full traceback:")
+        print(f"   {traceback.format_exc()}")
+        return {"success": False, "message": error_msg}

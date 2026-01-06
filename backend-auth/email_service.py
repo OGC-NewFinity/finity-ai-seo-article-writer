@@ -17,6 +17,62 @@ EMAILS_ENABLED = os.getenv("EMAILS_ENABLED", "true").lower() == "true"
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
 
+def validate_smtp_config() -> tuple[bool, list[str]]:
+    """
+    Validate SMTP configuration at startup.
+    
+    Returns:
+        Tuple of (is_valid, list_of_warnings)
+    """
+    warnings = []
+    is_valid = True
+    
+    if not EMAILS_ENABLED:
+        print("⚠️  EMAILS_ENABLED is set to false. Email functionality is disabled.")
+        return True, ["EMAILS_ENABLED is false - emails will not be sent"]
+    
+    # Check required SMTP variables
+    if not SMTP_HOST or not SMTP_HOST.strip():
+        warnings.append("SMTP_HOST is missing or empty")
+        is_valid = False
+    
+    if not SMTP_PORT or SMTP_PORT <= 0:
+        warnings.append("SMTP_PORT is missing or invalid")
+        is_valid = False
+    
+    if not SMTP_USERNAME or not SMTP_USERNAME.strip():
+        warnings.append("SMTP_USERNAME is missing or empty")
+        is_valid = False
+    
+    if not SMTP_PASSWORD or not SMTP_PASSWORD.strip():
+        warnings.append("SMTP_PASSWORD is missing or empty")
+        is_valid = False
+    
+    if not EMAILS_FROM_EMAIL or not EMAILS_FROM_EMAIL.strip():
+        warnings.append("EMAILS_FROM_EMAIL is missing or empty")
+        is_valid = False
+    
+    if warnings:
+        print("❌ SMTP Configuration Validation Failed:")
+        for warning in warnings:
+            print(f"   - {warning}")
+        print("   ⚠️  Email verification and password reset will not work!")
+        print("   📝 Please check your .env file and ensure all SMTP variables are set.")
+    else:
+        print("✅ SMTP Configuration Validated Successfully")
+        print(f"   Host: {SMTP_HOST}")
+        print(f"   Port: {SMTP_PORT}")
+        print(f"   Username: {SMTP_USERNAME}")
+        print(f"   From Email: {EMAILS_FROM_EMAIL}")
+        print(f"   From Name: {EMAILS_FROM_NAME}")
+    
+    return is_valid, warnings
+
+
+# Validate SMTP configuration at module load
+SMTP_CONFIG_VALID, SMTP_CONFIG_WARNINGS = validate_smtp_config()
+
+
 async def send_email(
     to_email: str,
     subject: str,
@@ -36,11 +92,20 @@ async def send_email(
         True if email was sent successfully, False otherwise
     """
     if not EMAILS_ENABLED:
-        print(f"[EMAIL DISABLED] Would send email to {to_email}: {subject}")
+        print(f"⚠️  [EMAIL DISABLED] Would send email to {to_email}: {subject}")
         return True
     
-    if not SMTP_USERNAME or not SMTP_PASSWORD:
-        print(f"[EMAIL ERROR] SMTP credentials not configured. Cannot send email to {to_email}")
+    # Validate SMTP configuration before attempting to send
+    if not SMTP_CONFIG_VALID:
+        error_msg = f"❌ [EMAIL ERROR] SMTP configuration is invalid. Cannot send email to {to_email}"
+        print(error_msg)
+        for warning in SMTP_CONFIG_WARNINGS:
+            print(f"   - {warning}")
+        return False
+    
+    if not SMTP_USERNAME or not SMTP_USERNAME.strip() or not SMTP_PASSWORD or not SMTP_PASSWORD.strip():
+        error_msg = f"❌ [EMAIL ERROR] SMTP credentials not configured. Cannot send email to {to_email}"
+        print(error_msg)
         return False
     
     try:
@@ -59,7 +124,7 @@ async def send_email(
         message.attach(html_part)
         
         # Send email
-        print(f"📧 Attempting to send email via SMTP...")
+        print(f"📧 Sending verification email to: {to_email}")
         smtp_response = await aiosmtplib.send(
             message,
             hostname=SMTP_HOST,
@@ -69,26 +134,29 @@ async def send_email(
             use_tls=True,
         )
         
-        print(f"[EMAIL SENT] Successfully sent email to {to_email}: {subject}")
+        print(f"📤 SMTP Status: success")
+        print(f"✅ [EMAIL SENT] Successfully sent email to {to_email}: {subject}")
         print(f"   SMTP Response: {smtp_response}")
         return True
         
     except Exception as e:
-        print(f"[EMAIL ERROR] Failed to send email to {to_email}: {str(e)}")
+        print(f"❌ Failed to send email to {to_email}: {str(e)}")
         import traceback
-        print(f"   Traceback: {traceback.format_exc()}")
+        print(f"   Full traceback:")
+        print(f"   {traceback.format_exc()}")
         return False
 
 
 async def send_verification_email(email: str, token: str) -> bool:
     """Send email verification email."""
-    print(f"📤 Sending verification email to {email}")
+    print(f"📧 Sending verification email to: {email}")
     print(f"   Token: {token[:20]}...")
     print(f"   SMTP Host: {SMTP_HOST}")
     print(f"   SMTP Port: {SMTP_PORT}")
     print(f"   SMTP Username: {SMTP_USERNAME}")
     print(f"   SMTP Password: {'*' * len(SMTP_PASSWORD) if SMTP_PASSWORD else 'NOT SET'}")
     print(f"   Emails Enabled: {EMAILS_ENABLED}")
+    print(f"   SMTP Config Valid: {SMTP_CONFIG_VALID}")
     
     verification_url = f"{FRONTEND_URL}/verify-email?token={token}"
     

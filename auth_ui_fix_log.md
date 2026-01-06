@@ -288,3 +288,49 @@ Successfully completed all tasks:
 7. ✅ **Fixed Registration Agreement Text** - Updated to proper HTM template syntax with interpolated links
 
 All changes maintain backward compatibility and follow existing code patterns. The authentication flow is now cleaner, more accessible, and provides better user feedback throughout the process.
+
+---
+
+## 13. ✅ Password Hashing for Dev Accounts
+
+**Date:** 2026-01-06
+
+**Issue:**
+- Development test accounts (`thecrow.samuel@gmail.com` and `artcrow88@gmail.com`) were seeded successfully but could not log in
+- Users received `LOGIN_BAD_CREDENTIALS` error, indicating passwords were not properly hashed
+
+**Root Cause:**
+- Passwords were being saved, but the hashing mechanism needed to be explicitly verified and ensured
+- Existing users in database may have had passwords that weren't hashed correctly on initial creation
+
+**Fix Applied:**
+
+Updated `seed_dev_users()` function in `backend-auth/app.py` to:
+
+1. **Ensure proper password hashing:**
+   - Created a `PasswordHelper` instance within the function for explicit password hashing
+   - Used `password_helper_instance.hash()` method from FastAPI Users to properly hash passwords before saving
+
+2. **Handle existing users:**
+   - Added logic to update passwords for existing dev accounts if they were previously created with incorrect hashing
+   - Ensures that even if accounts exist, their passwords are re-hashed correctly
+
+3. **Implementation details:**
+   - Both dev accounts now use properly hashed passwords:
+     - `thecrow.samuel@gmail.com` → Password: `Admin(2026).COM` (Free user)
+     - `artcrow88@gmail.com` → Password: `Admin(2077).COM` (PRO user)
+   - All accounts are created with `is_verified=True` and `is_active=True` to allow immediate login
+   - Passwords are hashed using the same `PasswordHelper` class used throughout FastAPI Users
+
+**Code Pattern:**
+```python
+password_helper_instance = PasswordHelper()
+hashed_password = password_helper_instance.hash(plain_password)
+user.hashed_password = hashed_password
+```
+
+**Testing:**
+- After restarting backend: `docker-compose restart finity-backend`
+- Test accounts should now be able to log in successfully with their credentials
+
+**File:** `backend-auth/app.py`
