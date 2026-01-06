@@ -7,7 +7,6 @@ A complete, production-ready authentication boilerplate for the Finity project. 
 - **Multiple Authentication Methods**
   - Email and password
   - Google OAuth2
-  - Facebook OAuth2
   - Discord OAuth2
   - X (Twitter) OAuth2
 
@@ -83,8 +82,6 @@ Copy `.env.example` to `.env` and configure the following:
 #### OAuth Providers
 - `GOOGLE_CLIENT_ID`: Google OAuth client ID
 - `GOOGLE_CLIENT_SECRET`: Google OAuth client secret
-- `FACEBOOK_CLIENT_ID`: Facebook App ID
-- `FACEBOOK_CLIENT_SECRET`: Facebook App Secret
 - `DISCORD_CLIENT_ID`: Discord OAuth client ID
 - `DISCORD_CLIENT_SECRET`: Discord OAuth client secret
 - `TWITTER_CLIENT_ID`: X (Twitter) OAuth client ID
@@ -161,12 +158,6 @@ finity-auth-starter/
 3. Enable Google+ API
 4. Create OAuth 2.0 credentials
 5. Add authorized redirect URI: `http://localhost:8000/api/auth/social/google/callback`
-
-### Facebook OAuth
-1. Go to [Facebook Developers](https://developers.facebook.com/)
-2. Create a new app
-3. Add Facebook Login product
-4. Set redirect URI: `http://localhost:8000/api/auth/social/facebook/callback`
 
 ### Discord OAuth
 1. Go to [Discord Developer Portal](https://discord.com/developers/applications)

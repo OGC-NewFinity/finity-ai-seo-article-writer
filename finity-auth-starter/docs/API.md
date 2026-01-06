@@ -106,7 +106,7 @@ POST /auth/verify-email?token=verification_token
 GET /auth/social/{provider}
 ```
 
-**Providers:** `google`, `facebook`, `discord`, `twitter`
+**Providers:** `google`, `discord`, `twitter`
 
 **Response:**
 ```json

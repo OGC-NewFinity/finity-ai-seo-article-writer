@@ -108,13 +108,6 @@ const Login = () => {
           <button
             type="button"
             className="social-btn"
-            onClick={() => handleSocialLogin('facebook')}
-          >
-            Facebook
-          </button>
-          <button
-            type="button"
-            className="social-btn"
             onClick={() => handleSocialLogin('discord')}
           >
             Discord

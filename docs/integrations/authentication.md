@@ -2,17 +2,16 @@
 
 ## Overview
 
-The Finity AI SEO Article Writer uses JWT-based authentication with refresh tokens. This document describes the authentication system and how to integrate it.
+The Finity AI SEO Article Writer uses a full-featured authentication system built with FastAPI (Python) backend and React frontend. The system includes JWT-based authentication with refresh tokens, OAuth2 social logins, email verification, and password reset functionality.
 
 ## Architecture
 
 ### Authentication Flow
 
 ```
-User Login → Backend validates → Generate JWT tokens → Return to client
+User Login → FastAPI Backend validates → Generate JWT tokens → Return to client
                 ↓
-         Store refresh token (httpOnly cookie)
-         Return access token (localStorage)
+         Store tokens in cookies (access_token, refresh_token)
                 ↓
     Client uses access token for API requests
                 ↓
@@ -22,393 +21,306 @@ User Login → Backend validates → Generate JWT tokens → Return to client
 ### Token Types
 
 1. **Access Token**
-   - Short-lived (15 minutes)
-   - Stored in localStorage
-   - Included in Authorization header
-   - Contains user ID and permissions
+   - Short-lived (30 minutes default, configurable)
+   - Stored in cookies
+   - Included in Authorization header as Bearer token
+   - Contains user ID and email
 
 2. **Refresh Token**
-   - Long-lived (7 days)
-   - Stored in httpOnly cookie
+   - Long-lived (7 days default, configurable)
+   - Stored in cookies
    - Used to get new access tokens
    - Can be revoked
 
 ## Backend Implementation
 
+The authentication backend is built with FastAPI and located in `/backend-auth/`.
+
+### Project Structure
+
+```
+backend-auth/
+├── app/
+│   ├── main.py                 # FastAPI application entry point
+│   ├── core/
+│   │   ├── config.py           # Settings and environment variables
+│   │   ├── database.py         # Database connection and session
+│   │   ├── security.py         # JWT and password hashing
+│   │   └── init_admin_user.py  # Admin user initialization
+│   ├── models/
+│   │   ├── user.py             # User model
+│   │   ├── oauth_connection.py # OAuth provider connections
+│   │   └── token.py            # Email verification and reset tokens
+│   ├── routes/
+│   │   ├── auth.py             # Authentication endpoints
+│   │   └── users.py            # User management endpoints
+│   ├── schemas/
+│   │   ├── auth.py             # Auth request/response schemas
+│   │   └── user.py             # User schemas
+│   └── services/
+│       ├── email_service.py    # SMTP email sending
+│       └── oauth_service.py    # OAuth provider integration
+├── requirements.txt
+└── Dockerfile
+```
+
 ### JWT Configuration
 
-```javascript
-// backend/src/config/jwt.js
-export const jwtConfig = {
-  accessToken: {
-    secret: process.env.JWT_SECRET,
-    expiresIn: '15m'
-  },
-  refreshToken: {
-    secret: process.env.JWT_REFRESH_SECRET,
-    expiresIn: '7d'
-  }
-};
+JWT settings are configured in `app/core/config.py`:
+
+```python
+# JWT Configuration
+JWT_SECRET_KEY: str  # Required - secret key for signing tokens
+JWT_ALGORITHM: str = "HS256"
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 ```
 
-### Authentication Middleware
+### Authentication Endpoints
 
-```javascript
-// backend/src/middleware/auth.middleware.js
-import jwt from 'jsonwebtoken';
+All authentication endpoints are prefixed with `/api/auth`:
 
-export const authenticate = async (req, res, next) => {
-  try {
-    const token = req.headers.authorization?.split(' ')[1];
-    
-    if (!token) {
-      return res.status(401).json({ error: 'No token provided' });
-    }
-    
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
-    next();
-  } catch (error) {
-    return res.status(401).json({ error: 'Invalid token' });
-  }
-};
+- `POST /api/auth/register` - Register new user
+- `POST /api/auth/login` - Login with email/password
+- `POST /api/auth/refresh` - Refresh access token
+- `POST /api/auth/logout` - Logout (client-side token removal)
+- `GET /api/auth/me` - Get current user info
+- `GET /api/auth/social/{provider}` - Initiate OAuth login
+- `GET /api/auth/social/{provider}/callback` - OAuth callback handler
+- `POST /api/auth/forgot-password` - Request password reset
+- `POST /api/auth/reset-password` - Reset password with token
+- `POST /api/auth/verify-email` - Verify email address
+
+### Admin User Creation
+
+The admin user is automatically created on application startup using credentials from environment variables:
+
+```python
+ADMIN_EMAIL=ogcnewfinity@gmail.com
+ADMIN_PASSWORD=FiniTy-2026-Data.CoM
 ```
 
-### Login Endpoint
-
-```javascript
-// backend/src/controllers/auth.controller.js
-export const login = async (req, res) => {
-  const { email, password } = req.body;
-  
-  // Validate credentials
-  const user = await validateCredentials(email, password);
-  
-  // Generate tokens
-  const accessToken = generateAccessToken(user);
-  const refreshToken = generateRefreshToken(user);
-  
-  // Set refresh token cookie
-  res.cookie('refreshToken', refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-  });
-  
-  res.json({
-    success: true,
-    data: {
-      user,
-      token: accessToken
-    }
-  });
-};
-```
+The script `app/core/init_admin_user.py` runs on startup and creates an admin user if one doesn't exist.
 
 ## Frontend Integration
 
 ### Auth Context
 
-```javascript
-// src/core/auth/AuthContext.js
-import React, { createContext, useState, useEffect } from 'react';
-
-const AuthContext = createContext();
-
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  
-  useEffect(() => {
-    // Check for stored token
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      // Verify token and load user
-      loadUser(token);
-    } else {
-      setLoading(false);
-    }
-  }, []);
-  
-  const login = async (email, password) => {
-    const response = await api.post('/auth/login', { email, password });
-    localStorage.setItem('accessToken', response.data.token);
-    setUser(response.data.user);
-    return response.data;
-  };
-  
-  const logout = () => {
-    localStorage.removeItem('accessToken');
-    setUser(null);
-    api.post('/auth/logout');
-  };
-  
-  return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
-```
-
-### Auth Hook
+The authentication context is located in `/context/AuthContext.js`:
 
 ```javascript
-// src/core/auth/useAuth.js
-import { useContext } from 'react';
-import { AuthContext } from './AuthContext';
+import { useAuth } from '../context/AuthContext';
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
-  }
-  return context;
-};
+// Usage in components
+const { user, isAuthenticated, login, logout } = useAuth();
 ```
 
-### Protected Route
+The AuthContext provides:
+- `user` - Current user object
+- `loading` - Loading state
+- `isAuthenticated` - Boolean authentication status
+- `login(email, password)` - Login function
+- `register(userData)` - Registration function
+- `logout()` - Logout function
+- `updateUser(userData)` - Update user data
+- `checkAuth()` - Check authentication status
 
-```javascript
-// src/shared/components/ProtectedRoute.js
-import { useAuth } from '../../core/auth/useAuth';
-import { Navigate } from 'react-router-dom';
+### Auth Pages
 
-const ProtectedRoute = ({ children }) => {
-  const { user, loading } = useAuth();
-  
-  if (loading) {
-    return <LoadingSpinner />;
-  }
-  
-  if (!user) {
-    return <Navigate to="/login" />;
-  }
-  
-  return children;
-};
+Authentication pages are located in `/pages/auth/`:
+
+- `Login.js` - Login page with email/password and social login buttons
+- `Register.js` - Registration page with required terms checkbox
+- `ForgotPassword.js` - Password reset request page
+- `ResetPassword.js` - Password reset with token
+- `VerifyEmail.js` - Email verification page
+
+### Registration Form
+
+The registration form includes a **required checkbox** that users must agree to:
+
+> "By creating an account, you agree to our Privacy Policy, Terms of Service, and Return & Refund Policy."
+
+This checkbox is validated on both frontend and backend. Registration will fail if the user doesn't agree to the terms.
+
+### API Service
+
+The API service (`/services/api.js`) automatically:
+- Adds Bearer token to requests
+- Handles token refresh on 401 errors
+- Redirects to login on authentication failure
+
+## Social Login Setup
+
+The system supports OAuth2 login with three providers:
+
+### Supported Providers
+
+1. **Google OAuth**
+2. **Discord OAuth**
+3. **X (Twitter) OAuth**
+
+### Setup Instructions
+
+#### Google OAuth
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select existing
+3. Enable Google+ API
+4. Create OAuth 2.0 credentials
+5. Add authorized redirect URI: `http://localhost:8000/api/auth/social/google/callback`
+6. Add `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` to `.env`
+
+#### Discord OAuth
+
+1. Go to [Discord Developer Portal](https://discord.com/developers/applications)
+2. Create a new application
+3. Add redirect URI: `http://localhost:8000/api/auth/social/discord/callback`
+4. Add `DISCORD_CLIENT_ID` and `DISCORD_CLIENT_SECRET` to `.env`
+
+#### X (Twitter) OAuth
+
+1. Go to [Twitter Developer Portal](https://developer.twitter.com/)
+2. Create a new app
+3. Add callback URL: `http://localhost:8000/api/auth/social/twitter/callback`
+4. Add `TWITTER_CLIENT_ID` and `TWITTER_CLIENT_SECRET` to `.env`
+
+## Email Configuration
+
+The system uses SMTP for sending emails. Configure SMTP settings in `.env`:
+
+```env
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASSWORD=your-app-password
+SMTP_FROM_EMAIL=noreply@finity.com
+SMTP_FROM_NAME=Finity Auth
 ```
 
-## Open-Source Templates
+### Supported Email Services
 
-### Recommended Resources
+- Gmail SMTP
+- SendGrid
+- Mailgun
+- Any SMTP-compatible service
 
-1. **React Auth Template**
-   - Repository: https://github.com/arifszn/react-auth-template
-   - Features: Login, Register, Forgot Password
-   - Tech: React, React Router, Axios
+### Email Templates
 
-2. **NextAuth.js**
-   - Website: https://next-auth.js.org/
-   - For Next.js applications
-   - Multiple provider support
+The system automatically sends:
 
-3. **Supabase Auth UI**
-   - Repository: https://github.com/supabase/auth-ui
-   - Pre-built auth components
-   - Multiple providers
+1. **Welcome Email** - Sent after registration with email verification link
+2. **Password Reset Email** - Sent when user requests password reset
 
-### Integration Example
-
-Using React Auth Template structure:
-
-```javascript
-// src/features/auth/components/Login.js
-import React, { useState } from 'react';
-import { useAuth } from '../../../core/auth/useAuth';
-import { Button3D } from '../../../shared/components';
-
-const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const { login } = useAuth();
-  
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      await login(email, password);
-      // Redirect to dashboard
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-  
-  return html`
-    <form onSubmit=${handleSubmit} className="login-form">
-      <Input3D
-        type="email"
-        label="Email"
-        value=${email}
-        onChange=${e => setEmail(e.target.value)}
-        required
-      />
-      <Input3D
-        type="password"
-        label="Password"
-        value=${password}
-        onChange=${e => setPassword(e.target.value)}
-        required
-      />
-      ${error && html`<div className="error">${error}</div>`}
-      <Button3D type="submit" variant="primary">
-        Login
-      </Button3D>
-    </form>
-  `;
-};
-```
+Email templates are HTML-formatted and include both HTML and plain text versions.
 
 ## Password Reset Flow
 
-### Backend
+1. User requests password reset via `/forgot-password` page
+2. Backend generates secure reset token (valid for 1 hour)
+3. Email sent with reset link containing token
+4. User clicks link and is redirected to `/reset-password?token=...`
+5. User enters new password
+6. Backend validates token and updates password
 
-```javascript
-// Forgot password
-export const forgotPassword = async (req, res) => {
-  const { email } = req.body;
-  
-  // Generate reset token
-  const resetToken = generateResetToken(email);
-  
-  // Send email with reset link
-  await sendResetEmail(email, resetToken);
-  
-  res.json({ success: true, message: 'Reset email sent' });
-};
+## Email Verification Flow
 
-// Reset password
-export const resetPassword = async (req, res) => {
-  const { token, password } = req.body;
-  
-  // Verify token
-  const email = verifyResetToken(token);
-  
-  // Update password
-  await updatePassword(email, password);
-  
-  res.json({ success: true, message: 'Password reset successful' });
-};
+1. User registers account
+2. Backend generates verification token (valid for 24 hours)
+3. Welcome email sent with verification link
+4. User clicks link and is redirected to `/verify-email?token=...`
+5. Backend verifies token and marks email as verified
+
+## Docker Setup
+
+The authentication system is fully Dockerized. Use Docker Compose to run all services:
+
+```bash
+# Copy environment file
+cp .env.example .env
+
+# Edit .env with your configuration
+# At minimum, set JWT_SECRET_KEY
+
+# Start all services
+docker-compose up -d
+
+# View logs
+docker-compose logs -f backend-auth
 ```
 
-### Frontend
+### Services
 
-```javascript
-// src/features/auth/components/PasswordReset.js
-const PasswordReset = () => {
-  const [email, setEmail] = useState('');
-  const [sent, setSent] = useState(false);
-  
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    await api.post('/auth/forgot-password', { email });
-    setSent(true);
-  };
-  
-  if (sent) {
-    return html`<div>Check your email for reset instructions</div>`;
-  }
-  
-  return html`
-    <form onSubmit=${handleSubmit}>
-      <Input3D
-        type="email"
-        label="Email"
-        value=${email}
-        onChange=${e => setEmail(e.target.value)}
-      />
-      <Button3D type="submit">Send Reset Link</Button3D>
-    </form>
-  `;
-};
+- **PostgreSQL** - Database (port 5433)
+- **Backend Auth** - FastAPI application (port 8000)
+- **Frontend** - React application (runs separately or in Docker)
+
+### Database Migrations
+
+The database tables are automatically created on first startup. For production, consider using Alembic migrations:
+
+```bash
+cd backend-auth
+alembic upgrade head
 ```
 
-## Email Verification
+## Required Environment Variables
 
-### Backend
+All credentials must be loaded from `.env`. Never hardcode passwords in code.
 
-```javascript
-export const verifyEmail = async (req, res) => {
-  const { token } = req.body;
-  
-  // Verify token
-  const userId = verifyEmailToken(token);
-  
-  // Mark email as verified
-  await markEmailVerified(userId);
-  
-  res.json({ success: true, message: 'Email verified' });
-};
-```
+### Required Variables
+
+- `DATABASE_URL` - PostgreSQL connection string
+- `JWT_SECRET_KEY` - Secret key for JWT tokens (required)
+
+### Optional Variables
+
+- `ADMIN_EMAIL` - Admin user email (default: ogcnewfinity@gmail.com)
+- `ADMIN_PASSWORD` - Admin user password (default: FiniTy-2026-Data.CoM)
+- OAuth client IDs and secrets (for social login)
+- SMTP settings (for email functionality)
+
+See `.env.example` for all available configuration options.
 
 ## Security Best Practices
 
-1. **Password Hashing:** Use bcrypt with 10+ rounds
-2. **Token Expiration:** Short-lived access tokens
-3. **HTTPS Only:** Secure cookies in production
-4. **CSRF Protection:** Use CSRF tokens
-5. **Rate Limiting:** Limit login attempts
-6. **Account Lockout:** Lock after failed attempts
-7. **Token Rotation:** Rotate refresh tokens
+1. **Password Hashing:** Uses bcrypt with secure salt rounds
+2. **Token Expiration:** Short-lived access tokens (30 minutes default)
+3. **HTTPS Only:** Use secure cookies in production
+4. **Token Storage:** Tokens stored in httpOnly cookies (not localStorage)
+5. **Token Rotation:** Refresh tokens are rotated on use
+6. **Input Validation:** All inputs validated using Pydantic schemas
+7. **SQL Injection Protection:** Uses SQLAlchemy ORM with parameterized queries
 
-## API Client Integration
+## API Documentation
 
-```javascript
-// src/core/api/client.js
-import axios from 'axios';
+Once the backend is running, visit:
+- Swagger UI: `http://localhost:8000/docs`
+- ReDoc: `http://localhost:8000/redoc`
 
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL
-});
+## How to Register
 
-// Add token to requests
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('accessToken');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+1. Navigate to `/register` page
+2. Fill in email, password, and optional username/full name
+3. **Check the required checkbox** agreeing to Privacy Policy, Terms of Service, and Return & Refund Policy
+4. Click "Create Account"
+5. Check email for verification link
+6. Click verification link to verify email
+7. Login with your credentials
 
-// Handle token refresh
-api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    if (error.response?.status === 401) {
-      // Try to refresh token
-      try {
-        const response = await axios.post('/auth/refresh');
-        localStorage.setItem('accessToken', response.data.token);
-        // Retry original request
-        return api.request(error.config);
-      } catch {
-        // Refresh failed, redirect to login
-        window.location.href = '/login';
-      }
-    }
-    return Promise.reject(error);
-  }
-);
-```
+## How Admin is Created
 
-## Testing
+The admin user is automatically created on application startup:
 
-### Auth Tests
+1. Backend reads `ADMIN_EMAIL` and `ADMIN_PASSWORD` from environment
+2. Checks if admin user already exists
+3. If not, creates admin user with:
+   - `role=ADMIN`
+   - `is_active=True`
+   - `is_verified=True`
+4. Logs success or error message
 
-```javascript
-// backend/tests/auth.test.js
-describe('Authentication', () => {
-  it('should login with valid credentials', async () => {
-    const response = await request(app)
-      .post('/api/auth/login')
-      .send({ email: 'test@example.com', password: 'password' });
-    
-    expect(response.status).toBe(200);
-    expect(response.body).toHaveProperty('token');
-  });
-});
-```
+Admin creation happens in `backend-auth/app/core/init_admin_user.py` and runs on every application startup.
 
 ## Next Steps
 

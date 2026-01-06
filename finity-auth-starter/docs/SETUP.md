@@ -102,14 +102,6 @@
 5. Add authorized redirect URI: `http://localhost:8000/api/auth/social/google/callback`
 6. Copy Client ID and Client Secret to `.env`
 
-### Facebook OAuth
-
-1. Go to [Facebook Developers](https://developers.facebook.com/)
-2. Create a new app
-3. Add "Facebook Login" product
-4. Set redirect URI: `http://localhost:8000/api/auth/social/facebook/callback`
-5. Copy App ID and App Secret to `.env`
-
 ### Discord OAuth
 
 1. Go to [Discord Developer Portal](https://discord.com/developers/applications)

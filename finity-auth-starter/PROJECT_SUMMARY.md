@@ -7,7 +7,7 @@
 - ✅ User login with JWT tokens
 - ✅ Password reset functionality
 - ✅ Email verification
-- ✅ OAuth2 integration (Google, Facebook, Discord, X/Twitter)
+- ✅ OAuth2 integration (Google, Discord, X/Twitter)
 - ✅ User profile management
 - ✅ Role-based access control (user, admin)
 - ✅ Email service with SMTP support
@@ -21,7 +21,7 @@
 - ✅ Reset password page
 - ✅ Email verification page
 - ✅ User profile page with edit functionality
-- ✅ Social login buttons (Google, Facebook, Discord, X/Twitter)
+- ✅ Social login buttons (Google, Discord, X/Twitter)
 - ✅ Dark/light theme toggle
 - ✅ Responsive design
 - ✅ Protected routes

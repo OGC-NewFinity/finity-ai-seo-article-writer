@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.responses import RedirectResponse
 import httpx
@@ -147,8 +147,15 @@ async def login(request: LoginRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/refresh", response_model=Token)
-async def refresh_token(refresh_token: str, db: Session = Depends(get_db)):
+async def refresh_token(request: dict, db: Session = Depends(get_db)):
     """Refresh access token using refresh token."""
+    refresh_token = request.get("refresh_token")
+    if not refresh_token:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="refresh_token is required"
+        )
+    
     payload = decode_token(refresh_token)
     if payload is None or payload.get("type") != "refresh":
         raise HTTPException(
@@ -233,7 +240,7 @@ async def reset_password(request: PasswordResetConfirm, db: Session = Depends(ge
 
 
 @router.post("/verify-email")
-async def verify_email(token: str, db: Session = Depends(get_db)):
+async def verify_email(token: str = Query(..., description="Email verification token"), db: Session = Depends(get_db)):
     """Verify email address with token."""
     token_record = db.query(TokenModel).filter(
         TokenModel.token == token,
