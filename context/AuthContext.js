@@ -17,6 +17,11 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  // Debug logging for auth state changes
+  useEffect(() => {
+    console.log('Auth state changed - isAuthenticated:', isAuthenticated, 'user:', user?.email, 'loading:', loading);
+  }, [isAuthenticated, user, loading]);
+
   useEffect(() => {
     // Handle OAuth callback
     const urlParams = new URLSearchParams(window.location.search);
@@ -45,13 +50,20 @@ export const AuthProvider = ({ children }) => {
         const response = await api.get('/users/me');
         setUser(response.data);
         setIsAuthenticated(true);
+        setLoading(false);
       } catch (error) {
         // Token invalid, clear it
+        console.error("Auth check failed:", error);
         Cookies.remove('access_token');
+        setUser(null);
         setIsAuthenticated(false);
+        setLoading(false);
       }
+    } else {
+      setUser(null);
+      setIsAuthenticated(false);
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const login = async (email, password) => {
@@ -59,18 +71,12 @@ export const AuthProvider = ({ children }) => {
       // Log the login payload for debugging
       console.log("Login Payload →", { email: email, password });
       
-      // Backend expects JSON with email field (not form data)
-      const loginData = {
-        email: email,
-        password: password
-      };
-      
-      console.log("Making login request to /auth/jwt/login with:", loginData);
-      
       // FastAPI Users expects form-encoded data (OAuth2PasswordRequestForm)
       const formData = new URLSearchParams();
       formData.append('username', email); // FastAPI Users uses 'username' field for email
       formData.append('password', password);
+      
+      console.log("Making login request to /auth/jwt/login");
       
       const response = await api.post('/auth/jwt/login', formData.toString(), {
         headers: {
@@ -82,13 +88,40 @@ export const AuthProvider = ({ children }) => {
       
       const { access_token } = response.data;
       
-      Cookies.set('access_token', access_token, { expires: 7 });
+      // Set cookie with proper options for cross-origin support
+      Cookies.set('access_token', access_token, { 
+        expires: 7,
+        sameSite: 'lax',
+        secure: window.location.protocol === 'https:'
+      });
       
+      console.log('Cookie set - access_token:', access_token ? 'present' : 'missing');
+      
+      // Fetch user data
       const userResponse = await api.get('/users/me');
+      console.log("User data:", userResponse.data);
+      
+      // Update state synchronously - use functional updates to ensure React processes them
       setUser(userResponse.data);
       setIsAuthenticated(true);
+      setLoading(false); // Ensure loading is false
       
-      return { success: true };
+      console.log('Login successful - User:', userResponse.data?.email, 'isAuthenticated set to true');
+      
+      // Force React to process state updates - use multiple frames to ensure propagation
+      await new Promise(resolve => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            setTimeout(resolve, 200);
+          });
+        });
+      });
+      
+      // Double-check state was actually set
+      const tokenAfter = Cookies.get('access_token');
+      console.log('Post-login verification - Token exists:', !!tokenAfter, 'State should be updated now');
+      
+      return { success: true, user: userResponse.data };
     } catch (error) {
       console.error("Login error:", {
         status: error.response?.status,

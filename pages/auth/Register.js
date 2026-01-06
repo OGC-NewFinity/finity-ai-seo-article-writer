@@ -180,13 +180,13 @@ const Register = () => {
             </div>
             <div className="ml-3 text-sm">
               <label htmlFor="agreedToTerms" className="font-medium text-gray-700">
-                By creating an account, you agree to our{' '}
+                ${'By creating an account, you agree to our '}
                 <a href="#" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-500">Privacy Policy</a>
-                ,{' '}
+                ${', '}
                 <a href="#" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-500">Terms of Service</a>
-                , and{' '}
+                ${', and '}
                 <a href="#" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-500">Return & Refund Policy</a>
-                . *
+                ${'. *'}
               </label>
             </div>
           </div>

@@ -17,6 +17,10 @@ import {
   createCheckoutSession,
   createPortalSession
 } from '../services/payment.service.js';
+import {
+  createPayPalCheckout,
+  executePayPalSubscription
+} from '../services/payments/paypalService.js';
 
 const router = express.Router();
 
@@ -210,6 +214,109 @@ router.post('/reactivate', async (req, res) => {
       error: {
         code: 'INTERNAL_ERROR',
         message: error.message
+      }
+    });
+  }
+});
+
+/**
+ * POST /api/subscription/paypal/checkout
+ * Create PayPal subscription checkout
+ */
+router.post('/paypal/checkout', async (req, res) => {
+  try {
+    const { plan } = req.body;
+    
+    if (!['PRO', 'ENTERPRISE'].includes(plan)) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid plan. Must be PRO or ENTERPRISE.'
+        }
+      });
+    }
+
+    // Prevent duplicate requests
+    // (In production, consider adding rate limiting or request deduplication)
+    
+    const checkout = await createPayPalCheckout(req.user.id, plan);
+
+    res.json({
+      success: true,
+      data: {
+        subscriptionId: checkout.subscriptionId,
+        approvalUrl: checkout.approvalUrl,
+        status: checkout.status
+      }
+    });
+  } catch (error) {
+    console.error('PayPal checkout error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'PAYPAL_CHECKOUT_ERROR',
+        message: error.message || 'Failed to create PayPal checkout'
+      }
+    });
+  }
+});
+
+/**
+ * POST /api/subscription/paypal/execute
+ * Execute approved PayPal subscription
+ */
+router.post('/paypal/execute', async (req, res) => {
+  try {
+    const { subscriptionId, token } = req.body;
+    
+    if (!subscriptionId) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'subscriptionId is required'
+        }
+      });
+    }
+
+    // Execute the subscription with PayPal
+    const subscription = await executePayPalSubscription(subscriptionId, token);
+
+    // Determine plan from PayPal plan ID
+    const plan = subscription.planId === process.env.PAYPAL_PLAN_ID_PRO 
+      ? 'PRO' 
+      : subscription.planId === process.env.PAYPAL_PLAN_ID_ENTERPRISE
+      ? 'ENTERPRISE'
+      : 'PRO'; // Default to PRO if plan ID doesn't match
+
+    // Update user subscription in database
+    await updateSubscriptionPlan(
+      req.user.id,
+      plan,
+      null, // stripeSubscriptionId
+      null, // stripeCustomerId
+      subscription.subscriptionId, // paypalSubscriptionId
+      subscription.payerId, // paypalPayerId
+      subscription.planId // paypalPlanId
+    );
+
+    res.json({
+      success: true,
+      message: 'PayPal subscription activated successfully',
+      data: {
+        subscriptionId: subscription.subscriptionId,
+        status: subscription.status,
+        plan
+      }
+    });
+  } catch (error) {
+    console.error('PayPal execution error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'PAYPAL_EXECUTE_ERROR',
+        message: error.message || 'Failed to execute PayPal subscription'
       }
     });
   }

@@ -84,18 +84,40 @@ export const incrementUsage = async (userId, feature, amount = 1) => {
 
 /**
  * Check if user can perform action
+ * @param {string} userId - User ID
+ * @param {string} feature - Feature name (e.g., 'articlesGenerated', 'imagesGenerated', 'researchQueries')
+ * @returns {Object} Quota check result
  */
 export const canPerformAction = async (userId, feature) => {
   try {
     const usage = await getCurrentUsage(userId);
     const plan = usage.subscription.plan;
-    const currentUsage = usage[`${feature}Generated`] || usage[feature] || 0;
+    
+    // Map feature names to usage fields and plan feature names
+    const featureMap = {
+      'articlesGenerated': { usageField: 'articlesGenerated', planFeature: 'articles' },
+      'imagesGenerated': { usageField: 'imagesGenerated', planFeature: 'images' },
+      'videosGenerated': { usageField: 'videosGenerated', planFeature: 'videos' },
+      'researchQueries': { usageField: 'researchQueries', planFeature: 'research' },
+      'articlesPublished': { usageField: 'articlesPublished', planFeature: 'wordpress' },
+      // Also support short names
+      'articles': { usageField: 'articlesGenerated', planFeature: 'articles' },
+      'images': { usageField: 'imagesGenerated', planFeature: 'images' },
+      'videos': { usageField: 'videosGenerated', planFeature: 'videos' },
+      'research': { usageField: 'researchQueries', planFeature: 'research' },
+      'wordpress': { usageField: 'articlesPublished', planFeature: 'wordpress' }
+    };
+
+    const mapping = featureMap[feature] || { usageField: feature, planFeature: feature };
+    const currentUsage = usage[mapping.usageField] || 0;
+    const planFeature = mapping.planFeature;
     
     return {
-      allowed: isWithinLimit(plan, feature, currentUsage),
+      allowed: isWithinLimit(plan, planFeature, currentUsage),
       currentUsage,
-      limit: getFeatureLimit(plan, feature),
-      plan
+      limit: getFeatureLimit(plan, planFeature),
+      plan,
+      feature: planFeature
     };
   } catch (error) {
     return {

@@ -1,9 +1,19 @@
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import { errorHandler } from './middleware/error.middleware.js';
 
-dotenv.config();
+// Get the directory of the current module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Load .env from project root (parent directory of backend/)
+dotenv.config({ path: join(__dirname, '../../.env') });
+// Also try loading from backend directory for backward compatibility
+dotenv.config({ path: join(__dirname, '../.env') });
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -13,6 +23,7 @@ app.use(cors({
   origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
   credentials: true
 }));
+app.use(cookieParser()); // Parse cookies from request
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -23,8 +34,10 @@ app.get('/health', (req, res) => {
 
 // API Routes
 import subscriptionRoutes from './routes/subscription.routes.js';
+import webhooksRoutes from './routes/webhooks.routes.js';
 
 app.use('/api/subscription', subscriptionRoutes);
+app.use('/api/webhooks', webhooksRoutes);
 // TODO: Import and mount other routes
 // app.use('/api/auth', authRoutes);
 // app.use('/api/articles', articleRoutes);

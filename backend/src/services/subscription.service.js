@@ -47,7 +47,15 @@ export const getUserSubscription = async (userId) => {
 /**
  * Update subscription plan
  */
-export const updateSubscriptionPlan = async (userId, plan, stripeSubscriptionId = null, stripeCustomerId = null) => {
+export const updateSubscriptionPlan = async (
+  userId, 
+  plan, 
+  stripeSubscriptionId = null, 
+  stripeCustomerId = null,
+  paypalSubscriptionId = null,
+  paypalPayerId = null,
+  paypalPlanId = null
+) => {
   const subscription = await getUserSubscription(userId);
   const now = new Date();
   const periodEnd = new Date(now);
@@ -61,7 +69,10 @@ export const updateSubscriptionPlan = async (userId, plan, stripeSubscriptionId 
       currentPeriodStart: now,
       currentPeriodEnd: periodEnd,
       ...(stripeSubscriptionId && { stripeSubscriptionId }),
-      ...(stripeCustomerId && { stripeCustomerId })
+      ...(stripeCustomerId && { stripeCustomerId }),
+      ...(paypalSubscriptionId && { paypalSubscriptionId }),
+      ...(paypalPayerId && { paypalPayerId }),
+      ...(paypalPlanId && { paypalPlanId })
     }
   });
 };
@@ -128,6 +139,11 @@ export const getSubscriptionStatus = async (userId) => {
     currentPeriodStart: subscription.currentPeriodStart,
     currentPeriodEnd: subscription.currentPeriodEnd,
     cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
+    stripeCustomerId: subscription.stripeCustomerId,
+    stripeSubscriptionId: subscription.stripeSubscriptionId,
+    paypalSubscriptionId: subscription.paypalSubscriptionId,
+    paypalPayerId: subscription.paypalPayerId,
+    paymentProvider: subscription.paypalSubscriptionId ? 'paypal' : (subscription.stripeSubscriptionId ? 'stripe' : null),
     limits,
     isActive: subscription.status === 'ACTIVE' && new Date() < subscription.currentPeriodEnd
   };

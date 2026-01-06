@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.db import User, create_db_and_tables
 from app.schemas import UserCreate, UserRead, UserUpdate
 from app.users import auth_backend, current_active_user, fastapi_users
+from app.dependencies import admin_required
 
 
 @asynccontextmanager
@@ -57,3 +58,9 @@ app.include_router(
 @app.get("/authenticated-route")
 async def authenticated_route(user: User = Depends(current_active_user)):
     return {"message": f"Hello {user.email}!"}
+
+
+@app.get("/admin/panel")
+async def admin_panel(admin_user: User = Depends(admin_required)):
+    """Admin-only endpoint. Only accessible to users with role='admin'."""
+    return {"message": "Welcome, Admin!", "user": admin_user.email, "role": admin_user.role}

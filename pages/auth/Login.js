@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import htm from 'htm';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 
@@ -10,7 +11,8 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
   // Handle OAuth errors from URL
   useEffect(() => {
@@ -27,15 +29,56 @@ const Login = () => {
     setError('');
     setLoading(true);
 
-    const result = await login(email, password);
-    setLoading(false);
-
-    if (result.success) {
-      window.location.href = '/';
-    } else {
-      setError(result.error);
+    try {
+      const result = await login(email, password);
+      
+      if (result.success) {
+        console.log('Login successful, preparing navigation...');
+        setLoading(false);
+        
+        // Wait for auth state to propagate, then navigate
+        // Use a more reliable approach: wait for the auth context to update
+        const waitForAuthAndNavigate = async () => {
+          // Check both cookie and wait a bit for React state to update
+          const token = document.cookie.split('; ').find(row => row.startsWith('access_token='));
+          if (!token) {
+            console.error('No token found after login, this should not happen');
+            setError('Login succeeded but authentication token was not set. Please try again.');
+            return;
+          }
+          
+          console.log('Token confirmed in cookie, waiting for React state update...');
+          
+          // Give React time to process the state update from AuthContext
+          await new Promise(resolve => setTimeout(resolve, 300));
+          
+          // Now navigate - the useEffect hook will handle redirect if needed
+          console.log('Navigating to dashboard...');
+          navigate('/dashboard', { replace: true });
+        };
+        
+        // Start navigation process
+        waitForAuthAndNavigate();
+      } else {
+        setError(result.error);
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Login form error:', error);
+      setError('An unexpected error occurred. Please try again.');
+      setLoading(false);
     }
   };
+
+  // Redirect if already authenticated (this handles the case where user is already logged in)
+  useEffect(() => {
+    // Check both state and cookie as fallback
+    const hasToken = document.cookie.split('; ').find(row => row.startsWith('access_token='));
+    if ((isAuthenticated || hasToken) && !loading) {
+      console.log('Login page - User already authenticated (state:', isAuthenticated, 'cookie:', !!hasToken, '), redirecting to dashboard');
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, navigate, loading]);
 
   const handleSocialLogin = async (provider) => {
     try {
@@ -114,50 +157,6 @@ const Login = () => {
             </button>
           </div>
         </form>
-
-        {/* Social login buttons temporarily disabled - OAuth not yet configured in backend */}
-        {/* To enable: 
-            1. Set up OAuth apps (Google, Discord) in their respective developer portals
-            2. Add OAuth credentials to .env file
-            3. Configure OAuth routers in backend-auth/app/app.py
-            4. Uncomment the buttons below
-        */}
-        {/* 
-        <div className="mt-6">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-gray-50 text-gray-500">Or continue with</span>
-            </div>
-          </div>
-
-          <div className="mt-6 grid grid-cols-3 gap-3">
-            <button
-              type="button"
-              onClick=${() => handleSocialLogin('google')}
-              className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-            >
-              Google
-            </button>
-            <button
-              type="button"
-              onClick=${() => handleSocialLogin('discord')}
-              className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-            >
-              Discord
-            </button>
-            <button
-              type="button"
-              onClick=${() => handleSocialLogin('twitter')}
-              className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-            >
-              X (Twitter)
-            </button>
-          </div>
-        </div>
-        */}
 
         <p className="mt-2 text-center text-sm text-gray-600">
           Don't have an account? <a href="/register" className="font-medium text-blue-600 hover:text-blue-500">Sign up</a>

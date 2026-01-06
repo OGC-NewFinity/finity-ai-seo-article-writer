@@ -1,67 +1,130 @@
 services:
-  auth-db:
+  # Database Service
+  finity-db:
     image: postgres:15-alpine
-    container_name: finity-auth-postgres
+    container_name: finity-db
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: finity_auth
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-finity_auth}
     ports:
-      - "5433:5432"
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./docker-init-db.sh:/docker-entrypoint-initdb.d/init-multiple-databases.sh
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
       - finity-network
 
-  backend-auth:
+  # Python Auth Backend Service (FastAPI)
+  finity-backend:
     build:
       context: ./backend-auth
       dockerfile: Dockerfile
-    container_name: finity-auth-backend
+    container_name: finity-backend
+    env_file:
+      - .env
     environment:
-      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://postgres:postgres@auth-db:5432/finity_auth}
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@finity-db:5432/${POSTGRES_DB:-finity_auth}
       SECRET: ${SECRET}
       USERS_VERIFICATION_TOKEN_SECRET: ${USERS_VERIFICATION_TOKEN_SECRET}
       USERS_RESET_PASSWORD_TOKEN_SECRET: ${USERS_RESET_PASSWORD_TOKEN_SECRET}
-      BACKEND_CORS_ORIGINS: ${BACKEND_CORS_ORIGINS:-http://localhost:3000,http://localhost:5173}
-      # Legacy support (optional, for backward compatibility)
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:5173}
+      BACKEND_CORS_ORIGINS: ${BACKEND_CORS_ORIGINS:-http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000}
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      EMAILS_FROM_EMAIL: ${EMAILS_FROM_EMAIL:-}
+      EMAILS_FROM_NAME: ${EMAILS_FROM_NAME:-Finity Support}
+      EMAILS_ENABLED: ${EMAILS_ENABLED:-true}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
     ports:
-      - "8000:8000"  # Map host port 8000 to container port 8000
+      - "8000:8000"
     depends_on:
-      auth-db:
+      finity-db:
         condition: service_healthy
     volumes:
       - ./backend-auth:/app
     command: uvicorn app.app:app --host 0.0.0.0 --port 8000 --reload
     networks:
       - finity-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/openapi.json').read()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
-  # Optional: Frontend service (if you want to run it in Docker)
-  # frontend:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile.frontend
-  #   container_name: finity-frontend
-  #   environment:
-  #     VITE_API_URL: ${BACKEND_URL:-http://localhost:8000}
-  #   ports:
-  #     - "5173:5173"
-  #   depends_on:
-  #     - backend-auth
-  #   volumes:
-  #     - .:/app
-  #     - /app/node_modules
-  #   networks:
-  #     - finity-network
+  # Node.js Backend Service (Express)
+  finity-backend-node:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: finity-backend-node
+    env_file:
+      - .env
+    environment:
+      PORT: ${NODE_BACKEND_PORT:-3001}
+      DATABASE_URL: ${NODE_DATABASE_URL:-postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@finity-db:5432/finity_db}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+      NODE_ENV: ${NODE_ENV:-development}
+    ports:
+      - "3001:3001"
+    depends_on:
+      finity-db:
+        condition: service_healthy
+      finity-backend:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - backend_node_modules:/app/node_modules
+    networks:
+      - finity-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3001/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Frontend Service (React/Vite)
+  finity-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: finity-frontend
+    env_file:
+      - .env
+    environment:
+      VITE_API_URL: http://localhost:8000
+      VITE_SUBSCRIPTION_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      finity-backend:
+        condition: service_healthy
+      finity-backend-node:
+        condition: service_healthy
+    volumes:
+      - .:/app
+      - /app/node_modules
+    networks:
+      - finity-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
 volumes:
   postgres_data:
+  backend_node_modules:
 
 networks:
   finity-network:

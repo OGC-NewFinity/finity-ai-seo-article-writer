@@ -1,13 +1,31 @@
 
 import React from 'react';
 import htm from 'htm';
+import { useAuth } from '../context/AuthContext';
 import { ROADMAP_DATA } from '../constants.js';
 
 const html = htm.bind(React.createElement);
 
 const Dashboard = () => {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
+
   return html`
     <div className="space-y-8 animate-fadeIn">
+      ${isAdmin && html`
+        <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6 rounded-2xl shadow-lg border border-purple-500/20">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-2xl font-black mb-2">Welcome, Admin!</h3>
+              <p className="text-purple-100 text-sm font-medium">You have administrative access to the system.</p>
+            </div>
+            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+              <i className="fa-solid fa-shield-halved text-2xl"></i>
+            </div>
+          </div>
+        </div>
+      `}
+      
       <header>
         <h2 className="text-3xl font-black text-slate-800 tracking-tight">Agent Overview</h2>
         <p className="text-slate-500 mt-2 font-medium">Monitoring your SEO performance and content velocity.</p>

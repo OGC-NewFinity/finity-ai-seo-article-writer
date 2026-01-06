@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
@@ -171,6 +172,9 @@ model Subscription {
   cancelAtPeriodEnd   Boolean            @default(false) @map("cancel_at_period_end")
   stripeSubscriptionId String?           @unique @map("stripe_subscription_id")
   stripeCustomerId    String?            @map("stripe_customer_id")
+  paypalSubscriptionId String?           @unique @map("paypal_subscription_id")
+  paypalPayerId       String?            @map("paypal_payer_id")
+  paypalPlanId        String?            @map("paypal_plan_id")
   createdAt           DateTime           @default(now()) @map("created_at")
   updatedAt           DateTime           @updatedAt @map("updated_at")
   

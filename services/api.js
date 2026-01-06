@@ -5,6 +5,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 const api = axios.create({
   baseURL: API_URL, // FastAPI Users endpoints don't have /api prefix
+  withCredentials: true, // Enable cookies for CORS requests
   headers: {
     'Content-Type': 'application/json',
   },

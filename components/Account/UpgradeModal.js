@@ -1,33 +1,61 @@
 import React, { useState } from 'react';
 import htm from 'htm';
+import subscriptionApi from '../../services/subscriptionApi.js';
 
 const html = htm.bind(React.createElement);
 
-const UpgradeModal = ({ currentPlan, onClose }) => {
+const UpgradeModal = ({ currentPlan, onClose, onUpgrade }) => {
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const handleUpgrade = async () => {
-    if (!selectedPlan) return;
+  const handlePayPalCheckout = async () => {
+    if (!selectedPlan) {
+      setError('Please select a plan first');
+      return;
+    }
 
     setLoading(true);
+    setError(null);
     try {
-      // TODO: Create Stripe checkout session
-      // const response = await fetch('/api/subscription/checkout', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ plan: selectedPlan })
-      // });
-      // const data = await response.json();
-      // window.location.href = data.data.url;
+      const response = await subscriptionApi.post('/api/subscription/paypal/checkout', { 
+        plan: selectedPlan 
+      });
       
-      // Mock for now
-      alert(`Redirecting to checkout for ${selectedPlan} plan...`);
-      onClose();
+      if (response.data.success && response.data.data.approvalUrl) {
+        // Redirect to PayPal approval URL
+        window.location.href = response.data.data.approvalUrl;
+      } else {
+        throw new Error('No approval URL received from PayPal');
+      }
+    } catch (err) {
+      console.error('PayPal checkout failed:', err);
+      setError(err.response?.data?.error?.message || 'Failed to start PayPal checkout. Please try again.');
+      setLoading(false);
+    }
+  };
+
+  const handleStripeCheckout = async () => {
+    if (!selectedPlan) {
+      setError('Please select a plan first');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      // If onUpgrade prop is provided, use it (from Subscription page - Stripe)
+      if (onUpgrade) {
+        await onUpgrade(selectedPlan);
+        onClose();
+      } else {
+        // Fallback for other uses (like AccountPage)
+        alert(`Stripe checkout is currently unavailable. Please use PayPal.`);
+        setLoading(false);
+      }
     } catch (error) {
-      console.error('Upgrade failed:', error);
-      alert('Failed to start upgrade process. Please try again.');
-    } finally {
+      console.error('Stripe checkout failed:', error);
+      setError('Failed to start checkout process. Please try again.');
       setLoading(false);
     }
   };
@@ -95,20 +123,37 @@ const UpgradeModal = ({ currentPlan, onClose }) => {
           })}
         </div>
 
-        <div className="flex space-x-4">
+        ${error && html`
+          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl">
+            <p className="text-sm text-red-700">${error}</p>
+          </div>
+        `}
+
+        <div className="flex flex-col space-y-3">
+          <button
+            onClick=${handlePayPalCheckout}
+            disabled=${!selectedPlan || loading}
+            className="w-full px-6 py-3 bg-[#0070ba] text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-[#005ea6] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg flex items-center justify-center"
+          >
+            ${loading ? html`<i className="fa-solid fa-spinner fa-spin mr-2"></i>` : html`<i className="fa-brands fa-paypal mr-2"></i>`}
+            Subscribe with PayPal
+          </button>
+          
+          <button
+            onClick=${handleStripeCheckout}
+            disabled=${true}
+            className="w-full px-6 py-3 bg-slate-300 text-slate-500 rounded-xl font-black text-xs uppercase tracking-widest cursor-not-allowed transition-all flex items-center justify-center opacity-50"
+            title="Stripe checkout coming soon"
+          >
+            <i className="fa-solid fa-credit-card mr-2"></i>
+            Subscribe with Stripe (Coming Soon)
+          </button>
+          
           <button
             onClick=${onClose}
-            className="flex-1 px-6 py-3 bg-slate-100 text-slate-700 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-slate-200 transition-all"
+            className="w-full px-6 py-3 bg-slate-100 text-slate-700 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-slate-200 transition-all"
           >
             Cancel
-          </button>
-          <button
-            onClick=${handleUpgrade}
-            disabled=${!selectedPlan || loading}
-            className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-blue-500/20"
-          >
-            ${loading ? html`<i className="fa-solid fa-spinner fa-spin mr-2"></i>` : ''}
-            Continue to Checkout
           </button>
         </div>
       </div>
