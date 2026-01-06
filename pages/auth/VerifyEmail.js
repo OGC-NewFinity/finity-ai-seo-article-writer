@@ -31,7 +31,7 @@ const VerifyEmail = () => {
     setMessage('');
 
     try {
-      await api.post(`/auth/verify-email?token=${encodeURIComponent(tokenParam)}`);
+      await api.post(`/api/auth/verify-email?token=${encodeURIComponent(tokenParam)}`);
       setMessage('Email verified successfully! You can now sign in.');
       setTimeout(() => {
         window.location.href = '/login';

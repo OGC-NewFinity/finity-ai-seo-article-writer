@@ -39,7 +39,7 @@ const Login = () => {
 
   const handleSocialLogin = async (provider) => {
     try {
-      const response = await api.get(`/auth/social/${provider}`);
+      const response = await api.get(`/api/auth/social/${provider}`);
       if (response.data.authorization_url) {
         window.location.href = response.data.authorization_url;
       }

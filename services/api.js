@@ -1,10 +1,10 @@
 import axios from 'axios';
 import Cookies from 'js-cookie';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8001';
 
 const api = axios.create({
-  baseURL: `${API_URL}/api`,
+  baseURL: API_URL, // FastAPI Users endpoints don't have /api prefix
   headers: {
     'Content-Type': 'application/json',
   },
@@ -24,34 +24,19 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor to handle token refresh
+// Response interceptor to handle 401 errors
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const originalRequest = error.config;
-
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-
-      try {
-        const refreshToken = Cookies.get('refresh_token');
-        if (refreshToken) {
-          const response = await axios.post(`${API_URL}/api/auth/refresh`, {
-            refresh_token: refreshToken,
-          });
-
-          const { access_token, refresh_token: new_refresh_token } = response.data;
-          Cookies.set('access_token', access_token, { expires: 7 });
-          Cookies.set('refresh_token', new_refresh_token, { expires: 7 });
-
-          originalRequest.headers.Authorization = `Bearer ${access_token}`;
-          return api(originalRequest);
-        }
-      } catch (refreshError) {
-        Cookies.remove('access_token');
-        Cookies.remove('refresh_token');
+    // FastAPI Users JWT doesn't use refresh tokens
+    // If we get a 401, the token is invalid/expired - redirect to login
+    if (error.response?.status === 401) {
+      Cookies.remove('access_token');
+      Cookies.remove('refresh_token');
+      // Only redirect if not already on login/register page
+      if (!window.location.pathname.includes('/login') && 
+          !window.location.pathname.includes('/register')) {
         window.location.href = '/login';
-        return Promise.reject(refreshError);
       }
     }
 

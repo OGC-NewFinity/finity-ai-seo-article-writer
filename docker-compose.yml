@@ -50,7 +50,7 @@ services:
       ADMIN_EMAIL: ${ADMIN_EMAIL:-ogcnewfinity@gmail.com}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-FiniTy-2026-Data.CoM}
     ports:
-      - "8000:8000"
+      - "8001:8000"  # Map host port 8001 to container port 8000
     depends_on:
       postgres:
         condition: service_healthy

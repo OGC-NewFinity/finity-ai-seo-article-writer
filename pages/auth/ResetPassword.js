@@ -40,7 +40,7 @@ const ResetPassword = () => {
     setLoading(true);
 
     try {
-      await api.post('/auth/reset-password', {
+      await api.post('/api/auth/reset-password', {
         token,
         new_password: password
       });
