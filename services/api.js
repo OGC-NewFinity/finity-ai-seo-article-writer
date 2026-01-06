@@ -5,11 +5,15 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 const api = axios.create({
   baseURL: API_URL, // FastAPI Users endpoints don't have /api prefix
-  withCredentials: true, // Enable cookies for CORS requests
+  withCredentials: true, // CRITICAL: Enable cookies for CORS requests
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 30000, // 30 second timeout to prevent hanging
 });
+
+// CRITICAL: Ensure withCredentials is always true
+api.defaults.withCredentials = true;
 
 // Request interceptor to add auth token
 api.interceptors.request.use(

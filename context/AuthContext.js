@@ -68,58 +68,119 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      // Log the login payload for debugging
-      console.log("Login Payload →", { email: email, password });
+      setLoading(true);
+      
+      // Log the login payload for debugging (dev mode only)
+      if (import.meta.env.DEV) {
+        console.log("Login Payload →", { email: email });
+      }
       
       // FastAPI Users expects form-encoded data (OAuth2PasswordRequestForm)
       const formData = new URLSearchParams();
       formData.append('username', email); // FastAPI Users uses 'username' field for email
       formData.append('password', password);
       
-      console.log("Making login request to /auth/jwt/login");
+      if (import.meta.env.DEV) {
+        console.log("Making login request to /auth/jwt/login");
+      }
       
       const response = await api.post('/auth/jwt/login', formData.toString(), {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
+        withCredentials: true, // Explicitly ensure credentials are sent
       });
       
-      console.log("Login response:", response.data);
+      // CRITICAL: Log full response for debugging
+      console.log("=== LOGIN RESPONSE DEBUG ===");
+      console.log("Status:", response.status);
+      console.log("Headers:", response.headers);
+      console.log("Data:", response.data);
+      console.log("Response type:", typeof response.data);
       
-      const { access_token } = response.data;
+      // FastAPI Users BearerTransport returns JSON: {"access_token": "..."}
+      // But response might be in different format - handle both
+      let access_token = null;
+      
+      if (response.data && typeof response.data === 'object') {
+        access_token = response.data.access_token || response.data.accessToken;
+      } else if (typeof response.data === 'string') {
+        // If response is a string, try to parse it
+        try {
+          const parsed = JSON.parse(response.data);
+          access_token = parsed.access_token || parsed.accessToken;
+        } catch (e) {
+          console.error("Failed to parse response as JSON:", e);
+        }
+      }
+      
+      // Check for access_token in response - throw error if missing
+      if (!access_token) {
+        const errorMsg = 'Invalid email or password';
+        console.error("❌ LOGIN FAILED: No access token in response");
+        console.error("Full response:", response);
+        console.error("Response data:", response.data);
+        setLoading(false);
+        throw new Error(errorMsg);
+      }
+      
+      console.log("✅ Access token received:", access_token ? access_token.substring(0, 20) + '...' : 'MISSING');
       
       // Set cookie with proper options for cross-origin support
-      Cookies.set('access_token', access_token, { 
+      // CRITICAL: Set cookie with domain/path that works for localhost
+      const cookieOptions = {
         expires: 7,
-        sameSite: 'lax',
-        secure: window.location.protocol === 'https:'
-      });
+        sameSite: 'lax', // Fixed: Removed TypeScript 'as const' syntax
+        secure: window.location.protocol === 'https:',
+        path: '/', // Ensure cookie is available site-wide
+      };
       
-      console.log('Cookie set - access_token:', access_token ? 'present' : 'missing');
+      Cookies.set('access_token', access_token, cookieOptions);
       
-      // Fetch user data
-      const userResponse = await api.get('/users/me');
-      console.log("User data:", userResponse.data);
+      // Verify cookie was set
+      const cookieValue = Cookies.get('access_token');
+      console.log("🍪 Cookie set - verification:", cookieValue ? 'SUCCESS' : 'FAILED');
+      console.log("🍪 Cookie value (first 20 chars):", cookieValue ? cookieValue.substring(0, 20) + '...' : 'NONE');
+      
+      if (!cookieValue) {
+        console.error("❌ CRITICAL: Cookie was not set! This will cause login to fail.");
+        setLoading(false);
+        throw new Error('Failed to set authentication cookie. Please check browser settings.');
+      }
+      
+      // CRITICAL: Small delay to ensure cookie is available
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Fetch user data with explicit error handling
+      console.log("📡 Fetching user data from /users/me...");
+      let userResponse;
+      try {
+        userResponse = await api.get('/users/me', {
+          withCredentials: true, // Explicitly ensure credentials are sent
+        });
+        console.log("✅ User data fetched successfully:", userResponse.data);
+      } catch (userError) {
+        console.error("❌ FAILED to fetch user data:", userError);
+        console.error("Error details:", {
+          status: userError.response?.status,
+          statusText: userError.response?.statusText,
+          data: userError.response?.data,
+          headers: userError.response?.headers,
+        });
+        // Clear cookie if user fetch fails
+        Cookies.remove('access_token');
+        setLoading(false);
+        throw new Error('Login succeeded but failed to fetch user information. Please try again.');
+      }
       
       // Update state synchronously - use functional updates to ensure React processes them
       setUser(userResponse.data);
       setIsAuthenticated(true);
-      setLoading(false); // Ensure loading is false
+      setLoading(false);
       
-      console.log('Login successful - User:', userResponse.data?.email, 'isAuthenticated set to true');
-      
-      // Force React to process state updates - use multiple frames to ensure propagation
-      await new Promise(resolve => {
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            setTimeout(resolve, 200);
-          });
-        });
-      });
-      
-      // Double-check state was actually set
-      const tokenAfter = Cookies.get('access_token');
-      console.log('Post-login verification - Token exists:', !!tokenAfter, 'State should be updated now');
+      if (import.meta.env.DEV) {
+        console.log('Login successful - User:', userResponse.data?.email, 'isAuthenticated set to true');
+      }
       
       return { success: true, user: userResponse.data };
     } catch (error) {
@@ -130,9 +191,21 @@ export const AuthProvider = ({ children }) => {
         message: error.message,
         fullError: error
       });
+      setLoading(false);
+      
+      // Extract error message with user-friendly defaults
+      let errorMessage = 'Invalid email or password';
+      if (error.response?.status === 401 || error.response?.status === 422) {
+        errorMessage = 'Invalid email or password';
+      } else if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      } else if (error.message && error.message !== 'Login failed: No access token received from server') {
+        errorMessage = error.message;
+      }
+      
       return {
         success: false,
-        error: error.response?.data?.detail || error.message || 'Login failed'
+        error: errorMessage
       };
     }
   };
@@ -168,6 +241,11 @@ export const AuthProvider = ({ children }) => {
     setUser(prev => ({ ...prev, ...userData }));
   };
 
+  const loginWithProvider = (provider) => {
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+    window.location.href = `${apiUrl}/auth/${provider}`;
+  };
+
   return React.createElement(
     AuthContext.Provider,
     {
@@ -179,7 +257,8 @@ export const AuthProvider = ({ children }) => {
         register,
         logout,
         updateUser,
-        checkAuth
+        checkAuth,
+        loginWithProvider
       }
     },
     children

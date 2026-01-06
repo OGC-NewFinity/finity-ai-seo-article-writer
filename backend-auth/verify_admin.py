@@ -3,7 +3,7 @@ import asyncio
 import os
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
-from app.db import User
+from db import User
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",

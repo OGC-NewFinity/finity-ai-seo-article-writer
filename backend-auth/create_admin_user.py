@@ -10,7 +10,7 @@ from fastapi_users.password import PasswordHelper
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy import select
 
-from app.db import User, Base
+from db import User, Base
 
 # Get database URL from environment
 DATABASE_URL = os.getenv(
