@@ -160,6 +160,213 @@ export const resetMonthlyUsage = async () => {
 };
 
 /**
+ * Check token usage limit
+ * @param {string} userId - User ID
+ * @param {number} tokensUsed - Tokens to be used in this request
+ * @returns {Object} Token quota check result
+ */
+export const checkTokenUsage = async (userId, tokensUsed = 0) => {
+  try {
+    const usage = await getCurrentUsage(userId);
+    const plan = usage.subscription.plan;
+    const limit = getFeatureLimit(plan, 'tokenLimit');
+    
+    // Get current token usage by calculating from article and research queries
+    // This is a fallback approach until tokensUsed field is added to Usage model
+    const today = new Date();
+    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    
+    // Estimate token usage from articles (assuming ~500 tokens per article on average)
+    // and research queries (assuming ~1000 tokens per query on average)
+    const [articles, research] = await Promise.all([
+      prisma.article.count({
+        where: { userId, createdAt: { gte: monthStart } }
+      }),
+      prisma.researchQuery.count({
+        where: { userId, createdAt: { gte: monthStart } }
+      })
+    ]);
+    
+    // Rough estimate: articles ~500 tokens, research ~1000 tokens
+    // This can be refined with actual token tracking when implemented
+    const estimatedTokenPerArticle = 500;
+    const estimatedTokenPerResearch = 1000;
+    const currentTokenUsage = (articles * estimatedTokenPerArticle) + (research * estimatedTokenPerResearch);
+    
+    const projectedUsage = currentTokenUsage + tokensUsed;
+    
+    if (limit === -1) {
+      return {
+        allowed: true,
+        currentUsage: currentTokenUsage,
+        limit: -1,
+        remaining: -1,
+        plan
+      };
+    }
+    
+    return {
+      allowed: projectedUsage <= limit,
+      currentUsage: currentTokenUsage,
+      limit,
+      remaining: Math.max(0, limit - currentTokenUsage),
+      plan,
+      projectedUsage
+    };
+  } catch (error) {
+    return {
+      allowed: false,
+      error: error.message
+    };
+  }
+};
+
+/**
+ * Check media duration limit
+ * @param {string} userId - User ID
+ * @param {number} mediaDuration - Duration in seconds for this request
+ * @returns {Object} Media duration quota check result
+ */
+export const checkMediaDuration = async (userId, mediaDuration = 0) => {
+  try {
+    const usage = await getCurrentUsage(userId);
+    const plan = usage.subscription.plan;
+    const limit = getFeatureLimit(plan, 'mediaDurationLimit');
+    
+    // Get current media duration usage (calculated from media assets or stored)
+    // For now, calculate from MediaAsset records
+    const today = new Date();
+    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    
+    const mediaAssets = await prisma.mediaAsset.findMany({
+      where: {
+        userId,
+        createdAt: { gte: monthStart }
+      },
+      select: {
+        metadata: true
+      }
+    });
+    
+    const currentMediaDuration = mediaAssets.reduce((total, asset) => {
+      const duration = asset.metadata?.duration || 0;
+      return total + (typeof duration === 'number' ? duration : 0);
+    }, 0);
+    
+    const projectedDuration = currentMediaDuration + mediaDuration;
+    
+    if (limit === -1) {
+      return {
+        allowed: true,
+        currentUsage: currentMediaDuration,
+        limit: -1,
+        remaining: -1,
+        plan
+      };
+    }
+    
+    return {
+      allowed: projectedDuration <= limit,
+      currentUsage: currentMediaDuration,
+      limit,
+      remaining: Math.max(0, limit - currentMediaDuration),
+      plan,
+      projectedDuration
+    };
+  } catch (error) {
+    return {
+      allowed: false,
+      error: error.message
+    };
+  }
+};
+
+/**
+ * Check daily API call limit
+ * @param {string} userId - User ID
+ * @param {string} dailyCountKey - Key to identify the daily count type (e.g., 'apiCalls', 'researchQueries')
+ * @returns {Object} Daily API call quota check result
+ */
+export const checkDailyApiCalls = async (userId, dailyCountKey = 'apiCalls') => {
+  try {
+    const subscription = await prisma.subscription.findUnique({
+      where: { userId },
+      include: { user: true }
+    });
+    
+    if (!subscription) {
+      throw new Error('User subscription not found');
+    }
+    
+    const plan = subscription.plan;
+    const limit = getFeatureLimit(plan, 'dailyApiCalls');
+    
+    if (limit === -1) {
+      return {
+        allowed: true,
+        currentUsage: 0,
+        limit: -1,
+        remaining: -1,
+        plan
+      };
+    }
+    
+    // Get today's date range
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    // Count API calls today based on the dailyCountKey
+    // This counts requests from different sources based on the key
+    let dailyCount = 0;
+    
+    if (dailyCountKey === 'apiCalls') {
+      // Count all API-related actions today (articles, images, videos, research)
+      const [articles, images, videos, research] = await Promise.all([
+        prisma.article.count({
+          where: { userId, createdAt: { gte: today, lt: tomorrow } }
+        }),
+        prisma.mediaAsset.count({
+          where: { userId, type: 'IMAGE', createdAt: { gte: today, lt: tomorrow } }
+        }),
+        prisma.mediaAsset.count({
+          where: { userId, type: 'VIDEO', createdAt: { gte: today, lt: tomorrow } }
+        }),
+        prisma.researchQuery.count({
+          where: { userId, createdAt: { gte: today, lt: tomorrow } }
+        })
+      ]);
+      
+      dailyCount = articles + images + videos + research;
+    } else if (dailyCountKey === 'researchQueries') {
+      dailyCount = await prisma.researchQuery.count({
+        where: { userId, createdAt: { gte: today, lt: tomorrow } }
+      });
+    } else {
+      // Default: count all user actions today
+      dailyCount = await prisma.article.count({
+        where: { userId, createdAt: { gte: today, lt: tomorrow } }
+      });
+    }
+    
+    return {
+      allowed: dailyCount < limit,
+      currentUsage: dailyCount,
+      limit,
+      remaining: Math.max(0, limit - dailyCount),
+      plan,
+      dailyCountKey
+    };
+  } catch (error) {
+    return {
+      allowed: false,
+      error: error.message
+    };
+  }
+};
+
+/**
  * Get usage statistics for user
  */
 export const getUsageStats = async (userId) => {

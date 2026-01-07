@@ -1,26 +1,14 @@
 /**
- * Media Routes
- * API endpoints for image and video generation
- * 
- * Example usage of quota middleware
+ * Media Controller
+ * Handles HTTP request/response logic for media endpoints
  */
 
-import express from 'express';
-import { authenticate } from '../middleware/auth.middleware.js';
-import { checkQuota } from '../middleware/quota.middleware.js';
-import { incrementUsage } from '../services/usage.service.js';
-
-const router = express.Router();
-
-// All routes require authentication
-router.use(authenticate);
+import { incrementUsage } from '../../services/usage.service.js';
 
 /**
- * POST /api/media/images
  * Generate an image
- * Protected by quota middleware - checks image quota before allowing generation
  */
-router.post('/images', checkQuota('images'), async (req, res) => {
+export const generateImage = async (req, res) => {
   try {
     const { prompt, style, aspectRatio } = req.body;
     
@@ -53,14 +41,12 @@ router.post('/images', checkQuota('images'), async (req, res) => {
       }
     });
   }
-});
+};
 
 /**
- * POST /api/media/videos
  * Generate a video
- * Protected by quota middleware - checks video quota before allowing generation
  */
-router.post('/videos', checkQuota('videos'), async (req, res) => {
+export const generateVideo = async (req, res) => {
   try {
     const { prompt, style, aspectRatio, duration } = req.body;
     
@@ -90,6 +76,4 @@ router.post('/videos', checkQuota('videos'), async (req, res) => {
       }
     });
   }
-});
-
-export default router;
+};

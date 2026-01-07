@@ -1,26 +1,14 @@
 /**
- * Research Routes
- * API endpoints for research queries
- * 
- * Example usage of quota middleware
+ * Research Controller
+ * Handles HTTP request/response logic for research endpoints
  */
 
-import express from 'express';
-import { authenticate } from '../middleware/auth.middleware.js';
-import { checkQuota } from '../middleware/quota.middleware.js';
-import { incrementUsage } from '../services/usage.service.js';
-
-const router = express.Router();
-
-// All routes require authentication
-router.use(authenticate);
+import { incrementUsage } from '../../services/usage.service.js';
 
 /**
- * POST /api/research/query
  * Execute a research query
- * Protected by quota middleware - checks research quota before allowing query
  */
-router.post('/query', checkQuota('research'), async (req, res) => {
+export const executeResearchQuery = async (req, res) => {
   try {
     const { query } = req.body;
     
@@ -53,6 +41,4 @@ router.post('/query', checkQuota('research'), async (req, res) => {
       }
     });
   }
-});
-
-export default router;
+};

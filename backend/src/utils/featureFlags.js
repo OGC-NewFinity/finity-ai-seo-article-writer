@@ -12,7 +12,11 @@ export const PLAN_FEATURES = {
     wordpress: { enabled: false },
     api: { enabled: false },
     advancedSEO: { enabled: false },
-    prioritySupport: { enabled: false }
+    prioritySupport: { enabled: false },
+    // New quota limits
+    tokenLimit: { limit: 100000, enabled: true }, // Monthly token limit
+    mediaDurationLimit: { limit: 3600, enabled: true }, // Monthly media duration in seconds
+    dailyApiCalls: { limit: 100, enabled: true } // Daily API call limit
   },
   PRO: {
     articles: { limit: 100, enabled: true, quality: 'high' },
@@ -22,7 +26,11 @@ export const PLAN_FEATURES = {
     wordpress: { limit: 50, enabled: true },
     api: { enabled: true },
     advancedSEO: { enabled: true },
-    prioritySupport: { enabled: true }
+    prioritySupport: { enabled: true },
+    // New quota limits
+    tokenLimit: { limit: 10000000, enabled: true }, // Monthly token limit (10M)
+    mediaDurationLimit: { limit: 72000, enabled: true }, // Monthly media duration in seconds (20 hours)
+    dailyApiCalls: { limit: 1000, enabled: true } // Daily API call limit
   },
   ENTERPRISE: {
     articles: { limit: -1, enabled: true, quality: 'highest' },
@@ -33,7 +41,11 @@ export const PLAN_FEATURES = {
     api: { enabled: true },
     advancedSEO: { enabled: true },
     prioritySupport: { enabled: true },
-    customIntegrations: { enabled: true }
+    customIntegrations: { enabled: true },
+    // New quota limits
+    tokenLimit: { limit: -1, enabled: true }, // Unlimited tokens
+    mediaDurationLimit: { limit: -1, enabled: true }, // Unlimited media duration
+    dailyApiCalls: { limit: -1, enabled: true } // Unlimited daily API calls
   }
 };
 

@@ -35,14 +35,17 @@ app.get('/health', (req, res) => {
 // API Routes
 import subscriptionRoutes from './routes/subscription.routes.js';
 import webhooksRoutes from './routes/webhooks.routes.js';
+import { articleRoutes } from './features/article/index.js';
+import { researchRoutes } from './features/research/index.js';
+import { mediaRoutes } from './features/media/index.js';
 
 app.use('/api/subscription', subscriptionRoutes);
 app.use('/api/webhooks', webhooksRoutes);
+app.use('/api/articles', articleRoutes);
+app.use('/api/media', mediaRoutes);
+app.use('/api/research', researchRoutes);
 // TODO: Import and mount other routes
 // app.use('/api/auth', authRoutes);
-// app.use('/api/articles', articleRoutes);
-// app.use('/api/media', mediaRoutes);
-// app.use('/api/research', researchRoutes);
 // app.use('/api/settings', settingsRoutes);
 
 // Error handling

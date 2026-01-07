@@ -1,26 +1,14 @@
 /**
- * Article Routes
- * API endpoints for article generation and management
- * 
- * Example usage of quota middleware
+ * Article Controller
+ * Handles HTTP request/response logic for article endpoints
  */
 
-import express from 'express';
-import { authenticate } from '../middleware/auth.middleware.js';
-import { checkQuota } from '../middleware/quota.middleware.js';
-import { incrementUsage } from '../services/usage.service.js';
-
-const router = express.Router();
-
-// All routes require authentication
-router.use(authenticate);
+import { incrementUsage } from '../../services/usage.service.js';
 
 /**
- * POST /api/articles
  * Create a new article
- * Protected by quota middleware - checks article quota before allowing creation
  */
-router.post('/', checkQuota('articles'), async (req, res) => {
+export const createArticle = async (req, res) => {
   try {
     // At this point, quota has been checked and req.quota contains quota info
     // req.quota = { feature, currentUsage, limit, remaining, plan }
@@ -51,14 +39,12 @@ router.post('/', checkQuota('articles'), async (req, res) => {
       }
     });
   }
-});
+};
 
 /**
- * POST /api/articles/:id/publish
  * Publish article to WordPress
- * Protected by quota middleware - checks WordPress publishing quota
  */
-router.post('/:id/publish', checkQuota('wordpress'), async (req, res) => {
+export const publishArticle = async (req, res) => {
   try {
     // TODO: Implement WordPress publishing logic
     
@@ -84,6 +70,4 @@ router.post('/:id/publish', checkQuota('wordpress'), async (req, res) => {
       }
     });
   }
-});
-
-export default router;
+};
