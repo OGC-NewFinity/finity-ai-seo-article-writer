@@ -234,7 +234,7 @@ export const AuthProvider = ({ children }) => {
     Cookies.remove('access_token');
     setUser(null);
     setIsAuthenticated(false);
-    window.location.href = '/login';
+    window.location.href = '/';
   };
 
   const updateUser = (userData) => {

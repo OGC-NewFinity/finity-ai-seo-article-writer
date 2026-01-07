@@ -18,6 +18,7 @@ import ResetPassword from './pages/auth/ResetPassword.js';
 import VerifyEmail from './pages/auth/VerifyEmail.js';
 import Subscription from './pages/Subscription.js';
 import AdminDashboard from './pages/AdminDashboard.js';
+import LandingPage from './pages/LandingPage/LandingPage';
 
 const html = htm.bind(React.createElement);
 
@@ -196,7 +197,10 @@ const App = () => {
             if (loading) {
               return React.createElement('div', { className: 'flex items-center justify-center min-h-screen' }, 'Loading...');
             }
-            return React.createElement(Navigate, { to: isAuthenticated ? "/dashboard" : "/login", replace: true });
+            if (isAuthenticated) {
+              return React.createElement(Navigate, { to: "/dashboard", replace: true });
+            }
+            return React.createElement(LandingPage);
           })
         }),
         React.createElement(Route, {

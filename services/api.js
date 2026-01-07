@@ -38,9 +38,10 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       Cookies.remove('access_token');
       Cookies.remove('refresh_token');
-      // Only redirect if not already on login/register page
+      // Only redirect if not already on login/register page or landing page
       if (!window.location.pathname.includes('/login') && 
-          !window.location.pathname.includes('/register')) {
+          !window.location.pathname.includes('/register') &&
+          window.location.pathname !== '/') {
         window.location.href = '/login';
       }
     }

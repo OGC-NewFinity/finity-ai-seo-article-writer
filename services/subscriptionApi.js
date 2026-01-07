@@ -33,7 +33,10 @@ subscriptionApi.interceptors.response.use(
     if (error.response?.status === 401) {
       // Token invalid or expired
       Cookies.remove('access_token');
-      if (!window.location.pathname.includes('/login')) {
+      // Only redirect if not already on login/register page or landing page
+      if (!window.location.pathname.includes('/login') && 
+          !window.location.pathname.includes('/register') &&
+          window.location.pathname !== '/') {
         window.location.href = '/login';
       }
     }
