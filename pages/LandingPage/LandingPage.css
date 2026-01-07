@@ -1,45 +1,251 @@
-/* /frontend/src/pages/LandingPage/LandingPage.css */
-.landing-page {
-  padding: 4rem;
+/* LandingPage.css */
+.landing-container {
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(to bottom, #0f0c29, #302b63, #24243e);
+  color: #fff;
+  min-height: 100vh;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+section {
+  padding: 80px 20px;
   text-align: center;
-  color: white;
-  background: transparent;
 }
 
-.hero h1 {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-}
-
-.hero p {
-  font-size: 1.2rem;
-  margin-bottom: 2rem;
+h1, h2 {
+  font-weight: 600;
 }
 
 button {
-  background: #5864FF;
+  background-color: #5864FF;
   color: white;
   border: none;
-  padding: 1rem 2rem;
-  font-size: 1rem;
+  padding: 12px 28px;
   border-radius: 8px;
+  font-size: 1rem;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: 0.3s;
 }
 
 button:hover {
-  background: #4752E6;
+  background-color: #00FFC6;
+  color: #000;
 }
 
-.features {
-  margin-top: 4rem;
+/* Hero Section */
+.hero-section {
+  padding: 120px 20px;
+}
+
+.hero-section h1 {
+  font-size: 3.5rem;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(135deg, #00FFC6, #5864FF);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-section p {
+  font-size: 1.3rem;
+  margin-bottom: 2.5rem;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+  opacity: 0.9;
+}
+
+/* Project Overview */
+.project-overview {
+  background: rgba(255, 255, 255, 0.03);
+  padding: 100px 20px;
+}
+
+.project-overview h2 {
+  font-size: 2.5rem;
+  margin-bottom: 2rem;
+  color: #00FFC6;
+}
+
+.project-overview p {
+  font-size: 1.1rem;
+  max-width: 800px;
+  margin: 0 auto;
+  line-height: 1.8;
+  opacity: 0.85;
+}
+
+/* Services Section */
+.services-section {
+  padding: 100px 20px;
+}
+
+.services-section h2 {
+  font-size: 2.5rem;
+  margin-bottom: 3rem;
+  color: #00FFC6;
+}
+
+.services-list {
+  list-style: none;
+  padding: 0;
+  max-width: 600px;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
 }
 
-.feature-box {
+.services-list li {
   background: rgba(255, 255, 255, 0.05);
   padding: 1.5rem;
   border-radius: 12px;
+  font-size: 1.1rem;
+  border: 1px solid rgba(88, 100, 255, 0.3);
+  transition: all 0.3s ease;
+}
+
+.services-list li:hover {
+  background: rgba(88, 100, 255, 0.15);
+  border-color: #5864FF;
+  transform: translateY(-5px);
+}
+
+/* Contact & Newsletter */
+.contact-newsletter {
+  background: rgba(255, 255, 255, 0.03);
+  padding: 100px 20px;
+}
+
+.contact-newsletter h2 {
+  font-size: 2.5rem;
+  margin-bottom: 2.5rem;
+  color: #00FFC6;
+}
+
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  max-width: 500px;
+  margin: 0 auto 2rem;
+}
+
+.contact-form input,
+.contact-form textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-size: 1rem;
+  font-family: 'Segoe UI', sans-serif;
+  transition: all 0.3s ease;
+}
+
+.contact-form input::placeholder,
+.contact-form textarea::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.contact-form input:focus,
+.contact-form textarea:focus {
+  outline: none;
+  border-color: #5864FF;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.contact-form textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.newsletter-label {
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  opacity: 0.9;
+}
+
+.newsletter-input {
+  max-width: 400px;
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-size: 1rem;
+  font-family: 'Segoe UI', sans-serif;
+  transition: all 0.3s ease;
+}
+
+.newsletter-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.newsletter-input:focus {
+  outline: none;
+  border-color: #5864FF;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .hero-section h1 {
+    font-size: 2.5rem;
+  }
+
+  .hero-section p {
+    font-size: 1.1rem;
+  }
+
+  .project-overview h2,
+  .services-section h2,
+  .contact-newsletter h2 {
+    font-size: 2rem;
+  }
+
+  section {
+    padding: 60px 20px;
+  }
+
+  .hero-section {
+    padding: 80px 20px;
+  }
+
+  .contact-form {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .contact-form input,
+  .contact-form textarea,
+  .newsletter-input {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-section h1 {
+    font-size: 2rem;
+  }
+
+  .hero-section p {
+    font-size: 1rem;
+  }
+
+  .project-overview h2,
+  .services-section h2,
+  .contact-newsletter h2 {
+    font-size: 1.75rem;
+  }
+
+  .services-list li {
+    font-size: 1rem;
+    padding: 1.2rem;
+  }
 }

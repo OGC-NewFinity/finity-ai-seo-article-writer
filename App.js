@@ -18,7 +18,7 @@ import ResetPassword from './pages/auth/ResetPassword.js';
 import VerifyEmail from './pages/auth/VerifyEmail.js';
 import Subscription from './pages/Subscription.js';
 import AdminDashboard from './pages/AdminDashboard.js';
-import LandingPage from './pages/LandingPage/LandingPage';
+import LandingPage from './pages/LandingPage/LandingPage.jsx';
 
 const html = htm.bind(React.createElement);
 
