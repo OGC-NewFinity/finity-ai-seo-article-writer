@@ -101,7 +101,7 @@ export async function createPayPalCheckout(userId, plan) {
         }
       },
       application_context: {
-        brand_name: 'Finity AI',
+        brand_name: 'Nova‑XFinity AI',
         locale: 'en-US',
         shipping_preference: 'NO_SHIPPING',
         user_action: 'SUBSCRIBE_NOW',

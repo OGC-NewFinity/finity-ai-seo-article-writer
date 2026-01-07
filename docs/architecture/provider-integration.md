@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Finity AI SEO Article Writer uses a multi-provider architecture that abstracts AI service complexity behind user-friendly "Engines." Users interact with branded engine names rather than raw model APIs, ensuring a seamless experience while maintaining flexibility and security.
+The Nova‑XFinity AI Article Writer uses a multi-provider architecture that abstracts AI service complexity behind user-friendly "Engines." Users interact with branded engine names rather than raw model APIs, ensuring a seamless experience while maintaining flexibility and security.
 
 ### Architecture Diagram
 
@@ -10,7 +10,7 @@ The Finity AI SEO Article Writer uses a multi-provider architecture that abstrac
 ┌─────────────────────────────────────────────────────────────┐
 │                    User Interface Layer                      │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐    │
-│  │ ChatGPT 3.0  │  │  Gemini AI   │  │ Finity Agent  │    │
+│  │ ChatGPT 3.0  │  │  Gemini AI   │  │ Nova‑XFinity Agent  │    │
 │  │   Engine     │  │   Engine     │  │ (Recommended) │    │
 │  └──────────────┘  └──────────────┘  └──────────────┘    │
 │  ┌──────────────┐  ┌──────────────┐                      │
@@ -26,7 +26,7 @@ The Finity AI SEO Article Writer uses a multi-provider architecture that abstrac
 │  │   (GPT-4o)   │  │ (Gemini 3)   │  │   (Claude)   │    │
 │  └──────────────┘  └──────────────┘  └──────────────┘    │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐    │
-│  │  Groq/Llama  │  │ Finity Agent │  │ Media APIs   │    │
+│  │  Groq/Llama  │  │ Nova‑XFinity Agent │  │ Media APIs   │    │
 │  │  (Llama 3.3) │  │ Orchestrator │  │ (Gemini Veo) │    │
 │  └──────────────┘  └──────────────┘  └──────────────┘    │
 └─────────────────────────────────────────────────────────────┘
@@ -46,7 +46,7 @@ The Finity AI SEO Article Writer uses a multi-provider architecture that abstrac
 
 | Provider | Engine Name | Type | Status |
 |----------|-------------|------|--------|
-| **Finity Agent** | Finity Agent (Recommended) | Proprietary Orchestration | Primary |
+| **Nova‑XFinity Agent** | Nova‑XFinity Agent (Recommended) | Proprietary Orchestration | Primary |
 | **OpenAI** | ChatGPT 3.0 | External API | Active |
 | **Google Gemini** | Gemini AI | External API | Active |
 | **Anthropic** | Claude AI | External API | Active |
@@ -63,7 +63,7 @@ The Finity AI SEO Article Writer uses a multi-provider architecture that abstrac
 - Groq (Llama 3.3 70B)
 
 **Internal Services:**
-- **Finity Agent** - Proprietary orchestration layer
+- **Nova‑XFinity Agent** - Proprietary orchestration layer
 - **Image Engine** - Specialized image generation service
 - **Video Engine** - Specialized video generation service
 
@@ -77,7 +77,7 @@ Users interact with the system through branded engine names, not raw model ident
 - **Gemini AI** - SEO research and context-rich content
 - **Claude AI** - Technical accuracy and deep reasoning
 - **Llama AI** - Fast generation and concise summaries
-- **Finity Agent (Recommended)** - SEO-optimized writing with brand tuning
+- **Nova‑XFinity Agent (Recommended)** - SEO-optimized writing with brand tuning
 - **Image Engine** - Banner images, diagrams, featured images
 - **Video Engine** - Short-form videos, educational content
 
@@ -213,11 +213,11 @@ Users **cannot** configure:
 - Style control (Cinematic, Documentary, etc.)
 - Image-to-video generation
 
-## Finity Agent Architecture
+## Nova‑XFinity Agent Architecture
 
 ### Overview
 
-The **Finity Agent** is a proprietary orchestration layer designed to become the primary content generation engine. It combines multiple AI providers with custom prompt engineering, structured input-output processing, and brand-specific tuning.
+The **Nova‑XFinity Agent** is a proprietary orchestration layer designed to become the primary content generation engine. It combines multiple AI providers with custom prompt engineering, structured input-output processing, and brand-specific tuning.
 
 ### Core Components
 
@@ -248,7 +248,7 @@ The **Finity Agent** is a proprietary orchestration layer designed to become the
 ### How It Works
 
 ```
-User Request → Finity Agent
+User Request → Nova‑XFinity Agent
                     │
                     ├─→ Input Optimization
                     │       │
@@ -297,7 +297,7 @@ User Request → Finity Agent
 
 ### Future Vision
 
-The Finity Agent is designed to:
+The Nova‑XFinity Agent is designed to:
 - Gradually replace direct provider usage for most workflows
 - Become the default recommendation for all users
 - Support full replacement of external models in specific use cases
@@ -559,7 +559,7 @@ const FALLBACK_CHAINS = {
 ### For Users
 
 1. **Select engines based on use case**, not provider names
-2. **Trust the Finity Agent** for best results
+2. **Trust the Nova‑XFinity Agent** for best results
 3. **Use specialized engines** (Image/Video) for media generation
 4. **Report issues** with specific engines, not providers
 
@@ -573,7 +573,7 @@ const FALLBACK_CHAINS = {
 - **Solution:** Check rate limits haven't been exceeded
 
 **Issue:** Content quality inconsistent
-- **Solution:** Use Finity Agent for consistent quality
+- **Solution:** Use Nova‑XFinity Agent for consistent quality
 - **Solution:** Verify engine selection matches use case
 - **Solution:** Check input parameters are correct
 

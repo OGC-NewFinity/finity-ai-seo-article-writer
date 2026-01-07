@@ -1,4 +1,4 @@
-# Finity AI SEO Article Writer
+# Nova‑XFinity AI Article Writer
 
 > AI-powered SEO-optimized article generation for WordPress with multi-provider support, media generation, and research intelligence.
 
@@ -271,5 +271,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 <div align="center">
-Made with ❤️ by the Finity AI Team
+Made with ❤️ by the Nova‑XFinity AI Team
 </div>

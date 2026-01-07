@@ -1,10 +1,10 @@
 <?php
 /**
- * Plugin Name: Finity AI SEO Article Writer
+ * Plugin Name: Nova‑XFinity AI Article Writer
  * Plugin URI: https://finity.ai
  * Description: AI-powered SEO-optimized article generation for WordPress with multi-provider support, media generation, and research intelligence.
  * Version: 1.0.0
- * Author: Finity AI
+ * Author: Nova‑XFinity AI
  * Author URI: https://finity.ai
  * License: MIT
  * Text Domain: finity-ai
@@ -43,8 +43,8 @@ class Finity_AI_SEO_Writer {
      */
     public function add_admin_menu() {
         add_menu_page(
-            'Finity AI Writer',
-            'Finity AI',
+            'Nova‑XFinity AI Writer',
+            'Nova‑XFinity AI',
             'edit_posts',
             'finity-ai-writer',
             array($this, 'render_admin_page'),
@@ -60,7 +60,7 @@ class Finity_AI_SEO_Writer {
         $app_url = get_option('finity_ai_app_url', 'http://localhost:3000');
         ?>
         <div class="wrap">
-            <h1>Finity AI SEO Article Writer</h1>
+            <h1>Nova‑XFinity AI Article Writer</h1>
             <div style="margin-top: 20px;">
                 <iframe 
                     src="<?php echo esc_url($app_url); ?>" 

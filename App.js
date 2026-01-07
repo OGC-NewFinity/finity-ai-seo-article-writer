@@ -129,7 +129,7 @@ const AppContent = () => {
   }, [settings]);
 
   const handleSaveSettings = () => {
-    alert('Finity Agent Configuration synchronized successfully.');
+    alert('Nova‑XFinity Agent Configuration synchronized successfully.');
   };
 
   const renderContent = () => {

@@ -2,7 +2,7 @@
 
 ## Overview
 
-The backend is built with Node.js and Express.js, providing a RESTful API for the Finity AI SEO Article Writer application. It handles authentication, article generation, media processing, and database operations.
+The backend is built with Node.js and Express.js, providing a RESTful API for the Nova‑XFinity AI Article Writer application. It handles authentication, article generation, media processing, and database operations.
 
 ## Directory Structure
 

@@ -1,6 +1,6 @@
 # Contributing Guidelines
 
-Thank you for your interest in contributing to Finity AI SEO Article Writer! This document provides guidelines for contributing to the project.
+Thank you for your interest in contributing to Nova‑XFinity AI Article Writer! This document provides guidelines for contributing to the project.
 
 ## Code of Conduct
 
@@ -247,4 +247,4 @@ Contributors will be:
 - Credited in release notes
 - Appreciated! 🎉
 
-Thank you for contributing to Finity AI SEO Article Writer!
+Thank you for contributing to Nova‑XFinity AI Article Writer!

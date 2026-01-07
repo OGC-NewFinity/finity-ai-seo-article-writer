@@ -1,6 +1,6 @@
-# Finity AI Backend
+# Nova‑XFinity AI Backend
 
-Backend API for Finity AI SEO Article Writer.
+Backend API for Nova‑XFinity AI Article Writer.
 
 ## Setup
 

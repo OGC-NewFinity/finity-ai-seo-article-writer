@@ -1,6 +1,6 @@
-# Finity AI SEO Article Writer - Complete Setup Guide
+# Nova‑XFinity AI Article Writer - Complete Setup Guide
 
-This comprehensive guide will walk you through all the steps required to set up and run the Finity AI SEO Article Writer plugin.
+This comprehensive guide will walk you through all the steps required to set up and run the Nova‑XFinity AI Article Writer plugin.
 
 ## 📋 Table of Contents
 
@@ -44,7 +44,7 @@ Before starting, ensure you have the following installed on your system:
 
 ## Project Overview
 
-The Finity AI SEO Article Writer consists of three main components:
+The Nova‑XFinity AI Article Writer consists of three main components:
 
 1. **Frontend Application** - React-based UI (runs on port 3000)
 2. **Backend API** - Node.js/Express server (runs on port 3001)
@@ -384,12 +384,12 @@ Or manually:
 
 1. Log in to WordPress Admin Dashboard
 2. Go to **Plugins** → **Installed Plugins**
-3. Find "Finity AI SEO Article Writer"
+3. Find "Nova‑XFinity AI Article Writer"
 4. Click **Activate**
 
 ### Step 3: Configure Plugin Settings
 
-1. Go to **Finity AI** in the WordPress admin menu
+1. Go to **Nova‑XFinity AI** in the WordPress admin menu
 2. The plugin will load the frontend application in an iframe
 3. Configure the app URL if needed (default: `http://localhost:3000`)
 
@@ -474,7 +474,7 @@ NODE_ENV=production npm start
 ### Step 1: Verify Frontend
 
 1. Open `http://localhost:3000` in your browser
-2. You should see the Finity AI dashboard
+2. You should see the Nova‑XFinity AI dashboard
 3. Check browser console for any errors
 
 ### Step 2: Verify Backend
@@ -868,7 +868,7 @@ After completing the setup:
 
 ---
 
-**Congratulations!** 🎉 You've successfully set up the Finity AI SEO Article Writer. Start creating amazing SEO-optimized content!
+**Congratulations!** 🎉 You've successfully set up the Nova‑XFinity AI Article Writer. Start creating amazing SEO-optimized content!
 
 ---
 

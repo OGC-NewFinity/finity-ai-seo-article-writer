@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Finity AI SEO Article Writer uses a full-featured authentication system built with FastAPI (Python) backend and React frontend. The system includes JWT-based authentication with refresh tokens, OAuth2 social logins, email verification, and password reset functionality.
+The Nova‑XFinity AI Article Writer uses a full-featured authentication system built with FastAPI (Python) backend and React frontend. The system includes JWT-based authentication with refresh tokens, OAuth2 social logins, email verification, and password reset functionality.
 
 ## Architecture
 

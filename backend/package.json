@@ -1,7 +1,7 @@
 {
   "name": "finity-ai-backend",
   "version": "1.0.0",
-  "description": "Backend API for Finity AI SEO Article Writer",
+  "description": "Backend API for Nova‑XFinity AI Article Writer",
   "main": "src/index.js",
   "type": "module",
   "scripts": {

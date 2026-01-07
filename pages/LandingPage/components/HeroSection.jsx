@@ -10,7 +10,7 @@ const HeroSection = () => {
 
   return (
     <section className="hero-section">
-      <h1>Finity AI SEO Writer</h1>
+      <h1>Nova‑XFinity AI Writer</h1>
       <p>Create powerful, optimized content with futuristic multi-provider AI tools built for growth.</p>
       <button onClick={handleGetStarted}>Get Started</button>
     </section>

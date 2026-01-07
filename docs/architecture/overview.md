@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Finity AI SEO Article Writer is a full-stack application that generates SEO-optimized WordPress articles using multiple AI providers. The system is designed with a modular, scalable architecture supporting both frontend and backend components.
+Nova‑XFinity AI Article Writer is a full-stack application that generates SEO-optimized WordPress articles using multiple AI providers. The system is designed with a modular, scalable architecture supporting both frontend and backend components.
 
 ## High-Level Architecture
 

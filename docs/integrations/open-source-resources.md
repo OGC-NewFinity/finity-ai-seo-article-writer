@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document lists all open-source templates, libraries, and resources used in the Finity AI SEO Article Writer project.
+This document lists all open-source templates, libraries, and resources used in the Nova‑XFinity AI Article Writer project.
 
 ## Authentication Templates
 

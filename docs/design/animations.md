@@ -2,7 +2,7 @@
 
 ## Overview
 
-Animations in the Finity AI SEO Article Writer follow a consistent pattern focused on smooth transitions, 3D effects, and subtle feedback mechanisms.
+Animations in the Nova‑XFinity AI Article Writer follow a consistent pattern focused on smooth transitions, 3D effects, and subtle feedback mechanisms.
 
 ## Animation Principles
 

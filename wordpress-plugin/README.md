@@ -1,6 +1,6 @@
-# Finity AI SEO Article Writer - WordPress Plugin
+# Nova‑XFinity AI Article Writer - WordPress Plugin
 
-This WordPress plugin integrates the Finity AI SEO Article Writer React application into your WordPress admin dashboard.
+This WordPress plugin integrates the Nova‑XFinity AI Article Writer React application into your WordPress admin dashboard.
 
 ## Installation
 
@@ -12,14 +12,14 @@ This WordPress plugin integrates the Finity AI SEO Article Writer React applicat
 2. **Activate the plugin** in WordPress Admin → Plugins
 
 3. **Configure the app URL** (if different from default):
-   - Go to Settings → Finity AI
+   - Go to Settings → Nova‑XFinity AI
    - Set the App URL (default: http://localhost:3000)
 
 ## Usage
 
-1. Navigate to **Finity AI** in WordPress admin menu
+1. Navigate to **Nova‑XFinity AI** in WordPress admin menu
 2. The React app will load in an iframe
-3. Generate articles using the Finity AI interface
+3. Generate articles using the Nova‑XFinity AI interface
 4. Publish directly to WordPress as drafts
 
 ## REST API Endpoints

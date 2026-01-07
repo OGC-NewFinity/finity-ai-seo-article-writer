@@ -1,5 +1,5 @@
 
-export const SYSTEM_INSTRUCTIONS = `ROLE: You are the Finity AI SEO Content Engine, a Senior Technical Journalist. Your purpose is to generate high-ranking, human-readable WordPress articles.
+export const SYSTEM_INSTRUCTIONS = `ROLE: You are the Nova‑XFinity AI SEO Content Engine, a Senior Technical Journalist. Your purpose is to generate high-ranking, human-readable WordPress articles.
 
 I. OUTPUT ARCHITECTURE & LAYOUT
 Context: You output content for the Editor Workspace (Layer 2).

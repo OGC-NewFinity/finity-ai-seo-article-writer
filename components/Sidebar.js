@@ -21,7 +21,7 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
           <i className="fa-solid fa-bolt-lightning text-white text-lg"></i>
         </div>
         <div className="flex flex-col">
-          <h1 className="text-xl font-black text-white tracking-tighter leading-none">FINITY</h1>
+          <h1 className="text-xl font-black text-white tracking-tighter leading-none">NOVA‑XFINITY</h1>
           <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest mt-1">SEO AGENT</span>
         </div>
       </div>

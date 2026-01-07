@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes the email service integration and autoresponder system for the Finity AI SEO Article Writer application.
+This document describes the email service integration and autoresponder system for the Nova‑XFinity AI Article Writer application.
 
 ## Email Service Setup
 
@@ -120,13 +120,13 @@ export const WelcomeEmail = ({ userName }) => {
       <Body style={main}>
         <Container style={container}>
           <Section style={header}>
-            <Text style={title}>Welcome to Finity AI!</Text>
+            <Text style={title}>Welcome to Nova‑XFinity AI!</Text>
           </Section>
           
           <Section style={content}>
             <Text style={paragraph}>Hi {userName},</Text>
             <Text style={paragraph}>
-              Welcome to Finity AI SEO Article Writer. Start creating
+              Welcome to Nova‑XFinity AI Article Writer. Start creating
               high-quality SEO-optimized articles with the power of AI.
             </Text>
             <Button style={button} href="https://finity.ai/dashboard">
@@ -136,7 +136,7 @@ export const WelcomeEmail = ({ userName }) => {
           
           <Hr style={hr} />
           <Text style={footer}>
-            © 2024 Finity AI. All rights reserved.
+            © 2024 Nova‑XFinity AI. All rights reserved.
           </Text>
         </Container>
       </Body>
@@ -172,7 +172,7 @@ export const sendWelcomeEmail = async (user) => {
   
   return sendEmail({
     to: user.email,
-    subject: 'Welcome to Finity AI',
+    subject: 'Welcome to Nova‑XFinity AI',
     html,
     text
   });

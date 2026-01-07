@@ -1,6 +1,6 @@
 <?php
 /**
- * Uninstall script for Finity AI SEO Writer
+ * Uninstall script for Nova‑XFinity AI Writer
  */
 
 if (!defined('WP_UNINSTALL_PLUGIN')) {

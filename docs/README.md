@@ -1,6 +1,6 @@
-# Finity AI SEO Article Writer - Documentation
+# Nova‑XFinity AI Article Writer - Documentation
 
-Welcome to the comprehensive documentation for the Finity AI SEO Article Writer project. This documentation covers architecture, development guidelines, design system, and integrations.
+Welcome to the comprehensive documentation for the Nova‑XFinity AI Article Writer project. This documentation covers architecture, development guidelines, design system, and integrations.
 
 ## Documentation Index
 

@@ -403,7 +403,7 @@ async def test_email(email: str):
         <div class="container">
             <h2>Test Email</h2>
             <p class="success">✅ Email service is working correctly!</p>
-            <p>This is a test email from your Finity AI SEO Article Writer application.</p>
+            <p>This is a test email from your Nova‑XFinity AI Article Writer application.</p>
             <p>If you received this email, your SMTP configuration is correct.</p>
         </div>
     </body>
@@ -422,7 +422,7 @@ async def test_email(email: str):
     try:
         result = await send_email(
             to_email=email,
-            subject="Test Email - Finity AI",
+            subject="Test Email - Nova‑XFinity AI",
             html_content=html_content,
             text_content=text_content,
         )

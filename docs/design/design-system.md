@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Finity AI SEO Article Writer uses a modern 3D-themed design system with elegant colors, smooth animations, and contemporary UI elements.
+The Nova‑XFinity AI Article Writer uses a modern 3D-themed design system with elegant colors, smooth animations, and contemporary UI elements.
 
 ## Color Palette
 
