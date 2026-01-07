@@ -14,7 +14,7 @@ Thank you for your interest in contributing to Nova‑XFinity AI Article Writer!
 1. **Fork the repository**
 2. **Clone your fork:**
    ```bash
-   git clone https://github.com/yourusername/finity-ai-seo-article-writer.git
+   git clone https://github.com/yourusername/nova-xfinity-ai.git
    ```
 3. **Create a branch:**
    ```bash

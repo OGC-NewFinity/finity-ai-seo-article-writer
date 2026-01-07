@@ -584,7 +584,8 @@ const FALLBACK_CHAINS = {
 
 ## Related Documentation
 
-- [System Architecture Overview](overview.md) - Overall system design
+- [Backend Architecture](backend-architecture.md) - Backend system design
+- [Frontend Architecture](frontend-architecture.md) - Frontend system design
 - [API Documentation](api.md) - API endpoint details
 - [Backend Architecture](backend.md) - Backend implementation
 - [Setup Guide](../development/setup.md) - Environment configuration

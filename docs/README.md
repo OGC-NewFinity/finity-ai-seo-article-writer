@@ -5,7 +5,8 @@ Welcome to the comprehensive documentation for the Nova‑XFinity AI Article Wri
 ## Documentation Index
 
 ### Architecture
-- [System Overview](architecture/overview.md) - Overall system architecture and design decisions
+- [Backend Architecture](architecture/backend-architecture.md) - Backend system architecture
+- [Frontend Architecture](architecture/frontend-architecture.md) - Frontend system architecture
 - [Backend Architecture](architecture/backend.md) - Node.js/Express backend structure and patterns
 - [Database Design](architecture/database.md) - PostgreSQL schema and Docker setup
 - [Frontend Architecture](architecture/frontend.md) - React component structure and patterns
@@ -35,7 +36,7 @@ Welcome to the comprehensive documentation for the Nova‑XFinity AI Article Wri
 ## Project Structure
 
 ```
-finity-ai-seo-article-writer/
+nova-xfinity-ai/
 ├── docs/                 # This documentation
 ├── backend/              # Node.js/Express backend
 ├── src/                  # React frontend source
@@ -47,7 +48,7 @@ finity-ai-seo-article-writer/
 ## Getting Started
 
 1. Read the [Setup Guide](development/setup.md) for environment configuration
-2. Review the [Architecture Overview](architecture/overview.md) to understand the system
+2. Review the [Backend Architecture](architecture/backend-architecture.md) and [Frontend Architecture](architecture/frontend-architecture.md) to understand the system
 3. Check [Code Organization](development/code-organization.md) for project structure
 4. Explore the [Design System](design/design-system.md) for UI/UX guidelines
 

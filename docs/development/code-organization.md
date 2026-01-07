@@ -5,7 +5,7 @@
 The project follows a **feature-based modular structure** to improve maintainability and scalability.
 
 ```
-finity-ai-seo-article-writer/
+nova-xfinity-ai/
 ├── docs/                    # Documentation
 ├── backend/                 # Backend application
 │   ├── src/
@@ -389,5 +389,5 @@ services/ai/
 ## Next Steps
 
 - Review [Contributing Guidelines](contributing.md) for coding standards
-- Check [Frontend Architecture](../architecture/frontend.md) for structure details
+- Check [Frontend Architecture](../architecture/frontend-architecture.md) for structure details
 - See [Design System](../design/design-system.md) for component patterns

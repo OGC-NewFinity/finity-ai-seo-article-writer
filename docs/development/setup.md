@@ -14,8 +14,8 @@ Before setting up the development environment, ensure you have the following ins
 ### 1. Clone Repository
 
 ```bash
-git clone https://github.com/yourusername/finity-ai-seo-article-writer.git
-cd finity-ai-seo-article-writer
+git clone https://github.com/yourusername/nova-xfinity-ai.git
+cd nova-xfinity-ai
 ```
 
 ### 2. Install Frontend Dependencies
@@ -45,10 +45,24 @@ cp .env.example .env
 
 ### 5. Start Docker Services
 
+**Option A: Using Docker Compose (Recommended)**
 ```bash
-# Start PostgreSQL and Redis
+# Start all services with one command
+npm run dev
+# This runs docker compose up --build using root-level docker-compose.yml
+```
+
+**Option B: Manual Docker Services**
+```bash
+# Start PostgreSQL and Redis only
 docker-compose up -d
 ```
+
+**Services Started:**
+- PostgreSQL (port `5432`)
+- Node.js API (port `3001`)
+- FastAPI Auth (port `8000`)
+- React frontend (port `3000`)
 
 ### 6. Run Database Migrations
 
@@ -392,8 +406,34 @@ npx prisma generate
 | `EMAIL_SERVICE` | Email provider | No |
 | `EMAIL_API_KEY` | Email API key | No |
 
+## Access Points
+
+After starting services, access:
+
+| Service     | URL                                            |
+| ----------- | ---------------------------------------------- |
+| Frontend    | [http://localhost:3000](http://localhost:3000) |
+| Auth API    | [http://localhost:8000](http://localhost:8000) |
+| Node API    | [http://localhost:3001](http://localhost:3001) |
+| DB Admin UI | (optional, via pgAdmin)                        |
+
+## Testing Locally
+
+Once services are running, you can test:
+- All login flows (OAuth, email)
+- Referral + invite logic
+- Protected routes via test user accounts
+- Admin dashboard UI (if admin)
+
+**Note:** Use `npm run dev:local` if you want to run services **outside Docker**
+
+---
+
+**Note:** Content merged from `local-dev-setup.md` (deleted) - Jan 07, 2026
+
 ## Next Steps
 
 - Read [Code Organization](code-organization.md) for project structure
 - Check [Contributing Guidelines](contributing.md) before making changes
-- Review [Architecture Overview](../architecture/overview.md) for system design
+- Review [Backend Architecture](../architecture/backend-architecture.md) and [Frontend Architecture](../architecture/frontend-architecture.md) for system design
+- See [Deployment Process](deployment-process.md) for production deployment

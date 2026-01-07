@@ -67,7 +67,7 @@ Frontend (React + Vite) → Backend API (Express) → PostgreSQL Database
 ### Step 1: Navigate to Project Root
 
 ```bash
-cd finity-ai-seo-article-writer
+cd nova-xfinity-ai
 ```
 
 ### Step 2: Install Frontend Dependencies
@@ -803,7 +803,8 @@ Use this checklist to ensure everything is set up correctly:
 
 ### Documentation
 
-- [Architecture Overview](docs/architecture/overview.md)
+- [Backend Architecture](docs/architecture/backend-architecture.md)
+- [Frontend Architecture](docs/architecture/frontend-architecture.md)
 - [API Documentation](docs/architecture/api.md)
 - [Database Schema](docs/architecture/database.md)
 - [Development Setup](docs/development/setup.md)
@@ -811,7 +812,7 @@ Use this checklist to ensure everything is set up correctly:
 
 ### Support
 
-- Check [GitHub Issues](https://github.com/yourusername/finity-ai-seo-article-writer/issues)
+- Check [GitHub Issues](https://github.com/yourusername/nova-xfinity-ai/issues)
 - Review [Troubleshooting](#troubleshooting) section above
 - Check application logs for detailed error messages
 
@@ -858,7 +859,7 @@ After completing the setup:
 
 3. **Development:**
    - Read [Code Organization](docs/development/code-organization.md)
-   - Review [Architecture](docs/architecture/overview.md)
+   - Review [Backend Architecture](docs/architecture/backend-architecture.md) and [Frontend Architecture](docs/architecture/frontend-architecture.md)
    - Check [Contributing Guidelines](docs/development/contributing.md)
 
 4. **Production:**

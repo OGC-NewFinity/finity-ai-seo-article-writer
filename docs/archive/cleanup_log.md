@@ -63,11 +63,11 @@ This document logs all changes made during the comprehensive project cleanup and
 - `ADMIN_SETUP_COMPLETE.md` → `docs/ADMIN_SETUP_COMPLETE.md`
 - `BACKEND_NETWORK_TEST_RESULTS.md` → `docs/BACKEND_NETWORK_TEST_RESULTS.md`
 - `EMAIL_SETUP_COMPLETE.md` → `docs/EMAIL_SETUP_COMPLETE.md`
-- `ENV_SETUP_COMPLETE.md` → `docs/ENV_SETUP_COMPLETE.md`
+- `ENV_SETUP_COMPLETE.md` → `docs/archive/env-setup.md`
 - `FRONTEND_AUTH_TEST_RESULTS.md` → `docs/FRONTEND_AUTH_TEST_RESULTS.md`
 - `LOGIN_DIAGNOSIS_FIXES.md` → `docs/LOGIN_DIAGNOSIS_FIXES.md`
 - `NETWORK_DIAGNOSIS.md` → `docs/NETWORK_DIAGNOSIS.md`
-- `ROLE_BASED_ACCESS_CONTROL.md` → `docs/ROLE_BASED_ACCESS_CONTROL.md`
+- `ROLE_BASED_ACCESS_CONTROL.md` → `docs/architecture/rbac.md`
 - `SETUP_GUIDE.md` → `docs/SETUP_GUIDE.md`
 - `diagnostics/16-login-network-fix-results.md` → `docs/16-login-network-fix-results.md`
 - `backend-auth/README_ADMIN_SETUP.md` → `docs/README_ADMIN_SETUP.md`

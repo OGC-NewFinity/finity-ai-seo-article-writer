@@ -195,7 +195,7 @@ SMTP_PORT=587
 SMTP_USER=your-email@gmail.com
 SMTP_PASSWORD=your-app-password
 SMTP_FROM_EMAIL=noreply@finity.com
-SMTP_FROM_NAME=Finity Auth
+SMTP_FROM_NAME=Nova-XFinity Auth
 ```
 
 ### Supported Email Services

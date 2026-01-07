@@ -22,20 +22,22 @@
 | **Official Documentation (A)** | | |
 | `docs/README.md` | (A) Official | Documentation index and navigation |
 | `docs/SETUP_GUIDE.md` | (A) Official | Comprehensive setup instructions |
-| `docs/ENV_SETUP_COMPLETE.md` | (A) Official | Environment variables setup reference |
-| `docs/USAGE_TRACKING_QUOTA_IMPLEMENTATION.md` | (A) Official | Feature documentation for quota system |
-| `docs/ROLE_BASED_ACCESS_CONTROL.md` | (A) Official | RBAC implementation documentation |
+| `docs/archive/env-setup.md` | (B) Archive | Environment variables setup reference (archived) |
+| `docs/architecture/quota-limits.md` | (A) Official | Feature documentation for quota system |
+| `docs/architecture/rbac.md` | (A) Official | RBAC implementation documentation |
 | **Architecture Documentation** | | |
-| `docs/architecture/overview.md` | (A) Official | System architecture overview |
-| `docs/architecture/backend.md` | (A) Official | Backend architecture details |
-| `docs/architecture/database.md` | (A) Official | Database design and schema |
-| `docs/architecture/frontend.md` | (A) Official | Frontend architecture and structure |
+| `docs/architecture/backend-architecture.md` | (A) Official | Backend system architecture |
+| `docs/architecture/frontend-architecture.md` | (A) Official | Frontend system architecture |
+| `docs/architecture/backend-architecture.md` | (A) Official | Backend system architecture |
+| `docs/architecture/database-schema.md` | (A) Official | Database schema and design |
+| `docs/architecture/frontend-architecture.md` | (A) Official | Frontend system architecture |
 | `docs/architecture/api.md` | (A) Official | API endpoints and specifications |
 | `docs/architecture/provider-integration.md` | (A) Official | AI provider integration patterns |
 | **Development Documentation** | | |
 | `docs/development/setup.md` | (A) Official | Development environment setup |
 | `docs/development/code-organization.md` | (A) Official | Project structure and coding guidelines |
 | `docs/development/contributing.md` | (A) Official | Contribution guidelines |
+| `docs/development/docs-overview.md` | (A) Official | This file |
 | **Design Documentation** | | |
 | `docs/design/design-system.md` | (A) Official | Design system, colors, typography |
 | `docs/design/components.md` | (A) Official | Component library and patterns |
@@ -54,7 +56,7 @@
 | `docs/archive/auth_ui_fix_log.md` | (B) Archive | UI fixes (content merged into OAuth Master Log) |
 | `docs/archive/auth_setup_output.md` | (B) Archive | Temporary setup output from installation |
 | `docs/archive/cleanup_log.md` | (B) Archive | Historical project cleanup log |
-| `docs/archive/README_ADMIN_SETUP.md` | (B) Archive | Duplicate admin setup (superseded by ROLE_BASED_ACCESS_CONTROL.md) |
+| `docs/archive/README_ADMIN_SETUP.md` | (B) Archive | Duplicate admin setup (superseded by rbac.md) |
 | `docs/archive/16-login-network-fix-results.md` | (B) Archive | Specific network fix results |
 | `docs/archive/ADMIN_SETUP_COMPLETE.md` | (B) Archive | Temporary setup completion status |
 | `docs/archive/EMAIL_SETUP_COMPLETE.md` | (B) Archive | Temporary setup completion status |
@@ -68,28 +70,28 @@
 ## Directory Structure
 
 ```
-finity-ai-seo-article-writer/
+nova-xfinity-ai/
 ├── README.md                                    # (C) Main project readme
 ├── docs/
 │   ├── README.md                                # (A) Documentation index
 │   ├── SETUP_GUIDE.md                           # (A) Official setup guide
-│   ├── ENV_SETUP_COMPLETE.md                    # (A) Environment setup reference
-│   ├── USAGE_TRACKING_QUOTA_IMPLEMENTATION.md   # (A) Feature documentation
-│   ├── ROLE_BASED_ACCESS_CONTROL.md             # (A) RBAC documentation
-│   ├── DOCUMENTATION_STRUCTURE_OVERVIEW.md      # (A) This file
 │   │
 │   ├── architecture/                            # (A) Official architecture docs
-│   │   ├── overview.md
-│   │   ├── backend.md
-│   │   ├── database.md
-│   │   ├── frontend.md
+│   │   ├── backend-architecture.md
+│   │   ├── frontend-architecture.md
+│   │   ├── backend-architecture.md
+│   │   ├── database-schema.md
+│   │   ├── frontend-architecture.md
 │   │   ├── api.md
-│   │   └── provider-integration.md
+│   │   ├── provider-integration.md
+│   │   ├── rbac.md
+│   │   └── quota-limits.md
 │   │
 │   ├── development/                             # (A) Official development docs
 │   │   ├── setup.md
 │   │   ├── code-organization.md
-│   │   └── contributing.md
+│   │   ├── contributing.md
+│   │   └── docs-overview.md
 │   │
 │   ├── design/                                  # (A) Official design docs
 │   │   ├── design-system.md
@@ -112,6 +114,7 @@ finity-ai-seo-article-writer/
 │       ├── 16-login-network-fix-results.md
 │       ├── ADMIN_SETUP_COMPLETE.md
 │       ├── EMAIL_SETUP_COMPLETE.md
+│       ├── env-setup.md
 │       ├── BACKEND_NETWORK_TEST_RESULTS.md
 │       ├── NETWORK_DIAGNOSIS.md
 │       ├── 17-single-command-dev-setup.md
@@ -183,16 +186,16 @@ finity-ai-seo-article-writer/
 ### For New Developers
 1. Start with `README.md` (root) for project overview
 2. Read `docs/SETUP_GUIDE.md` for installation
-3. Review `docs/architecture/overview.md` for system understanding
+3. Review `docs/architecture/backend-architecture.md` and `docs/architecture/frontend-architecture.md` for system understanding
 4. Check `docs/development/` for coding guidelines
 
 ### For Troubleshooting
 1. Check `docs/troubleshooting/OAUTH_FIXES_MASTER_LOG.md` for auth issues
-2. Review `docs/ENV_SETUP_COMPLETE.md` for environment setup issues
+2. Review `docs/archive/env-setup.md` for environment setup issues
 3. Search archived files in `docs/archive/` for specific historical fixes
 
 ### For Architecture & Design
-1. Start with `docs/architecture/overview.md`
+1. Start with `docs/architecture/backend-architecture.md` and `docs/architecture/frontend-architecture.md`
 2. Review specific architecture files as needed
 3. Check `docs/design/` for UI/UX guidelines
 
@@ -223,7 +226,7 @@ finity-ai-seo-article-writer/
 - **Total Markdown Files:** 36
 - **Official Documentation (A):** 23 files
 - **Reference Files (C):** 4 files
-- **Archived Files (B):** 11 files
+- **Archived Files (B):** 12 files
 
 ---
 
