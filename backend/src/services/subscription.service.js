@@ -1,10 +1,12 @@
 /**
  * Subscription Service
  * Handles subscription management, plan checking, and upgrades/downgrades
+ * Uses unified plan structure for consistent tier management
  */
 
 import prisma from '../config/database.js';
 import { PLAN_FEATURES } from '../utils/featureFlags.js';
+import { isValidTier, getPlanByTier } from '../utils/unifiedPlans.js';
 
 /**
  * Get user subscription
@@ -46,6 +48,7 @@ export const getUserSubscription = async (userId) => {
 
 /**
  * Update subscription plan
+ * Uses unified plan structure to validate tier and sync status
  */
 export const updateSubscriptionPlan = async (
   userId, 
@@ -56,24 +59,47 @@ export const updateSubscriptionPlan = async (
   paypalPayerId = null,
   paypalPlanId = null
 ) => {
+  // Validate tier using unified plan structure
+  const tier = plan?.toUpperCase() || 'FREE';
+  if (!isValidTier(tier)) {
+    throw new Error(`Invalid plan tier: ${tier}. Must be FREE, PRO, or ENTERPRISE.`);
+  }
+
   const subscription = await getUserSubscription(userId);
   const now = new Date();
   const periodEnd = new Date(now);
   periodEnd.setMonth(periodEnd.getMonth() + 1);
 
+  // Prepare update data with unified plan structure
+  const updateData = {
+    plan: tier, // Use validated tier
+    status: 'ACTIVE',
+    currentPeriodStart: now,
+    currentPeriodEnd: periodEnd,
+    cancelAtPeriodEnd: false // Reset cancellation flag on upgrade
+  };
+
+  // Only update payment provider IDs if provided
+  // This allows switching between providers or updating provider info
+  if (stripeSubscriptionId) {
+    updateData.stripeSubscriptionId = stripeSubscriptionId;
+  }
+  if (stripeCustomerId) {
+    updateData.stripeCustomerId = stripeCustomerId;
+  }
+  if (paypalSubscriptionId) {
+    updateData.paypalSubscriptionId = paypalSubscriptionId;
+  }
+  if (paypalPayerId) {
+    updateData.paypalPayerId = paypalPayerId;
+  }
+  if (paypalPlanId) {
+    updateData.paypalPlanId = paypalPlanId;
+  }
+
   return await prisma.subscription.update({
     where: { id: subscription.id },
-    data: {
-      plan,
-      status: 'ACTIVE',
-      currentPeriodStart: now,
-      currentPeriodEnd: periodEnd,
-      ...(stripeSubscriptionId && { stripeSubscriptionId }),
-      ...(stripeCustomerId && { stripeCustomerId }),
-      ...(paypalSubscriptionId && { paypalSubscriptionId }),
-      ...(paypalPayerId && { paypalPayerId }),
-      ...(paypalPlanId && { paypalPlanId })
-    }
+    data: updateData
   });
 };
 
@@ -128,13 +154,30 @@ export const getSubscriptionLimits = async (userId) => {
 
 /**
  * Get subscription status with details
+ * Uses unified plan structure to return consistent tier information
  */
 export const getSubscriptionStatus = async (userId) => {
   const subscription = await getUserSubscription(userId);
-  const limits = PLAN_FEATURES[subscription.plan] || PLAN_FEATURES.FREE;
+  
+  // Validate and normalize tier using unified plan structure
+  const tier = subscription.plan?.toUpperCase() || 'FREE';
+  const validatedTier = isValidTier(tier) ? tier : 'FREE';
+  
+  // Get plan limits using unified plan structure
+  const planConfig = getPlanByTier(validatedTier);
+  const limits = planConfig?.quotas || PLAN_FEATURES.FREE;
+
+  // Determine payment provider (both can exist, prioritize active one)
+  let paymentProvider = null;
+  if (subscription.paypalSubscriptionId) {
+    paymentProvider = 'paypal';
+  } else if (subscription.stripeSubscriptionId) {
+    paymentProvider = 'stripe';
+  }
 
   return {
-    plan: subscription.plan,
+    plan: validatedTier, // Return validated tier
+    tier: validatedTier, // Also include tier field for consistency
     status: subscription.status,
     currentPeriodStart: subscription.currentPeriodStart,
     currentPeriodEnd: subscription.currentPeriodEnd,
@@ -143,8 +186,11 @@ export const getSubscriptionStatus = async (userId) => {
     stripeSubscriptionId: subscription.stripeSubscriptionId,
     paypalSubscriptionId: subscription.paypalSubscriptionId,
     paypalPayerId: subscription.paypalPayerId,
-    paymentProvider: subscription.paypalSubscriptionId ? 'paypal' : (subscription.stripeSubscriptionId ? 'stripe' : null),
+    paypalPlanId: subscription.paypalPlanId,
+    paymentProvider, // Unified payment provider field
     limits,
-    isActive: subscription.status === 'ACTIVE' && new Date() < subscription.currentPeriodEnd
+    isActive: subscription.status === 'ACTIVE' && new Date() < subscription.currentPeriodEnd,
+    // Include unified plan metadata
+    metadata: planConfig?.metadata || null
   };
 };

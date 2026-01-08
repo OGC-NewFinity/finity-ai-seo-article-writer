@@ -5,6 +5,7 @@
 
 import prisma from '../../config/database.js';
 import { updateSubscriptionPlan } from '../subscription.service.js';
+import { extractTierFromMetadata, extractTierFromStripePriceId, isValidTier } from '../../utils/unifiedPlans.js';
 
 /**
  * Handle Stripe webhook event
@@ -52,12 +53,12 @@ export async function handleStripeWebhookEvent(event) {
 /**
  * Handle checkout session completed event
  * This is triggered when a user successfully completes checkout
+ * Uses unified plan structure to extract tier from metadata
  */
 async function handleCheckoutSessionCompleted(session) {
   console.log(`[Stripe Webhook] Checkout session completed: ${session.id}`);
 
   const userId = session.metadata?.userId;
-  const plan = session.metadata?.plan;
   const customerId = session.customer;
   const subscriptionId = session.subscription;
 
@@ -66,22 +67,28 @@ async function handleCheckoutSessionCompleted(session) {
     return { processed: false, reason: 'No userId in metadata' };
   }
 
-  if (!plan) {
-    console.warn('[Stripe Webhook] No plan in checkout session metadata');
-    return { processed: false, reason: 'No plan in metadata' };
+  // Extract tier from standardized metadata using unified plan structure
+  const tier = extractTierFromMetadata(session.metadata);
+  
+  if (!isValidTier(tier)) {
+    console.warn('[Stripe Webhook] Invalid tier in metadata:', tier);
+    return { processed: false, reason: 'Invalid tier in metadata' };
   }
 
   // Update subscription with Stripe customer and subscription IDs
   try {
     await updateSubscriptionPlan(
       userId,
-      plan,
+      tier,
       subscriptionId,
-      customerId
+      customerId,
+      null, // paypalSubscriptionId
+      null, // paypalPayerId
+      null  // paypalPlanId
     );
 
-    console.log(`[Stripe Webhook] Subscription activated for user ${userId}, plan: ${plan}`);
-    return { processed: true, action: 'subscription_activated' };
+    console.log(`[Stripe Webhook] Subscription activated for user ${userId}, tier: ${tier}`);
+    return { processed: true, action: 'subscription_activated', tier };
   } catch (error) {
     console.error('[Stripe Webhook] Error updating subscription:', error);
     throw error;
@@ -122,6 +129,7 @@ async function handleSubscriptionCreated(subscription) {
 
 /**
  * Handle subscription updated event
+ * Uses unified plan structure to extract tier from price ID
  */
 async function handleSubscriptionUpdated(subscription) {
   console.log(`[Stripe Webhook] Subscription updated: ${subscription.id}`);
@@ -142,12 +150,13 @@ async function handleSubscriptionUpdated(subscription) {
     cancelAtPeriodEnd: subscription.cancel_at_period_end || false
   };
 
-  // Update plan if price changed
+  // Update tier if price changed using unified plan structure
   if (subscription.items?.data?.[0]?.price?.id) {
     const priceId = subscription.items.data[0].price.id;
-    const plan = getPlanFromPriceId(priceId);
-    if (plan) {
-      updateData.plan = plan;
+    const tier = extractTierFromStripePriceId(priceId);
+    if (tier && isValidTier(tier)) {
+      updateData.plan = tier;
+      console.log(`[Stripe Webhook] Plan updated to ${tier} for subscription ${subscription.id}`);
     }
   }
 
@@ -272,13 +281,9 @@ function mapStripeStatus(stripeStatus) {
 }
 
 /**
- * Get plan from Stripe price ID
+ * Get plan from Stripe price ID (deprecated - use extractTierFromStripePriceId from unifiedPlans)
+ * @deprecated Use extractTierFromStripePriceId from unifiedPlans.js instead
  */
 function getPlanFromPriceId(priceId) {
-  const priceIdPro = process.env.STRIPE_PRICE_ID_PRO;
-  const priceIdEnterprise = process.env.STRIPE_PRICE_ID_ENTERPRISE;
-
-  if (priceId === priceIdPro) return 'PRO';
-  if (priceId === priceIdEnterprise) return 'ENTERPRISE';
-  return null;
+  return extractTierFromStripePriceId(priceId);
 }

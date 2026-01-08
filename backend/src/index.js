@@ -42,6 +42,9 @@ app.get('/health', (req, res) => {
 import subscriptionRoutes from './routes/subscription.routes.js';
 import webhooksRoutes from './routes/webhooks.routes.js';
 import tokenUsageRoutes from './routes/tokenUsage.routes.js';
+import notificationsRoutes from './routes/notifications.routes.js';
+import feedbackRoutes from './routes/feedback.routes.js';
+import statsRoutes from './routes/stats.routes.js';
 import { articleRoutes } from './features/article/index.js';
 import { researchRoutes } from './features/research/index.js';
 import { mediaRoutes } from './features/media/index.js';
@@ -49,6 +52,9 @@ import { mediaRoutes } from './features/media/index.js';
 app.use('/api/subscription', subscriptionRoutes);
 app.use('/api/webhooks', webhooksRoutes);
 app.use('/api/token-usage', tokenUsageRoutes);
+app.use('/api/notifications', notificationsRoutes);
+app.use('/api/feedback', feedbackRoutes);
+app.use('/api/stats', statsRoutes);
 app.use('/api/articles', articleRoutes);
 app.use('/api/media', mediaRoutes);
 app.use('/api/research', researchRoutes);
@@ -63,6 +69,23 @@ app.use(errorHandler);
 app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
+
+// Initialize cron jobs
+if (process.env.ENABLE_CRON_JOBS !== 'false') {
+  try {
+    const { scheduleUsageReset } = await import('./jobs/usageReset.job.js');
+    const { scheduleQuotaCheck } = await import('./jobs/quotaCheck.job.js');
+    
+    scheduleUsageReset();
+    scheduleQuotaCheck();
+    
+    console.log('✅ Cron jobs initialized');
+  } catch (error) {
+    console.error('❌ Error initializing cron jobs:', error);
+  }
+} else {
+  console.log('⏭️  Cron jobs disabled (ENABLE_CRON_JOBS=false)');
+}
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);

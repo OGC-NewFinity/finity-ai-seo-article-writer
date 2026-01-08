@@ -2,10 +2,11 @@
 import React, { useState } from 'react';
 import htm from 'htm';
 import { generateCTA } from '../../services/geminiArticleService.js';
+import FeedbackWidget from '../../components/common/FeedbackWidget.js';
 
 const html = htm.bind(React.createElement);
 
-const CTABlock = ({ topic, keywords, focusKeyphrase, onCTAGenerated, existingCTA }) => {
+const CTABlock = ({ topic, keywords, focusKeyphrase, onCTAGenerated, existingCTA, provider, model }) => {
   const [loading, setLoading] = useState(false);
   const [content, setContent] = useState(existingCTA || '');
 
@@ -43,25 +44,40 @@ const CTABlock = ({ topic, keywords, focusKeyphrase, onCTAGenerated, existingCTA
                 </button>
               </div>
               <div className="prose prose-invert prose-lg max-w-none text-slate-200 editor-html-content" dangerouslySetInnerHTML=${{ __html: content }} />
-              <div className="mt-12 pt-8 border-t border-slate-800 flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                   <div className="w-10 h-10 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
-                      <i className="fa-solid fa-bolt text-xs text-white"></i>
-                   </div>
-                   <div className="flex flex-col">
-                      <span className="text-xs font-black text-white uppercase tracking-tight">Finity AI Optimized</span>
-                      <span className="text-[10px] font-bold text-slate-500">Branded Engagement Sync Active</span>
-                   </div>
+              <div className="mt-12 pt-8 border-t border-slate-800 space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                     <div className="w-10 h-10 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                        <i className="fa-solid fa-bolt text-xs text-white"></i>
+                     </div>
+                     <div className="flex flex-col">
+                        <span className="text-xs font-black text-white uppercase tracking-tight">Finity AI Optimized</span>
+                        <span className="text-[10px] font-bold text-slate-500">Branded Engagement Sync Active</span>
+                     </div>
+                  </div>
+                  <button 
+                    onClick=${() => {
+                      navigator.clipboard.writeText(content);
+                      alert("CTA HTML copied to clipboard.");
+                    }}
+                    className="px-8 py-3.5 bg-white text-slate-900 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-50 transition-all active:scale-95 shadow-xl"
+                  >
+                    <i className="fa-solid fa-copy mr-2"></i> Copy CTA HTML
+                  </button>
                 </div>
-                <button 
-                  onClick=${() => {
-                    navigator.clipboard.writeText(content);
-                    alert("CTA HTML copied to clipboard.");
-                  }}
-                  className="px-8 py-3.5 bg-white text-slate-900 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-50 transition-all active:scale-95 shadow-xl"
-                >
-                  <i className="fa-solid fa-copy mr-2"></i> Copy CTA HTML
-                </button>
+                ${provider && html`
+                  <div className="pt-6 border-t border-slate-800">
+                    <${FeedbackWidget}
+                      contentType="ARTICLE_CTA"
+                      provider=${provider}
+                      model=${model}
+                      metadata=${{ topic, keywords, focusKeyphrase }}
+                      variant="stars"
+                      showComment=${true}
+                      className="bg-slate-800/50 p-4 rounded-xl"
+                    />
+                  </div>
+                `}
               </div>
             </div>
           ` : html`

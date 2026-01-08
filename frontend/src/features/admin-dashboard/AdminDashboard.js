@@ -3,6 +3,26 @@ import htm from 'htm';
 import Cookies from 'js-cookie';
 import { useAuth } from '@/hooks';
 import api from '../../services/api.js';
+import {
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  defs,
+  linearGradient,
+  stop
+} from 'recharts';
 
 const html = htm.bind(React.createElement);
 
@@ -16,10 +36,17 @@ const AdminDashboard = () => {
   const [subscriptions, setSubscriptions] = useState(null);
   const [quotaUsage, setQuotaUsage] = useState(null);
   const [payments, setPayments] = useState([]);
+  
+  // Stats data for visualizations
+  const [usageStats, setUsageStats] = useState([]);
+  const [planStats, setPlanStats] = useState([]);
+  const [failureStats, setFailureStats] = useState([]);
+  const [statsLoading, setStatsLoading] = useState(false);
 
   useEffect(() => {
     if (user?.role === 'admin') {
       loadAdminData();
+      loadStatsData();
     }
   }, [user]);
 
@@ -103,6 +130,65 @@ const AdminDashboard = () => {
       setError('Failed to load admin data. Some endpoints may not be available yet.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadStatsData = async () => {
+    setStatsLoading(true);
+    try {
+      // Stats endpoints are on the Node.js backend (port 3001)
+      // The Node.js backend handles /api/stats routes
+      const nodeBackendUrl = import.meta.env.VITE_NODE_API_URL || 'http://localhost:3001';
+      
+      // Fetch stats from backend
+      const [usageRes, plansRes, failuresRes] = await Promise.allSettled([
+        fetch(`${nodeBackendUrl}/api/stats/usage`, {
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(Cookies.get('access_token') && { 'Authorization': `Bearer ${Cookies.get('access_token')}` })
+          }
+        }).then(res => res.json()),
+        fetch(`${nodeBackendUrl}/api/stats/plans`, {
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(Cookies.get('access_token') && { 'Authorization': `Bearer ${Cookies.get('access_token')}` })
+          }
+        }).then(res => res.json()),
+        fetch(`${nodeBackendUrl}/api/stats/failures?days=30&period=daily`, {
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(Cookies.get('access_token') && { 'Authorization': `Bearer ${Cookies.get('access_token')}` })
+          }
+        }).then(res => res.json())
+      ]);
+
+      // Process usage stats
+      if (usageRes.status === 'fulfilled' && usageRes.value?.success) {
+        setUsageStats(usageRes.value.data || []);
+      } else {
+        console.warn('Failed to load usage stats:', usageRes.reason || usageRes.value);
+      }
+
+      // Process plan stats
+      if (plansRes.status === 'fulfilled' && plansRes.value?.success) {
+        setPlanStats(plansRes.value.data?.plans || []);
+      } else {
+        console.warn('Failed to load plan stats:', plansRes.reason || plansRes.value);
+      }
+
+      // Process failure stats
+      if (failuresRes.status === 'fulfilled' && failuresRes.value?.success) {
+        setFailureStats(failuresRes.value.data?.failures || []);
+      } else {
+        console.warn('Failed to load failure stats:', failuresRes.reason || failuresRes.value);
+      }
+    } catch (err) {
+      console.error('Error loading stats data:', err);
+    } finally {
+      setStatsLoading(false);
     }
   };
 
@@ -326,6 +412,135 @@ const AdminDashboard = () => {
           <div className="text-center py-8 text-gray-500">
             <i className="fa-solid fa-credit-card text-4xl mb-3 opacity-50"></i>
             <p className="font-medium">No payments found or endpoint not available</p>
+          </div>
+        `}
+      </div>
+
+      <!-- Statistics Visualizations -->
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Quota Usage per User -->
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <h3 className="text-xl font-black text-slate-800 mb-6 flex items-center">
+            <i className="fa-solid fa-chart-bar text-blue-600 mr-3"></i>
+            Quota Usage per User
+          </h3>
+          ${statsLoading ? html`
+            <div className="flex items-center justify-center h-64">
+              <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ` : usageStats.length > 0 ? React.createElement(ResponsiveContainer, { width: '100%', height: 300 },
+            React.createElement(BarChart, { data: usageStats.slice(0, 10) },
+              React.createElement(CartesianGrid, { strokeDasharray: '3 3' }),
+              React.createElement(XAxis, { 
+                dataKey: 'email',
+                angle: -45,
+                textAnchor: 'end',
+                height: 100,
+                interval: 0,
+                tick: { fontSize: 10 }
+              }),
+              React.createElement(YAxis, { label: { value: 'Tokens Used', angle: -90, position: 'insideLeft' } }),
+              React.createElement(Tooltip, { 
+                formatter: (value) => [value.toLocaleString(), 'Tokens Used'],
+                labelStyle: { color: '#1e293b' }
+              }),
+              React.createElement(Bar, { 
+                dataKey: 'tokensUsed',
+                fill: '#3b82f6',
+                radius: [8, 8, 0, 0]
+              })
+            )
+          ) : html`
+            <div className="text-center py-12 text-gray-500">
+              <i className="fa-solid fa-chart-bar text-4xl mb-3 opacity-50"></i>
+              <p className="font-medium">No usage data available</p>
+            </div>
+          `}
+        </div>
+
+        <!-- Plan Adoption Rates -->
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <h3 className="text-xl font-black text-slate-800 mb-6 flex items-center">
+            <i className="fa-solid fa-chart-pie text-purple-600 mr-3"></i>
+            Plan Adoption Rates
+          </h3>
+          ${statsLoading ? html`
+            <div className="flex items-center justify-center h-64">
+              <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ` : planStats.length > 0 ? React.createElement(ResponsiveContainer, { width: '100%', height: 300 },
+            React.createElement(PieChart, null,
+              React.createElement(Pie,
+                {
+                  data: planStats,
+                  cx: '50%',
+                  cy: '50%',
+                  labelLine: false,
+                  label: ({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`,
+                  outerRadius: 100,
+                  fill: '#8884d8',
+                  dataKey: 'value'
+                },
+                planStats.map((entry, index) => 
+                  React.createElement(Cell, { key: `cell-${index}`, fill: entry.color || '#94a3b8' })
+                )
+              ),
+              React.createElement(Tooltip, { 
+                formatter: (value) => [value, 'Users'],
+                labelStyle: { color: '#1e293b' }
+              }),
+              React.createElement(Legend)
+            )
+          ) : html`
+            <div className="text-center py-12 text-gray-500">
+              <i className="fa-solid fa-chart-pie text-4xl mb-3 opacity-50"></i>
+              <p className="font-medium">No plan data available</p>
+            </div>
+          `}
+        </div>
+      </div>
+
+      <!-- Failed Generation Attempts -->
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <h3 className="text-xl font-black text-slate-800 mb-6 flex items-center">
+          <i className="fa-solid fa-chart-line text-red-600 mr-3"></i>
+          Failed Generation Attempts
+        </h3>
+        ${statsLoading ? html`
+          <div className="flex items-center justify-center h-64">
+            <div className="w-8 h-8 border-4 border-red-500 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        ` : failureStats.length > 0 ? React.createElement(ResponsiveContainer, { width: '100%', height: 350 },
+          React.createElement(AreaChart, { 
+            data: failureStats,
+            margin: { top: 10, right: 30, left: 0, bottom: 0 }
+          },
+            React.createElement(CartesianGrid, { strokeDasharray: '3 3' }),
+            React.createElement(XAxis, { 
+              dataKey: 'date',
+              tick: { fontSize: 10 },
+              angle: -45,
+              textAnchor: 'end',
+              height: 80
+            }),
+            React.createElement(YAxis, { label: { value: 'Failures', angle: -90, position: 'insideLeft' } }),
+            React.createElement(Tooltip, { 
+              formatter: (value) => [value, 'Failed Attempts'],
+              labelStyle: { color: '#1e293b' },
+              labelFormatter: (label) => `Date: ${new Date(label).toLocaleDateString()}`
+            }),
+            React.createElement(Area, { 
+              type: 'monotone',
+              dataKey: 'failures',
+              stroke: '#ef4444',
+              fill: '#ef4444',
+              fillOpacity: 0.3
+            })
+          )
+        ) : html`
+          <div className="text-center py-12 text-gray-500">
+            <i className="fa-solid fa-chart-line text-4xl mb-3 opacity-50"></i>
+            <p className="font-medium">No failure data available</p>
           </div>
         `}
       </div>

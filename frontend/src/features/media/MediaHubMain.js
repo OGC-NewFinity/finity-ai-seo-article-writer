@@ -2,6 +2,7 @@
 import React, { useState, useRef } from 'react';
 import htm from 'htm';
 import { generateImage, editImage, generateVideo, generateAudio, decodeBase64, decodeAudioData } from '../../services/geminiMediaService.js';
+import { transcribeAudio, summarizeVideo } from '../../services/geminiResearchService.js';
 import MediaHubHeader from './MediaHubHeader.js';
 import MediaHubParameters from './MediaHubParameters.js';
 import MediaOutput from './MediaOutput.js';
@@ -149,6 +150,122 @@ const MediaHubMain = () => {
     }
   };
 
+  /**
+   * Example: Transcribe audio file
+   * Demonstrates usage of transcribeAudio function from geminiResearchService
+   * 
+   * @example
+   * // Using File object
+   * const transcription = await transcribeAudio(audioFile);
+   * 
+   * @example
+   * // Using base64 string with options
+   * const transcription = await transcribeAudio(base64Audio, {
+   *   language: "en-US",
+   *   model: "gemini"
+   * });
+   */
+  const handleTranscribeAudio = async (audioFile) => {
+    if (!audioFile) {
+      alert('Please select an audio file to transcribe');
+      return;
+    }
+
+    setLoading(true);
+    setStatusMessage('Transcribing audio...');
+    
+    try {
+      // Example: Basic transcription
+      // const result = await transcribeAudio(audioFile);
+      
+      // Example: Transcription with options
+      const result = await transcribeAudio(audioFile, {
+        language: 'en-US', // Auto-detected if not provided
+        model: 'gemini'
+      });
+      
+      // Result contains: { text, language, confidence, duration, segments }
+      console.log('Transcription result:', result);
+      alert(`Transcription complete!\n\nText: ${result.text?.substring(0, 200)}...`);
+      
+      return result;
+    } catch (error) {
+      console.error('Transcription error:', error);
+      alert(`Transcription failed: ${error.message}`);
+      throw error;
+    } finally {
+      setLoading(false);
+      setStatusMessage('');
+    }
+  };
+
+  /**
+   * Example: Summarize video file
+   * Demonstrates usage of summarizeVideo function from geminiResearchService
+   * 
+   * @example
+   * // Using File object
+   * const summary = await summarizeVideo(videoFile);
+   * 
+   * @example
+   * // Using base64 string with options
+   * const summary = await summarizeVideo(base64Video, {
+   *   summaryType: "full",
+   *   includeKeyframes: true,
+   *   includeTranscript: true,
+   *   language: "en"
+   * });
+   */
+  const handleSummarizeVideo = async (videoFile) => {
+    if (!videoFile) {
+      alert('Please select a video file to summarize');
+      return;
+    }
+
+    setLoading(true);
+    setStatusMessage('Analyzing video content...');
+    
+    const messages = [
+      'Extracting video frames...',
+      'Analyzing visual content...',
+      'Generating keyframe timestamps...',
+      'Creating summary...'
+    ];
+    
+    let msgIndex = 0;
+    const interval = setInterval(() => {
+      setStatusMessage(messages[msgIndex % messages.length]);
+      msgIndex++;
+    }, 5000);
+
+    try {
+      // Example: Basic video summarization
+      // const result = await summarizeVideo(videoFile);
+      
+      // Example: Video summarization with options
+      const result = await summarizeVideo(videoFile, {
+        summaryType: 'detailed', // 'brief' | 'detailed' | 'full'
+        includeKeyframes: true,
+        includeTranscript: false,
+        language: 'en'
+      });
+      
+      // Result contains: { summary, keyframes, topics, duration, insights, transcript }
+      console.log('Video summary result:', result);
+      alert(`Video summary complete!\n\nSummary: ${result.summary?.substring(0, 200)}...\n\nKeyframes: ${result.keyframes?.length || 0}`);
+      
+      return result;
+    } catch (error) {
+      console.error('Video summarization error:', error);
+      alert(`Video summarization failed: ${error.message}`);
+      throw error;
+    } finally {
+      clearInterval(interval);
+      setLoading(false);
+      setStatusMessage('');
+    }
+  };
+
   const handlePresetClick = (presetPrompt) => {
     if (mode === 'video') {
       handleVideoGenerate(presetPrompt);
@@ -206,6 +323,13 @@ const MediaHubMain = () => {
             resultImage=${resultImage}
             resultVideo=${resultVideo}
             resultAudio=${resultAudio}
+            provider="GEMINI"
+            model="gemini-3-pro-preview"
+            prompt=${prompt}
+            style=${style}
+            aspect=${aspect}
+            duration=${duration}
+            resolution=${resolution}
           />
         </div>
       </div>

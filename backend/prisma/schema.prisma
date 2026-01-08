@@ -29,6 +29,8 @@ model User {
   usage         Usage[]
   tokenUsages   TokenUsage[]
   platformApiKey PlatformApiKey?
+  notifications Notification[]
+  feedbacks     Feedback[]
   
   @@map("users")
 }
@@ -266,4 +268,66 @@ model PlatformApiKey {
   @@index([userId])
   @@index([isActive])
   @@map("platform_api_keys")
+}
+
+model Notification {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  type        NotificationType
+  title       String
+  message     String
+  metadata    Json?    // Additional data (feature, threshold, etc.)
+  read        Boolean  @default(false)
+  readAt      DateTime? @map("read_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([read])
+  @@index([createdAt])
+  @@index([type])
+  @@map("notifications")
+}
+
+enum NotificationType {
+  QUOTA
+  QUOTA_RESET
+  SUBSCRIPTION
+  SYSTEM
+}
+
+model Feedback {
+  id            String      @id @default(uuid())
+  userId        String      @map("user_id")
+  contentType   ContentType
+  provider      Provider
+  model         String?     // Specific model used (e.g., "gemini-3-pro-preview", "gpt-4o")
+  rating        Int         // 1-5 stars or -1 (thumbs down), 1 (thumbs up)
+  comment       String?     @db.Text
+  contentId     String?     @map("content_id") // Optional reference to article/media ID
+  metadata      Json?       // Additional context (prompt used, generation params, etc.)
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+  
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([contentType])
+  @@index([provider])
+  @@index([rating])
+  @@index([createdAt])
+  @@map("feedback")
+}
+
+enum ContentType {
+  ARTICLE
+  ARTICLE_SECTION
+  ARTICLE_METADATA
+  ARTICLE_CTA
+  IMAGE
+  VIDEO
+  AUDIO
+  RESEARCH
+  SEO_ANALYSIS
 }

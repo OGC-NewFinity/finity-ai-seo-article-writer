@@ -4,6 +4,7 @@
  */
 
 import prisma from '../../config/database.js';
+import { extractTierFromPayPalPlanId, isValidTier, getPlanByTier } from '../../utils/unifiedPlans.js';
 
 /**
  * Handle PayPal webhook event
@@ -185,6 +186,7 @@ async function handleSubscriptionExpired(subscriptionId, resource) {
 
 /**
  * Handle subscription updated event
+ * Uses unified plan structure to extract tier from plan_id
  */
 async function handleSubscriptionUpdated(subscriptionId, resource) {
   console.log(`[PayPal Webhook] Updating subscription: ${subscriptionId}`);
@@ -199,6 +201,15 @@ async function handleSubscriptionUpdated(subscriptionId, resource) {
   }
 
   const updateData = {};
+
+  // Update tier if plan_id changed using unified plan structure
+  if (resource.plan_id) {
+    const tier = extractTierFromPayPalPlanId(resource.plan_id);
+    if (tier && isValidTier(tier) && tier !== subscription.plan) {
+      updateData.plan = tier;
+      console.log(`[PayPal Webhook] Plan updated to ${tier} for subscription ${subscriptionId}`);
+    }
+  }
 
   // Update status if provided
   if (resource.status) {

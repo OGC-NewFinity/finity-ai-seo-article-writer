@@ -1,10 +1,12 @@
 /**
  * Subscription Middleware
  * Validates subscription and feature access before operations
+ * Uses unified plan structure for validation
  */
 
 import { hasFeatureAccess } from '../services/subscription.service.js';
 import { canPerformAction } from '../services/usage.service.js';
+import { isValidTier, getAvailableUpgrades } from '../utils/unifiedPlans.js';
 
 /**
  * Check if user has feature access

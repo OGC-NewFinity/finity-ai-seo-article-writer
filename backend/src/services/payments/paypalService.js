@@ -4,6 +4,7 @@
  */
 
 import axios from 'axios';
+import { getPlanMetadata, getPlanByTier, isValidTier, extractTierFromPayPalPlanId } from '../../utils/unifiedPlans.js';
 
 const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID;
 const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET;
@@ -78,10 +79,15 @@ async function makePayPalRequest(method, endpoint, data = null) {
 /**
  * Create PayPal subscription checkout
  * Returns approval URL for user to complete subscription
+ * Uses unified plan structure with standardized metadata
  */
 export async function createPayPalCheckout(userId, plan) {
   if (!PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET) {
     throw new Error('PayPal credentials not configured');
+  }
+
+  if (!isValidTier(plan)) {
+    throw new Error(`Invalid plan: ${plan}. Must be PRO or ENTERPRISE.`);
   }
 
   const planId = PAYPAL_PLAN_IDS[plan];
@@ -89,8 +95,12 @@ export async function createPayPalCheckout(userId, plan) {
     throw new Error(`PayPal plan ID not configured for plan: ${plan}`);
   }
 
+  // Get unified plan metadata
+  const planConfig = getPlanByTier(plan);
+  const metadata = getPlanMetadata(plan, userId);
+
   try {
-    // Create subscription
+    // Create subscription with standardized metadata
     const subscriptionData = {
       plan_id: planId,
       start_time: new Date(Date.now() + 60000).toISOString(), // Start in 1 minute
@@ -100,6 +110,9 @@ export async function createPayPalCheckout(userId, plan) {
           surname: 'Name'
         }
       },
+      // Add standardized metadata to subscription
+      // Note: PayPal stores metadata differently than Stripe
+      // We pass tier and userId in return_url for extraction during execution
       application_context: {
         brand_name: 'Nova‑XFinity AI',
         locale: 'en-US',
@@ -109,7 +122,8 @@ export async function createPayPalCheckout(userId, plan) {
           payer_selected: 'PAYPAL',
           payee_preferred: 'IMMEDIATE_PAYMENT_REQUIRED'
         },
-        return_url: `${FRONTEND_URL}/subscription?subscription_id={SUB_ID}&token={TOKEN}`,
+        // Include tier and userId in return URL for unified plan structure
+        return_url: `${FRONTEND_URL}/subscription?subscription_id={SUB_ID}&token={TOKEN}&tier=${plan}&userId=${userId}`,
         cancel_url: `${FRONTEND_URL}/subscription?canceled=true`
       }
     };
@@ -125,7 +139,9 @@ export async function createPayPalCheckout(userId, plan) {
     return {
       subscriptionId: subscription.id,
       approvalUrl: approvalLink.href,
-      status: subscription.status
+      status: subscription.status,
+      plan: plan, // Include plan for reference
+      metadata: metadata // Return metadata for frontend reference if needed
     };
   } catch (error) {
     console.error('PayPal checkout creation error:', error.response?.data || error.message);
@@ -137,6 +153,7 @@ export async function createPayPalCheckout(userId, plan) {
  * Execute approved PayPal subscription
  * Called after user approves subscription on PayPal
  * Note: PayPal subscriptions are automatically active after approval
+ * Extracts plan from plan_id using unified plan structure
  */
 export async function executePayPalSubscription(subscriptionId, token) {
   if (!PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET) {
@@ -155,13 +172,22 @@ export async function executePayPalSubscription(subscriptionId, token) {
                    subscriptionDetails.subscriber?.email_address ||
                    null;
 
+    // Extract plan tier from plan_id using unified plan structure
+    const planId = subscriptionDetails.plan_id;
+    const tier = extractTierFromPayPalPlanId(planId);
+    const planConfig = tier ? getPlanByTier(tier) : null;
+
     return {
       subscriptionId: subscriptionDetails.id,
       status: subscriptionDetails.status,
       payerId: payerId,
-      planId: subscriptionDetails.plan_id,
+      planId: planId,
+      tier: tier || null, // Include tier for unified plan structure
+      plan: tier || null, // Backward compatibility
       startTime: subscriptionDetails.start_time,
-      billingInfo: subscriptionDetails.billing_info
+      billingInfo: subscriptionDetails.billing_info,
+      // Include unified metadata if plan was identified
+      metadata: planConfig ? planConfig.metadata : null
     };
   } catch (error) {
     console.error('PayPal subscription execution error:', error.response?.data || error.message);

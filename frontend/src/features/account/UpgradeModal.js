@@ -4,6 +4,46 @@ import subscriptionApi from '../../services/subscriptionApi.js';
 
 const html = htm.bind(React.createElement);
 
+// Unified plan configuration (matches backend unifiedPlans.js)
+const UNIFIED_PLANS = {
+  PRO: {
+    tier: 'PRO',
+    name: 'Pro',
+    price: '$29',
+    pricePeriod: '/month',
+    features: [
+      '100 articles/month',
+      '500 images/month',
+      '20 videos/month',
+      'Unlimited research',
+      '50 WordPress publications',
+      'Advanced SEO features',
+      'High-quality content',
+      'API access',
+      'Priority support'
+    ],
+    popular: true
+  },
+  ENTERPRISE: {
+    tier: 'ENTERPRISE',
+    name: 'Enterprise',
+    price: '$99',
+    pricePeriod: '/month',
+    features: [
+      'Unlimited articles',
+      'Unlimited images',
+      '100 videos/month',
+      'Unlimited research',
+      'Unlimited publications',
+      'All advanced features',
+      'Highest quality',
+      'Full API access',
+      'Custom integrations',
+      'Dedicated support'
+    ]
+  }
+};
+
 const UpgradeModal = ({ currentPlan, onClose, onUpgrade }) => {
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -49,20 +89,41 @@ const UpgradeModal = ({ currentPlan, onClose, onUpgrade }) => {
         await onUpgrade(selectedPlan);
         onClose();
       } else {
-        // Fallback for other uses (like AccountPage)
-        alert(`Stripe checkout is currently unavailable. Please use PayPal.`);
-        setLoading(false);
+        // Fallback: create Stripe checkout session directly
+        const response = await subscriptionApi.post('/api/subscription/checkout', {
+          plan: selectedPlan
+        });
+
+        if (response.data.success && response.data.data.url) {
+          // Redirect to Stripe checkout
+          window.location.href = response.data.data.url;
+        } else {
+          throw new Error('No checkout URL received from Stripe');
+        }
       }
     } catch (error) {
       console.error('Stripe checkout failed:', error);
-      setError('Failed to start checkout process. Please try again.');
+      setError(error.response?.data?.error?.message || 'Failed to start Stripe checkout. Please try again.');
       setLoading(false);
     }
   };
 
-  const availablePlans = currentPlan === 'FREE'
-    ? ['PRO', 'ENTERPRISE']
-    : ['ENTERPRISE'];
+  // Get available plans based on current plan
+  const getAvailablePlans = () => {
+    const currentTier = currentPlan?.toUpperCase() || 'FREE';
+    switch (currentTier) {
+      case 'FREE':
+        return ['PRO', 'ENTERPRISE'];
+      case 'PRO':
+        return ['ENTERPRISE'];
+      case 'ENTERPRISE':
+        return [];
+      default:
+        return ['PRO', 'ENTERPRISE'];
+    }
+  };
+
+  const availablePlans = getAvailablePlans();
 
   return html`
     <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
@@ -78,35 +139,53 @@ const UpgradeModal = ({ currentPlan, onClose, onUpgrade }) => {
         </div>
 
         <div className="space-y-4 mb-8">
-          ${availablePlans.map(plan => {
-            const isSelected = selectedPlan === plan;
-            const isPro = plan === 'PRO';
+          ${availablePlans.map(planTier => {
+            const isSelected = selectedPlan === planTier;
+            const plan = UNIFIED_PLANS[planTier];
+            
+            if (!plan) return null;
 
             return html`
               <div
-                key=${plan}
-                onClick=${() => setSelectedPlan(plan)}
+                key=${planTier}
+                onClick=${() => setSelectedPlan(planTier)}
                 className=${`p-6 rounded-2xl border-2 cursor-pointer transition-all ${
                   isSelected
                     ? 'border-blue-600 bg-blue-50/50'
                     : 'border-slate-200 hover:border-slate-300'
-                } ${isPro ? 'relative' : ''}`}
+                } ${plan.popular ? 'relative' : ''}`}
               >
-                ${isPro && html`
+                ${plan.popular && html`
                   <div className="absolute top-4 right-4 text-[9px] font-black text-purple-600 uppercase tracking-widest bg-purple-100 px-2 py-1 rounded">
                     Popular
                   </div>
                 `}
 
                 <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-xl font-black text-slate-800">${plan}</h4>
+                  <h4 className="text-xl font-black text-slate-800">${plan.name}</h4>
                   <div className="flex items-baseline">
                     <span className="text-3xl font-black text-slate-800">
-                      ${plan === 'PRO' ? '$29' : '$99'}
+                      ${plan.price}
                     </span>
-                    <span className="text-sm text-slate-500 ml-1">/month</span>
+                    <span className="text-sm text-slate-500 ml-1">${plan.pricePeriod || '/month'}</span>
                   </div>
                 </div>
+
+                ${plan.features && plan.features.length > 0 && html`
+                  <div className="mb-4 space-y-1">
+                    ${plan.features.slice(0, 3).map((feature, idx) => html`
+                      <div key=${idx} className="flex items-center space-x-2 text-xs text-slate-600">
+                        <i className="fa-solid fa-check text-emerald-500"></i>
+                        <span>${feature}</span>
+                      </div>
+                    `)}
+                    ${plan.features.length > 3 && html`
+                      <div className="text-xs text-slate-500 ml-5">
+                        +${plan.features.length - 3} more features
+                      </div>
+                    `}
+                  </div>
+                `}
 
                 <div className="flex items-center space-x-2">
                   <div className=${`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
@@ -141,12 +220,11 @@ const UpgradeModal = ({ currentPlan, onClose, onUpgrade }) => {
 
           <button
             onClick=${handleStripeCheckout}
-            disabled=${true}
-            className="w-full px-6 py-3 bg-slate-300 text-slate-500 rounded-xl font-black text-xs uppercase tracking-widest cursor-not-allowed transition-all flex items-center justify-center opacity-50"
-            title="Stripe checkout coming soon"
+            disabled=${!selectedPlan || loading}
+            className="w-full px-6 py-3 bg-[#635BFF] text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-[#5851EA] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg flex items-center justify-center"
           >
-            <i className="fa-solid fa-credit-card mr-2"></i>
-            Subscribe with Stripe (Coming Soon)
+            ${loading ? html`<i className="fa-solid fa-spinner fa-spin mr-2"></i>` : html`<i className="fa-solid fa-credit-card mr-2"></i>`}
+            Subscribe with Stripe
           </button>
 
           <button

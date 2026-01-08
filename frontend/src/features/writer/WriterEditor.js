@@ -9,10 +9,35 @@ import ImageBlock from './ImageBlock.js';
 const html = htm.bind(React.createElement);
 
 const WriterEditor = ({ metadata, sections, ctaContent, setCtaContent, config, generateContentForSection, autoTriggerAllMedia, settings }) => {
+  // Map provider ID to enum value
+  const getProviderEnum = (providerId) => {
+    const mapping = {
+      'gemini': 'GEMINI',
+      'openai': 'OPENAI',
+      'anthropic': 'ANTHROPIC',
+      'llama': 'LLAMA'
+    };
+    return mapping[providerId] || 'GEMINI';
+  };
+
+  // Get default model for provider
+  const getDefaultModel = (providerId) => {
+    const mapping = {
+      'gemini': 'gemini-3-pro-preview',
+      'openai': 'gpt-4o',
+      'anthropic': 'claude-3-5-sonnet-latest',
+      'llama': 'llama-3.3-70b-versatile'
+    };
+    return mapping[providerId] || 'gemini-3-pro-preview';
+  };
+
+  const provider = settings?.provider ? getProviderEnum(settings.provider) : 'GEMINI';
+  const model = getDefaultModel(settings?.provider || 'gemini');
+
   return html`
     <div className="flex-1 p-10 space-y-12">
         <div className="max-w-[90%] mx-auto space-y-12">
-            <${MetadataCard} metadata=${metadata} manualOverride=${!!settings?.focusKeyphrase} />
+            <${MetadataCard} metadata=${metadata} manualOverride=${!!settings?.focusKeyphrase} provider=${provider} model=${model} />
 
             ${sections.length === 0 ? html`
               <div className="h-[400px] flex flex-col items-center justify-center text-slate-200 space-y-6">
@@ -40,7 +65,9 @@ const WriterEditor = ({ metadata, sections, ctaContent, setCtaContent, config, g
                     idx=${idx} 
                     isOptimized=${metadata?.focusKeyphrase && section.title.toLowerCase().includes(metadata.focusKeyphrase.toLowerCase())} 
                     onGenerate=${() => generateContentForSection(idx)}
-                    autoTriggerAllMedia=${autoTriggerAllMedia} 
+                    autoTriggerAllMedia=${autoTriggerAllMedia}
+                    provider=${provider}
+                    model=${model}
                   />
               `)}
               
@@ -50,6 +77,8 @@ const WriterEditor = ({ metadata, sections, ctaContent, setCtaContent, config, g
                 focusKeyphrase=${metadata?.focusKeyphrase || ''}
                 existingCTA=${ctaContent}
                 onCTAGenerated=${(content) => setCtaContent(content)}
+                provider=${provider}
+                model=${model}
               />
             `}
         </div>

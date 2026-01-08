@@ -2,10 +2,11 @@
 import React from 'react';
 import htm from 'htm';
 import ImageBlock from './ImageBlock.js';
+import FeedbackWidget from '../../components/common/FeedbackWidget.js';
 
 const html = htm.bind(React.createElement);
 
-const SectionBlock = ({ section, idx, isOptimized, onGenerate, autoTriggerAllMedia }) => {
+const SectionBlock = ({ section, idx, isOptimized, onGenerate, autoTriggerAllMedia, provider, model }) => {
   const renderContent = () => {
     if (!section.body) return html`
       <div className="flex flex-col items-center justify-center py-16 border-2 border-dashed border-slate-100 rounded-3xl bg-slate-50/30 group/placeholder transition-all hover:bg-slate-50/50">
@@ -75,7 +76,22 @@ const SectionBlock = ({ section, idx, isOptimized, onGenerate, autoTriggerAllMed
           <div className="h-4 bg-slate-50 rounded-full w-10/12"></div>
           <div className="h-4 bg-slate-50 rounded-full w-full"></div>
         </div>
-      ` : renderContent()}
+      ` : html`
+        ${renderContent()}
+        ${section.body && provider && html`
+          <div className="mt-6 pt-6 border-t border-slate-100">
+            <${FeedbackWidget}
+              contentType="ARTICLE_SECTION"
+              provider=${provider}
+              model=${model}
+              contentId=${section.id || null}
+              metadata=${{ sectionTitle: section.title, sectionIndex: idx }}
+              variant="stars"
+              showComment=${true}
+            />
+          </div>
+        `}
+      `}
     </div>
   `;
 };

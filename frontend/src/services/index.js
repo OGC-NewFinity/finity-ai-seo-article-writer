@@ -13,6 +13,7 @@
  * - Article generation services (geminiArticleService.js)
  * - Media generation services (geminiMediaService.js)
  * - SEO analysis services (geminiSeoService.js)
+ * - Research and analysis services (geminiResearchService.js)
  * 
  * All services use the shared API client (api.js) configured with authentication
  * interceptors and error handling.
@@ -50,3 +51,18 @@ export {
   getSEOSuggestions,
   performSEOAudit
 } from './geminiSeoService.js';
+
+// Research and analysis services
+export {
+  transcribeAudio,
+  summarizeVideo,
+  performResearch
+} from './geminiResearchService.js';
+
+// Feedback services
+export {
+  submitFeedback,
+  getFeedbackStats,
+  getRecommendedProvider,
+  getUserFeedback
+} from './feedbackService.js';

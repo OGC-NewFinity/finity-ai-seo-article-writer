@@ -2,10 +2,11 @@
 import React from 'react';
 import htm from 'htm';
 import AudioBlock from './AudioBlock.js';
+import FeedbackWidget from '../../components/common/FeedbackWidget.js';
 
 const html = htm.bind(React.createElement);
 
-const MediaOutput = ({ mode, loading, statusMessage, resultImage, resultVideo, resultAudio }) => {
+const MediaOutput = ({ mode, loading, statusMessage, resultImage, resultVideo, resultAudio, provider = 'GEMINI', model = 'gemini-3-pro-preview', prompt, style, aspect }) => {
   return html`
     <div className="bg-white p-10 rounded-[2.5rem] shadow-sm border border-gray-100 min-h-[650px] flex flex-col">
        <div className="flex items-center justify-between mb-8">
@@ -35,14 +36,36 @@ const MediaOutput = ({ mode, loading, statusMessage, resultImage, resultVideo, r
               </div>
             </div>
           ` : resultVideo ? html`
-            <div className="space-y-6 w-full flex flex-col items-center">
-              <video src=${resultVideo} controls autoPlay loop className="max-w-full max-h-[500px] rounded-2xl shadow-2xl border border-white animate-fadeIn" />
+            <div className="space-y-6 w-full">
+              <video src=${resultVideo} controls autoPlay loop className="max-w-full max-h-[500px] rounded-2xl shadow-2xl border border-white animate-fadeIn mx-auto" />
               ${resultAudio && html`
                 <${AudioBlock} audioUrl=${resultAudio} />
               `}
+              <div className="mt-6 pt-6 border-t border-slate-200">
+                <${FeedbackWidget}
+                  contentType="VIDEO"
+                  provider=${provider}
+                  model=${model}
+                  metadata=${{ prompt, style, aspect, duration, resolution, withVoice: !!resultAudio }}
+                  variant="stars"
+                  showComment=${true}
+                />
+              </div>
             </div>
           ` : resultImage ? html`
-            <img src=${resultImage} className="max-w-full max-h-[500px] rounded-2xl shadow-2xl border border-white animate-fadeIn" />
+            <div className="space-y-6 w-full">
+              <img src=${resultImage} className="max-w-full max-h-[500px] rounded-2xl shadow-2xl border border-white animate-fadeIn mx-auto" />
+              <div className="mt-6 pt-6 border-t border-slate-200">
+                <${FeedbackWidget}
+                  contentType="IMAGE"
+                  provider=${provider}
+                  model=${model}
+                  metadata=${{ prompt, style, aspect, mode: mode === 'edit' ? 'edit' : 'generate' }}
+                  variant="stars"
+                  showComment=${true}
+                />
+              </div>
+            </div>
           ` : html`
             <div className="text-center space-y-6">
               <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm">

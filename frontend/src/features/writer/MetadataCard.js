@@ -1,10 +1,11 @@
 
 import React from 'react';
 import htm from 'htm';
+import FeedbackWidget from '../../components/common/FeedbackWidget.js';
 
 const html = htm.bind(React.createElement);
 
-const MetadataCard = ({ metadata, manualOverride }) => {
+const MetadataCard = ({ metadata, manualOverride, provider, model }) => {
   if (!metadata) return null;
 
   return html`
@@ -32,6 +33,18 @@ const MetadataCard = ({ metadata, manualOverride }) => {
               <p className="text-xs font-medium text-slate-500 leading-relaxed">${metadata.metaDescription}</p>
           </div>
       </div>
+      ${provider && html`
+        <div className="mt-6 pt-6 border-t border-slate-200">
+          <${FeedbackWidget}
+            contentType="ARTICLE_METADATA"
+            provider=${provider}
+            model=${model}
+            metadata=${{ focusKeyphrase: metadata.focusKeyphrase, seoTitle: metadata.seoTitle }}
+            variant="stars"
+            showComment=${true}
+          />
+        </div>
+      `}
     </div>
   `;
 };

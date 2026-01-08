@@ -56,13 +56,32 @@ export const getCurrentUsage = async (userId) => {
 
 /**
  * Increment usage for a feature
+ * Automatically checks quota and sends notifications if needed
  */
 export const incrementUsage = async (userId, feature, amount = 1) => {
   const usage = await getCurrentUsage(userId);
   const plan = usage.subscription.plan;
 
+  // Map feature names for quota checking
+  const featureMap = {
+    'articlesGenerated': { usageField: 'articlesGenerated', planFeature: 'articles' },
+    'imagesGenerated': { usageField: 'imagesGenerated', planFeature: 'images' },
+    'videosGenerated': { usageField: 'videosGenerated', planFeature: 'videos' },
+    'researchQueries': { usageField: 'researchQueries', planFeature: 'research' },
+    'articlesPublished': { usageField: 'articlesPublished', planFeature: 'wordpress' },
+    'articles': { usageField: 'articlesGenerated', planFeature: 'articles' },
+    'images': { usageField: 'imagesGenerated', planFeature: 'images' },
+    'videos': { usageField: 'videosGenerated', planFeature: 'videos' },
+    'research': { usageField: 'researchQueries', planFeature: 'research' },
+    'wordpress': { usageField: 'articlesPublished', planFeature: 'wordpress' }
+  };
+
+  const mapping = featureMap[feature] || { usageField: feature, planFeature: feature };
+  const currentUsage = usage[mapping.usageField] || 0;
+  const planFeature = mapping.planFeature;
+
   // Check if within limit
-  if (!isWithinLimit(plan, feature, usage[`${feature}Generated`] || usage[feature])) {
+  if (!isWithinLimit(plan, planFeature, currentUsage)) {
     throw new Error(`Usage limit exceeded for ${feature}`);
   }
 
@@ -76,10 +95,31 @@ export const incrementUsage = async (userId, feature, amount = 1) => {
     updateData.articlesPublished = { increment: amount };
   }
 
-  return await prisma.usage.update({
+  const updatedUsage = await prisma.usage.update({
     where: { id: usage.id },
-    data: updateData
+    data: updateData,
+    include: {
+      subscription: true
+    }
   });
+
+  // Check quota and send notifications if needed (async, don't block)
+  // Get updated usage value
+  const newUsageValue = updatedUsage[mapping.usageField] || 0;
+  const limit = getFeatureLimit(plan, planFeature);
+
+  // Check quota asynchronously (don't block the increment operation)
+  if (limit !== -1 && process.env.ENABLE_QUOTA_NOTIFICATIONS !== 'false') {
+    import('./notification.service.js').then(({ checkQuotaAndNotify }) => {
+      checkQuotaAndNotify(userId, planFeature, newUsageValue, limit).catch(error => {
+        console.error(`[Usage Service] Error checking quota for ${feature}:`, error);
+      });
+    }).catch(error => {
+      console.warn('[Usage Service] Could not load notification service:', error.message);
+    });
+  }
+
+  return updatedUsage;
 };
 
 /**
@@ -129,33 +169,95 @@ export const canPerformAction = async (userId, feature) => {
 
 /**
  * Reset monthly usage (run via cron job)
+ * Also integrates with token usage reset and sends notifications
  */
 export const resetMonthlyUsage = async () => {
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  // Find all usage records that need reset
-  const expiredUsage = await prisma.usage.findMany({
-    where: {
-      periodEnd: {
-        lt: monthStart
-      }
-    }
+  console.log('[Usage Reset] Starting monthly usage reset...', {
+    monthStart: monthStart.toISOString()
   });
 
-  // Create new usage records for current period
-  for (const usage of expiredUsage) {
-    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
-    
-    await prisma.usage.create({
-      data: {
-        userId: usage.userId,
-        subscriptionId: usage.subscriptionId,
-        period: 'MONTHLY',
-        periodStart: monthStart,
-        periodEnd: monthEnd
+  try {
+    // Find all usage records that need reset
+    const expiredUsage = await prisma.usage.findMany({
+      where: {
+        periodEnd: {
+          lt: monthStart
+        }
+      },
+      include: {
+        user: {
+          include: {
+            subscription: true
+          }
+        }
       }
     });
+
+    console.log(`[Usage Reset] Found ${expiredUsage.length} usage records to reset`);
+
+    let resetCount = 0;
+    let notificationCount = 0;
+    const errors = [];
+
+    // Reset each user's usage
+    for (const usage of expiredUsage) {
+      try {
+        const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+        
+        // Create new usage record for current period
+        await prisma.usage.create({
+          data: {
+            userId: usage.userId,
+            subscriptionId: usage.subscriptionId,
+            period: 'MONTHLY',
+            periodStart: monthStart,
+            periodEnd: monthEnd
+          }
+        });
+
+        resetCount++;
+
+        // Send quota reset notification (optional - can be disabled if too noisy)
+        if (process.env.SEND_QUOTA_RESET_EMAILS !== 'false') {
+          try {
+            const { sendQuotaResetNotification } = await import('./notification.service.js');
+            await sendQuotaResetNotification(usage.userId);
+            notificationCount++;
+          } catch (notifError) {
+            console.warn(`[Usage Reset] Failed to send reset notification for user ${usage.userId}:`, notifError.message);
+          }
+        }
+
+        // Token usage doesn't need explicit reset as it's time-based
+        // But we could optionally archive old token usage records here
+        // For now, token usage resets are implicit based on createdAt dates
+        
+      } catch (error) {
+        console.error(`[Usage Reset] Error resetting usage for user ${usage.userId}:`, error);
+        errors.push({ userId: usage.userId, error: error.message });
+      }
+    }
+
+    console.log(`[Usage Reset] Monthly reset completed:`, {
+      totalRecords: expiredUsage.length,
+      resetCount,
+      notificationCount,
+      errors: errors.length
+    });
+
+    return {
+      success: true,
+      totalRecords: expiredUsage.length,
+      resetCount,
+      notificationCount,
+      errors: errors.length > 0 ? errors : undefined
+    };
+  } catch (error) {
+    console.error('[Usage Reset] Fatal error during monthly reset:', error);
+    throw error;
   }
 };
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import htm from 'htm';
-import { performResearch } from '../services/geminiService.js';
+import { performResearch } from '../services/geminiResearchService.js';
 
 const html = htm.bind(React.createElement);
 
@@ -40,7 +40,16 @@ const Research = () => {
     }, 3000);
 
     try {
-      const data = await performResearch(finalQuery);
+      // Example: Basic research query
+      // const data = await performResearch(finalQuery);
+      
+      // Example: Research with options (focus, maxResults, timeRange)
+      const data = await performResearch(finalQuery, {
+        focus: 'all', // 'statistics' | 'trends' | 'news' | 'analysis' | 'all'
+        maxResults: 10,
+        timeRange: 'all' // 'day' | 'week' | 'month' | 'year' | 'all'
+      });
+      
       setResults(data);
     } catch (e) {
       console.error(e);

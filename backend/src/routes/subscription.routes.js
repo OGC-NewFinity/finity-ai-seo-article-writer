@@ -21,6 +21,7 @@ import {
   createPayPalCheckout,
   executePayPalSubscription
 } from '../services/payments/paypalService.js';
+import { isValidTier, extractTierFromPayPalPlanId } from '../utils/unifiedPlans.js';
 
 const router = express.Router();
 
@@ -101,7 +102,8 @@ router.post('/checkout', async (req, res) => {
   try {
     const { plan } = req.body;
     
-    if (!['PRO', 'ENTERPRISE'].includes(plan)) {
+    // Validate plan using unified plan structure
+    if (!isValidTier(plan) || plan === 'FREE') {
       return res.status(400).json({
         success: false,
         error: {
@@ -227,7 +229,8 @@ router.post('/paypal/checkout', async (req, res) => {
   try {
     const { plan } = req.body;
     
-    if (!['PRO', 'ENTERPRISE'].includes(plan)) {
+    // Validate plan using unified plan structure
+    if (!isValidTier(plan) || plan === 'FREE') {
       return res.status(400).json({
         success: false,
         error: {
@@ -283,12 +286,19 @@ router.post('/paypal/execute', async (req, res) => {
     // Execute the subscription with PayPal
     const subscription = await executePayPalSubscription(subscriptionId, token);
 
-    // Determine plan from PayPal plan ID
-    const plan = subscription.planId === process.env.PAYPAL_PLAN_ID_PRO 
-      ? 'PRO' 
-      : subscription.planId === process.env.PAYPAL_PLAN_ID_ENTERPRISE
-      ? 'ENTERPRISE'
-      : 'PRO'; // Default to PRO if plan ID doesn't match
+    // Determine plan from PayPal subscription using unified plan structure
+    // The executePayPalSubscription function already extracts the tier
+    const plan = subscription.tier || subscription.plan || 'PRO';
+    
+    if (!isValidTier(plan) || plan === 'FREE') {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'INVALID_PLAN',
+          message: `Invalid plan tier: ${plan}`
+        }
+      });
+    }
 
     // Update user subscription in database
     await updateSubscriptionPlan(
