@@ -87,7 +87,7 @@ export const authenticateApiKey = async (req, res, next) => {
     // Continue to next middleware/route handler
     next();
   } catch (error) {
-    console.error('API key authentication error:', error);
+    // Error will be logged by centralized error handler
     return res.status(500).json({
       success: false,
       error: {
@@ -107,7 +107,7 @@ export const authenticateApiKey = async (req, res, next) => {
  */
 export const generateApiKey = async (userId, name = null) => {
   // Generate a secure random API key (64 characters)
-  const apiKey = 'finity_' + crypto.randomBytes(32).toString('hex');
+  const apiKey = 'nova_xfinity_' + crypto.randomBytes(32).toString('hex');
 
   // Check if user already has an API key
   const existingKey = await prisma.platformApiKey.findUnique({

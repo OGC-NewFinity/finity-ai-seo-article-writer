@@ -4,6 +4,7 @@
  */
 
 import { incrementUsage } from '../../services/usage.service.js';
+import * as geminiProvider from '../providers/gemini/index.js';
 
 /**
  * Generate an image
@@ -15,8 +16,12 @@ export const generateImage = async (req, res) => {
     // At this point, quota has been checked
     // req.quota = { feature: 'images', currentUsage, limit, remaining, plan }
     
-    // TODO: Implement image generation logic here
-    // const image = await generateImage(prompt, style, aspectRatio, req.user.id);
+    // Generate image - userId is now first parameter, tracking/logging handled in service
+    const imageData = await geminiProvider.generateImage(req.user.id, prompt, aspectRatio, style);
+    
+    if (!imageData) {
+      throw new Error('Image generation failed - no image data returned');
+    }
     
     // After successful generation, increment usage
     await incrementUsage(req.user.id, 'imagesGenerated', 1);
@@ -24,7 +29,7 @@ export const generateImage = async (req, res) => {
     res.json({
       success: true,
       data: {
-        // image data
+        image: imageData,
         message: 'Image generated successfully',
         quota: {
           remaining: req.quota.remaining - 1,
@@ -48,10 +53,18 @@ export const generateImage = async (req, res) => {
  */
 export const generateVideo = async (req, res) => {
   try {
-    const { prompt, style, aspectRatio, duration } = req.body;
+    const { prompt, style, aspectRatio, duration, resolution, startFrameBase64 } = req.body;
     
-    // TODO: Implement video generation logic here
-    // const video = await generateVideo(prompt, style, aspectRatio, duration, req.user.id);
+    // Generate video - userId is now first parameter, tracking/logging handled in service
+    const videoUrl = await geminiProvider.generateVideo(
+      req.user.id,
+      prompt,
+      style || 'Cinematic',
+      resolution || '720p',
+      aspectRatio || '16:9',
+      duration || '9s',
+      startFrameBase64 || null
+    );
     
     // After successful generation, increment usage
     await incrementUsage(req.user.id, 'videosGenerated', 1);
@@ -59,7 +72,7 @@ export const generateVideo = async (req, res) => {
     res.json({
       success: true,
       data: {
-        // video data
+        videoUrl,
         message: 'Video generation started',
         quota: {
           remaining: req.quota.remaining - 1,

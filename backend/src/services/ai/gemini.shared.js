@@ -8,29 +8,32 @@ import { SYSTEM_INSTRUCTIONS } from "../../../constants.js";
 
 /**
  * Get API key from environment
+ * Returns the Gemini API key from environment variables
  */
 export const getApiKey = () => {
-  try {
-    return process.env.API_KEY;
-  } catch (e) {
-    console.warn("API_KEY not found in process.env");
-    return null;
-  }
+  return process.env.GEMINI_API_KEY || null;
 };
 
 /**
  * Get saved settings (for frontend compatibility)
  * Note: This uses localStorage which is not available in Node.js
- * This is a placeholder - in backend context, settings should come from database
+ * In backend context, settings should come from database or environment variables
  */
 export const getSavedSettings = () => {
-  // In backend, this should fetch from database or env vars
-  // For now, default to gemini
-  return { provider: 'gemini' };
+  // In backend, provider selection should come from database or default to env config
+  // For now, default to gemini if GEMINI_API_KEY is available
+  const provider = process.env.DEFAULT_AI_PROVIDER || 'gemini';
+  return { 
+    provider,
+    openaiKey: process.env.OPENAI_API_KEY || null,
+    claudeKey: process.env.ANTHROPIC_API_KEY || null,
+    llamaKey: process.env.GROQ_API_KEY || null
+  };
 };
 
 /**
  * Get provider configuration
+ * Returns configuration for the specified AI provider with API keys from environment
  */
 export const getProviderConfig = () => {
   const settings = getSavedSettings();
@@ -38,22 +41,22 @@ export const getProviderConfig = () => {
   
   const configs = {
     gemini: { 
-      key: getApiKey(), 
+      key: process.env.GEMINI_API_KEY || null, 
       baseUrl: 'https://generativelanguage.googleapis.com', 
       model: 'gemini-3-pro-preview' 
     },
     openai: { 
-      key: settings.openaiKey, 
+      key: process.env.OPENAI_API_KEY || settings.openaiKey || null, 
       baseUrl: 'https://api.openai.com/v1/chat/completions', 
       model: 'gpt-4o' 
     },
     anthropic: { 
-      key: settings.claudeKey, 
+      key: process.env.ANTHROPIC_API_KEY || settings.claudeKey || null, 
       baseUrl: 'https://api.anthropic.com/v1/messages', 
       model: 'claude-3-5-sonnet-latest' 
     },
     llama: { 
-      key: settings.llamaKey, 
+      key: process.env.GROQ_API_KEY || settings.llamaKey || null, 
       baseUrl: 'https://api.groq.com/openai/v1/chat/completions', 
       model: 'llama-3.3-70b-versatile' 
     }
@@ -138,10 +141,9 @@ export const callAI = async (prompt, systemPrompt, jsonMode = false) => {
     return data.choices[0].message.content;
 
   } catch (error) {
-    console.warn("Primary provider failed, attempting fallback to Gemini...", error);
     // Silent Fallback to Gemini if it's not the primary
-    if (config.id !== 'gemini') {
-      const ai = new GoogleGenAI({ apiKey: getApiKey() });
+    if (config.id !== 'gemini' && process.env.GEMINI_API_KEY) {
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `[FALLBACK MODE] ${prompt}`,

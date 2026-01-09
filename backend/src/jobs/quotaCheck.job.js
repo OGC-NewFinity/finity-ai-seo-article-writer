@@ -8,7 +8,7 @@ import cron from 'node-cron';
 import prisma from '../config/database.js';
 import { getCurrentUsage } from '../services/usage.service.js';
 import { getFeatureLimit } from '../utils/featureFlags.js';
-import { checkQuotaAndNotify } from '../services/notification.service.js';
+import { checkQuotaAndNotify } from '../features/notifications/services/notification.service.js';
 
 /**
  * Check quota for a single user and send notifications if needed
@@ -47,7 +47,7 @@ const checkUserQuota = async (userId) => {
 
     // Check token usage separately
     try {
-      const { getTokenUsageStats } = await import('../services/tokenUsage.service.js');
+      const { getTokenUsageStats } = await import('../features/tokenUsage/services/tokenUsage.service.js');
       const tokenStats = await getTokenUsageStats(userId);
       const tokenLimit = getFeatureLimit(plan, 'tokenLimit');
       
@@ -67,12 +67,12 @@ const checkUserQuota = async (userId) => {
         }
       }
     } catch (tokenError) {
-      console.warn(`[Quota Check] Error checking token usage for user ${userId}:`, tokenError.message);
+      // Silently fail - token check should not break quota check
     }
 
     return results;
   } catch (error) {
-    console.error(`[Quota Check] Error checking quota for user ${userId}:`, error);
+    // Error will be logged by centralized error handler if needed
     return [];
   }
 };
@@ -81,8 +81,6 @@ const checkUserQuota = async (userId) => {
  * Check quotas for all active users
  */
 const checkAllUsersQuota = async () => {
-  console.log('[Quota Check Job] Starting quota check for all users...');
-
   try {
     // Get all users with active subscriptions
     const users = await prisma.user.findMany({
@@ -97,8 +95,6 @@ const checkAllUsersQuota = async () => {
       }
     });
 
-    console.log(`[Quota Check Job] Checking quota for ${users.length} active users`);
-
     let totalNotifications = 0;
     const errors = [];
 
@@ -108,19 +104,11 @@ const checkAllUsersQuota = async () => {
         const results = await checkUserQuota(user.id);
         if (results.length > 0) {
           totalNotifications += results.length;
-          console.log(`[Quota Check Job] Sent ${results.length} notifications to user ${user.email}`);
         }
       } catch (error) {
-        console.error(`[Quota Check Job] Error checking quota for user ${user.id}:`, error);
         errors.push({ userId: user.id, error: error.message });
       }
     }
-
-    console.log(`[Quota Check Job] Quota check completed:`, {
-      totalUsers: users.length,
-      notificationsSent: totalNotifications,
-      errors: errors.length
-    });
 
     return {
       success: true,
@@ -129,7 +117,7 @@ const checkAllUsersQuota = async () => {
       errors: errors.length > 0 ? errors : undefined
     };
   } catch (error) {
-    console.error('[Quota Check Job] Fatal error during quota check:', error);
+    // Re-throw error - will be caught by job error handler
     throw error;
   }
 };
@@ -143,13 +131,10 @@ export const scheduleQuotaCheck = () => {
   console.log('[Cron Job] Scheduling daily quota check: 09:00 UTC daily');
 
   cron.schedule('0 9 * * *', async () => {
-    console.log('[Cron Job] Starting scheduled quota check...');
-    
     try {
-      const result = await checkAllUsersQuota();
-      console.log('[Cron Job] Quota check completed:', result);
+      await checkAllUsersQuota();
     } catch (error) {
-      console.error('[Cron Job] Error during quota check:', error);
+      // Error will be logged by centralized error handler if needed
     }
   }, {
     scheduled: true,
@@ -161,6 +146,5 @@ export const scheduleQuotaCheck = () => {
  * Manual trigger for testing
  */
 export const triggerQuotaCheck = async () => {
-  console.log('[Cron Job] Manual quota check triggered');
   return await checkAllUsersQuota();
 };

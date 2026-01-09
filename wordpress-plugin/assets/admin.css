@@ -1,48 +1,48 @@
-/* Finity AI Admin Styles */
+/* Nova‑XFinity AI Admin Styles */
 
 /* Settings Page Container */
-.finity-ai-settings-page {
+.nova-xfinity-ai-settings-page {
     max-width: 1200px;
 }
 
 /* Form Fields Styling */
-.finity-ai-settings-page .form-table th {
+.nova-xfinity-ai-settings-page .form-table th {
     width: 200px;
     padding: 20px 10px 20px 0;
 }
 
-.finity-ai-settings-page .form-table td {
+.nova-xfinity-ai-settings-page .form-table td {
     padding: 15px 10px;
 }
 
 /* Password Input Fields for API Keys */
-.finity-ai-settings-page input[type="password"] {
+.nova-xfinity-ai-settings-page input[type="password"] {
     font-family: 'Courier New', monospace;
     letter-spacing: 0.5px;
 }
 
 /* Button Styling */
-.finity-ai-settings-page .button {
+.nova-xfinity-ai-settings-page .button {
     transition: all 0.2s ease;
 }
 
-.finity-ai-settings-page .button:hover {
+.nova-xfinity-ai-settings-page .button:hover {
     transform: translateY(-1px);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.finity-ai-settings-page .button-primary {
+.nova-xfinity-ai-settings-page .button-primary {
     background: #2271b1;
     border-color: #2271b1;
 }
 
-.finity-ai-settings-page .button-primary:hover {
+.nova-xfinity-ai-settings-page .button-primary:hover {
     background: #135e96;
     border-color: #135e96;
 }
 
 /* Content Generation Section */
-#finity-ai-generator {
+#nova-xfinity-ai-generator {
     background: #fff;
     padding: 20px;
     border: 1px solid #ccd0d4;
@@ -51,12 +51,12 @@
     margin-top: 20px;
 }
 
-#finity-ai-generator textarea {
+#nova-xfinity-ai-generator textarea {
     resize: vertical;
     min-height: 100px;
 }
 
-#finity-ai-generator select {
+#nova-xfinity-ai-generator select {
     min-width: 200px;
 }
 
@@ -131,14 +131,14 @@
 
 /* Responsive Design */
 @media screen and (max-width: 782px) {
-    .finity-ai-settings-page .form-table th,
-    .finity-ai-settings-page .form-table td {
+    .nova-xfinity-ai-settings-page .form-table th,
+    .nova-xfinity-ai-settings-page .form-table td {
         display: block;
         width: 100%;
         padding: 10px 0;
     }
     
-    .finity-ai-settings-page .form-table th {
+    .nova-xfinity-ai-settings-page .form-table th {
         padding-bottom: 5px;
     }
     
@@ -152,50 +152,50 @@
 }
 
 /* Loading Spinner */
-.finity-ai-loading {
+.nova-xfinity-ai-loading {
     display: inline-block;
     width: 16px;
     height: 16px;
     border: 2px solid #f3f3f3;
     border-top: 2px solid #2271b1;
     border-radius: 50%;
-    animation: finity-ai-spin 1s linear infinite;
+    animation: nova-xfinity-ai-spin 1s linear infinite;
     margin-right: 8px;
     vertical-align: middle;
 }
 
-@keyframes finity-ai-spin {
+@keyframes nova-xfinity-ai-spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
 
 /* Success/Error Messages */
-.finity-ai-message {
+.nova-xfinity-ai-message {
     padding: 10px 15px;
     margin: 15px 0;
     border-radius: 4px;
     border-left: 4px solid;
 }
 
-.finity-ai-message.success {
+.nova-xfinity-ai-message.success {
     background: #ecf7ed;
     border-color: #46b450;
     color: #155724;
 }
 
-.finity-ai-message.error {
+.nova-xfinity-ai-message.error {
     background: #fbeaea;
     border-color: #dc3232;
     color: #721c24;
 }
 
 /* Iframe Styling (for main plugin page if used) */
-#finity-ai-iframe {
+#nova-xfinity-ai-iframe {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
     border-radius: 8px;
 }
 
-#finity-ai-iframe:hover {
+#nova-xfinity-ai-iframe:hover {
     box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
 }

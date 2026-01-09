@@ -4,7 +4,7 @@
  */
 
 const getSavedSettings = () => {
-  const saved = localStorage.getItem('finity_settings');
+  const saved = localStorage.getItem('nova_xfinity_settings');
   return saved ? JSON.parse(saved) : { provider: 'gemini' };
 };
 

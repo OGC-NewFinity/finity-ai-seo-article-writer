@@ -25,7 +25,7 @@ const CustomDropdown = ({ label, options, value, onChange, type = 'text' }) => {
 
   return html`
     <div className="relative" ref=${dropdownRef}>
-      <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">${label}</label>
+      ${label && html`<label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">${label}</label>`}
       <button
         type="button"
         onClick=${() => setIsOpen(!isOpen)}

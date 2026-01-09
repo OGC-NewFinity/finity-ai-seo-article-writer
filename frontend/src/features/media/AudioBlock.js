@@ -30,7 +30,7 @@ const AudioBlock = ({ audioUrl }) => {
 
   return html`
     <button onClick=${() => playTTS(audioUrl)} className="px-6 py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center shadow-lg">
-      <i className="fa-solid fa-volume-high mr-2 text-blue-400"></i> Replay Voiceover
+      <i className="fa-solid fa-volume-high mr-2 text-blue-400"></i> Play Voiceover
     </button>
   `;
 };

@@ -11,9 +11,17 @@ Backend API for Nova‑XFinity AI Article Writer.
 
 2. **Configure environment:**
    ```bash
-   cp .env.example .env
+   # Copy from project root (or backend directory)
+   cp ../env.example ../.env
    # Edit .env with your configuration
    ```
+   
+   **Important:** The application validates required environment variables at startup. Ensure all required variables are set:
+   - `DATABASE_URL` (required)
+   - `SECRET` (required - JWT secret)
+   - `GEMINI_API_KEY` (required - primary AI provider)
+   
+   See `env.example` in the project root for a complete list of required and optional variables.
 
 3. **Start Docker services:**
    ```bash

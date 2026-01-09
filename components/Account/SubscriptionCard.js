@@ -16,35 +16,35 @@ const SubscriptionCard = ({ subscription, onUpgrade }) => {
   };
 
   return html`
-    <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-xl shadow-slate-200/50">
+    <div className="bg-slate-900 p-8 rounded-[2.5rem] border border-slate-800 shadow-xl shadow-black/50">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-xl font-black text-slate-800">Current Subscription</h3>
+        <h3 className="text-xl font-black text-white">Current Subscription</h3>
         <${PlanBadge} plan=${subscription.plan} status=${subscription.status.toLowerCase()} />
       </div>
 
       <div className="space-y-4">
-        <div className="flex justify-between items-center py-3 border-b border-slate-100">
-          <span className="text-sm font-bold text-slate-500">Plan</span>
-          <span className="text-sm font-black text-slate-800 uppercase">${subscription.plan}</span>
+        <div className="flex justify-between items-center py-3 border-b border-slate-800">
+          <span className="text-sm font-bold text-slate-400">Plan</span>
+          <span className="text-sm font-black text-white uppercase">${subscription.plan}</span>
         </div>
 
-        <div className="flex justify-between items-center py-3 border-b border-slate-100">
-          <span className="text-sm font-bold text-slate-500">Status</span>
+        <div className="flex justify-between items-center py-3 border-b border-slate-800">
+          <span className="text-sm font-bold text-slate-400">Status</span>
           <span className=${`text-sm font-black uppercase ${
-            subscription.status === 'ACTIVE' ? 'text-emerald-600' : 'text-slate-500'
+            subscription.status === 'ACTIVE' ? 'text-emerald-500' : 'text-slate-400'
           }`}>
             ${subscription.status}
           </span>
         </div>
 
-        <div className="flex justify-between items-center py-3 border-b border-slate-100">
-          <span className="text-sm font-bold text-slate-500">Next Billing Date</span>
-          <span className="text-sm font-black text-slate-800">${formatDate(subscription.currentPeriodEnd)}</span>
+        <div className="flex justify-between items-center py-3 border-b border-slate-800">
+          <span className="text-sm font-bold text-slate-400">Next Billing Date</span>
+          <span className="text-sm font-black text-white">${formatDate(subscription.currentPeriodEnd)}</span>
         </div>
 
         ${subscription.cancelAtPeriodEnd && html`
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-            <p className="text-xs font-bold text-amber-800">
+          <div className="bg-amber-900/30 border border-amber-700 rounded-xl p-4">
+            <p className="text-xs font-bold text-amber-300">
               <i className="fa-solid fa-exclamation-triangle mr-2"></i>
               Your subscription will be cancelled at the end of the billing period.
             </p>
@@ -67,7 +67,7 @@ const SubscriptionCard = ({ subscription, onUpgrade }) => {
             // TODO: Open Stripe portal
             window.open('/api/subscription/portal', '_blank');
           }}
-          className="flex-1 px-6 py-3 bg-slate-100 text-slate-700 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-slate-200 transition-all"
+          className="flex-1 px-6 py-3 bg-slate-800 text-slate-200 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-slate-700 transition-all border border-slate-700"
         >
           <i className="fa-solid fa-credit-card mr-2"></i> Manage Billing
         </button>

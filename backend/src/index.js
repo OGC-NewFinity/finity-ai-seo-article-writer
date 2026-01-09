@@ -5,6 +5,8 @@ import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { errorHandler } from './middleware/error.middleware.js';
+import { requestLogger } from './middleware/logger.middleware.js';
+import { validateEnv } from './config/env.js';
 
 // Get the directory of the current module
 const __filename = fileURLToPath(import.meta.url);
@@ -14,6 +16,10 @@ const __dirname = dirname(__filename);
 dotenv.config({ path: join(__dirname, '../../.env') });
 // Also try loading from backend directory for backward compatibility
 dotenv.config({ path: join(__dirname, '../.env') });
+
+// Validate required environment variables at startup
+// This will exit the process if any required variables are missing
+validateEnv();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -33,18 +39,21 @@ app.use('/api/webhooks/stripe', express.raw({ type: 'application/json' }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Request logging middleware (must be after body parsers, before routes)
+app.use(requestLogger);
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// API Routes
-import subscriptionRoutes from './routes/subscription.routes.js';
-import webhooksRoutes from './routes/webhooks.routes.js';
-import tokenUsageRoutes from './routes/tokenUsage.routes.js';
-import notificationsRoutes from './routes/notifications.routes.js';
-import feedbackRoutes from './routes/feedback.routes.js';
-import statsRoutes from './routes/stats.routes.js';
+// API Routes - Feature-based modules
+import { subscriptionRoutes } from './features/subscription/index.js';
+import { webhooksRoutes } from './features/webhooks/index.js';
+import { tokenUsageRoutes } from './features/tokenUsage/index.js';
+import { notificationsRoutes } from './features/notifications/index.js';
+import { feedbackRoutes } from './features/feedback/index.js';
+import { statsRoutes } from './features/stats/index.js';
 import { articleRoutes } from './features/article/index.js';
 import { researchRoutes } from './features/research/index.js';
 import { mediaRoutes } from './features/media/index.js';

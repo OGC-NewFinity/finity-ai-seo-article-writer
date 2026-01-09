@@ -10,7 +10,7 @@ SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 SMTP_USERNAME = os.getenv("SMTP_USERNAME", "")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
 EMAILS_FROM_EMAIL = os.getenv("EMAILS_FROM_EMAIL", SMTP_USERNAME)
-EMAILS_FROM_NAME = os.getenv("EMAILS_FROM_NAME", "Finity Support")
+EMAILS_FROM_NAME = os.getenv("EMAILS_FROM_NAME", "Nova‑XFinity Support")
 EMAILS_ENABLED = os.getenv("EMAILS_ENABLED", "true").lower() == "true"
 
 # Frontend URL for email links

@@ -43,7 +43,7 @@ export { useQuota } from './useQuota.js';
  * Usage:
  * const { user, isAuthenticated, login, logout } = useAuth();
  */
-export { useAuth } from '../context/AuthContext.js';
+export { useAuth } from '../../../context/AuthContext.js';
 
 /**
  * useTheme - Hook for theme management (dark/light mode)

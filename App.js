@@ -16,6 +16,7 @@ const Dashboard = lazy(() => import('@/features/dashboard/Dashboard.js'));
 const Writer = lazy(() => import('@/features/writer').then(module => ({ default: module.WriterMain })));
 const Research = lazy(() => import('./components/Research.js'));
 const MediaHub = lazy(() => import('@/features/media').then(module => ({ default: module.MediaHubMain })));
+const MediaLayout = lazy(() => import('@/features/media/MediaLayout.js'));
 const SettingsPanel = lazy(() => import('./components/Settings/SettingsPanel.js'));
 const AdminDashboard = lazy(() => import('@/features/admin-dashboard/AdminDashboard.js'));
 const AccountPage = lazy(() => import('./components/Account/AccountPage.js'));
@@ -101,7 +102,7 @@ const AppContent = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   
   const [settings, setSettings] = useState(() => {
-    const saved = localStorage.getItem('finity_settings');
+    const saved = localStorage.getItem('nova_xfinity_settings');
     return saved ? JSON.parse(saved) : {
       apiContext: '************************',
       provider: 'gemini',
@@ -113,7 +114,7 @@ const AppContent = () => {
   });
 
   useEffect(() => {
-    localStorage.setItem('finity_settings', JSON.stringify(settings));
+    localStorage.setItem('nova_xfinity_settings', JSON.stringify(settings));
   }, [settings]);
 
   const handleSaveSettings = () => {
@@ -158,7 +159,7 @@ const AppContent = () => {
   };
 
   return html`
-    <div className="flex min-h-screen bg-gray-50 selection:bg-blue-100 selection:text-blue-900">
+    <div className="flex min-h-screen bg-slate-950 selection:bg-blue-500/20 selection:text-blue-200">
       <${Sidebar} activeTab=${activeTab} setActiveTab=${setActiveTab} />
       <main className="flex-1 p-8 lg:p-12 overflow-y-auto">
         <div className="max-w-7xl mx-auto">
@@ -208,6 +209,14 @@ const App = () => {
                       React.createElement(AdminDashboard)
                     )
                   )
+                )
+              )
+            }),
+            React.createElement(Route, {
+              path: "/media/*",
+              element: React.createElement(ProtectedRoute, null, 
+                React.createElement(Suspense, { fallback: React.createElement(Loading) }, 
+                  React.createElement(MediaLayout)
                 )
               )
             }),

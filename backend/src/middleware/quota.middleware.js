@@ -42,11 +42,12 @@ export const checkQuota = (feature, options = {}) => {
           success: false,
           error: {
             code: 'QUOTA_EXCEEDED',
-            message: `You have reached your ${feature} quota limit. Please upgrade your plan to continue.`,
+            message: `Quota exceeded. Upgrade your plan to continue.`,
             details: {
               feature,
               currentUsage: quotaCheck.currentUsage,
               limit: quotaCheck.limit,
+              remaining: quotaCheck.limit === -1 ? -1 : Math.max(0, quotaCheck.limit - quotaCheck.currentUsage),
               plan: quotaCheck.plan
             }
           }
@@ -84,22 +85,21 @@ export const checkQuota = (feature, options = {}) => {
         };
         
         if (!tokenCheck.allowed) {
-          // Soft warning for token limits (log but allow if within other limits)
-          console.warn(`[QUOTA WARNING] User ${req.user.id} approaching token limit: ${tokenCheck.currentUsage}/${tokenCheck.limit}`);
-          
           // If projected usage exceeds limit, block the request
           if (tokenCheck.projectedUsage > tokenCheck.limit) {
-            return res.status(429).json({
+            return res.status(403).json({
               success: false,
               error: {
                 code: 'QUOTA_EXCEEDED',
                 type: 'token',
-                message: 'Token usage limit exceeded for this request. Please reduce request size or upgrade your plan.',
+                message: 'Quota exceeded. Upgrade your plan to continue.',
                 details: {
+                  feature: 'token_usage',
                   currentUsage: tokenCheck.currentUsage,
                   limit: tokenCheck.limit,
                   requested: tokensUsed,
                   projectedUsage: tokenCheck.projectedUsage,
+                  remaining: Math.max(0, tokenCheck.limit - tokenCheck.currentUsage),
                   plan: tokenCheck.plan
                 }
               }
@@ -120,22 +120,21 @@ export const checkQuota = (feature, options = {}) => {
         };
         
         if (!mediaCheck.allowed) {
-          // Soft warning for media duration limits
-          console.warn(`[QUOTA WARNING] User ${req.user.id} approaching media duration limit: ${mediaCheck.currentUsage}/${mediaCheck.limit}`);
-          
           // If projected duration exceeds limit, block the request
           if (mediaCheck.projectedDuration > mediaCheck.limit) {
-            return res.status(429).json({
+            return res.status(403).json({
               success: false,
               error: {
                 code: 'QUOTA_EXCEEDED',
                 type: 'media',
-                message: 'Media duration limit exceeded for this request. Please reduce duration or upgrade your plan.',
+                message: 'Quota exceeded. Upgrade your plan to continue.',
                 details: {
+                  feature: 'media_duration',
                   currentUsage: mediaCheck.currentUsage,
                   limit: mediaCheck.limit,
                   requested: mediaDuration,
                   projectedDuration: mediaCheck.projectedDuration,
+                  remaining: Math.max(0, mediaCheck.limit - mediaCheck.currentUsage),
                   plan: mediaCheck.plan
                 }
               }
@@ -156,14 +155,14 @@ export const checkQuota = (feature, options = {}) => {
         };
         
         if (!dailyCheck.allowed) {
-          return res.status(429).json({
+          return res.status(403).json({
             success: false,
             error: {
               code: 'QUOTA_EXCEEDED',
               type: 'daily',
-              message: `Daily API call limit exceeded. Please try again tomorrow or upgrade your plan.`,
+              message: 'Quota exceeded. Upgrade your plan to continue.',
               details: {
-                dailyCountKey,
+                feature: dailyCountKey,
                 currentUsage: dailyCheck.currentUsage,
                 limit: dailyCheck.limit,
                 remaining: dailyCheck.remaining,
@@ -179,7 +178,7 @@ export const checkQuota = (feature, options = {}) => {
 
       next();
     } catch (error) {
-      console.error('Quota check error:', error);
+      // Error will be logged by centralized error handler
       return res.status(500).json({
         success: false,
         error: {

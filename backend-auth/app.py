@@ -419,7 +419,7 @@ async def test_email(email: str):
     
     ✅ Email service is working correctly!
     
-    This is a test email from your Finity AI SEO Article Writer application.
+    This is a test email from your Nova‑XFinity AI SEO Article Writer application.
     If you received this email, your SMTP configuration is correct.
     """
     

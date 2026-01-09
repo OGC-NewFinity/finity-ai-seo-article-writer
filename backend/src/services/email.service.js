@@ -5,7 +5,9 @@
 
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.EMAIL_API_KEY || process.env.RESEND_API_KEY);
+// Initialize Resend only if API key is available
+const apiKey = process.env.EMAIL_API_KEY || process.env.RESEND_API_KEY;
+const resend = apiKey ? new Resend(apiKey) : null;
 const FROM_EMAIL = process.env.EMAIL_FROM || 'noreply@nova-xfinity.ai';
 const FROM_NAME = process.env.EMAIL_FROM_NAME || 'Nova‑XFinity AI';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
@@ -14,8 +16,8 @@ const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
  * Send email using Resend
  */
 export const sendEmail = async ({ to, subject, html, text }) => {
-  if (!resend.apiKey) {
-    console.warn('[Email Service] Email API key not configured. Email not sent.');
+  if (!resend || !apiKey) {
+    // Email API key not configured - silently return failure
     return { success: false, error: 'Email API key not configured' };
   }
 
@@ -28,10 +30,9 @@ export const sendEmail = async ({ to, subject, html, text }) => {
       text
     });
 
-    console.log(`[Email Service] Email sent successfully to ${to}: ${subject}`);
     return { success: true, id: result.data?.id };
   } catch (error) {
-    console.error(`[Email Service] Failed to send email to ${to}:`, error);
+    // Error will be logged by centralized error handler if needed
     return { success: false, error: error.message };
   }
 };

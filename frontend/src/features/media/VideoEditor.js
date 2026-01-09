@@ -15,7 +15,7 @@ const VideoEditor = ({ duration, setDuration, withVoice, setWithVoice }) => {
             <button 
               key=${d}
               onClick=${() => setDuration(d)}
-              className=${`py-2 rounded-xl text-[10px] font-black border transition-all ${duration === d ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/20' : 'bg-slate-50 border-slate-100 text-slate-400 hover:border-slate-200'}`}
+              className=${`py-2 rounded-xl text-[10px] font-black border transition-all ${duration === d ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/20' : 'bg-slate-800 border-slate-700 text-slate-300 hover:border-slate-600 hover:bg-slate-700'}`}
             >
               ${d}
             </button>
@@ -23,16 +23,16 @@ const VideoEditor = ({ duration, setDuration, withVoice, setWithVoice }) => {
         </div>
       </div>
 
-      <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+      <div className="flex items-center justify-between p-4 bg-slate-800 rounded-2xl border border-slate-700">
         <div className="flex items-center space-x-3">
           <i className=${`fa-solid fa-microphone-lines text-blue-500 ${withVoice ? 'animate-pulse' : ''}`}></i>
-          <span className="text-[10px] font-black text-slate-700 uppercase tracking-tight">AI Voiceover Intro</span>
+          <span className="text-[10px] font-black text-slate-200 uppercase tracking-tight">AI Voiceover Introduction</span>
         </div>
         <button 
           onClick=${() => setWithVoice(!withVoice)}
           className=${`w-10 h-6 rounded-full transition-all relative ${withVoice ? 'bg-blue-600' : 'bg-slate-300'}`}
         >
-          <div className=${`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${withVoice ? 'left-5' : 'left-1'}`}></div>
+          <div className=${`absolute top-1 w-4 h-4 bg-slate-100 rounded-full transition-all ${withVoice ? 'left-5' : 'left-1'}`}></div>
         </button>
       </div>
     </div>

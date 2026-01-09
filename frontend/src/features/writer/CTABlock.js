@@ -51,7 +51,7 @@ const CTABlock = ({ topic, keywords, focusKeyphrase, onCTAGenerated, existingCTA
                         <i className="fa-solid fa-bolt text-xs text-white"></i>
                      </div>
                      <div className="flex flex-col">
-                        <span className="text-xs font-black text-white uppercase tracking-tight">Finity AI Optimized</span>
+                        <span className="text-xs font-black text-white uppercase tracking-tight">Nova‑XFinity AI Optimized</span>
                         <span className="text-[10px] font-bold text-slate-500">Branded Engagement Sync Active</span>
                      </div>
                   </div>
@@ -60,7 +60,7 @@ const CTABlock = ({ topic, keywords, focusKeyphrase, onCTAGenerated, existingCTA
                       navigator.clipboard.writeText(content);
                       alert("CTA HTML copied to clipboard.");
                     }}
-                    className="px-8 py-3.5 bg-white text-slate-900 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-50 transition-all active:scale-95 shadow-xl"
+                    className="px-8 py-3.5 bg-slate-800 text-slate-100 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-900/30 transition-all active:scale-95 shadow-xl border border-slate-700"
                   >
                     <i className="fa-solid fa-copy mr-2"></i> Copy CTA HTML
                   </button>
@@ -87,7 +87,7 @@ const CTABlock = ({ topic, keywords, focusKeyphrase, onCTAGenerated, existingCTA
                </div>
                <h4 className="text-3xl font-black text-white mb-4 tracking-tight">Synthesize Final Call to Action</h4>
                <p className="text-slate-400 text-base font-medium max-w-lg mb-10 leading-relaxed">
-                 Generate a compelling conclusion that encourages readers to engage with the content or discover the scaling power of Finity AI for their own projects.
+                 Generate a compelling conclusion that encourages readers to engage with the content or discover the scaling power of Nova‑XFinity AI for their own projects.
                </p>
                <button 
                  onClick=${handleGenerate}

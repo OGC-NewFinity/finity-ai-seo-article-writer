@@ -22,7 +22,7 @@
  */
 export const getSavedSettings = () => {
   try {
-    const saved = localStorage.getItem('finity_settings');
+    const saved = localStorage.getItem('nova_xfinity_settings');
     if (saved) {
       return JSON.parse(saved);
     }

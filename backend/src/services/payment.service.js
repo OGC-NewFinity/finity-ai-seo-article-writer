@@ -6,7 +6,9 @@
 import Stripe from 'stripe';
 import { getPlanByTier, getPlanMetadata, isValidTier } from '../utils/unifiedPlans.js';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+// Initialize Stripe only if API key is available
+const stripeKey = process.env.STRIPE_SECRET_KEY;
+const stripe = stripeKey ? new Stripe(stripeKey) : null;
 
 /**
  * Stripe Pricing IDs (set these in your Stripe dashboard)
@@ -20,6 +22,10 @@ const PRICING_IDS = {
  * Create Stripe customer
  */
 export const createCustomer = async (email, name, userId = null) => {
+  if (!stripe) {
+    throw new Error('Stripe is not configured. Please set STRIPE_SECRET_KEY environment variable.');
+  }
+
   const customerData = {
     email,
     name,
@@ -40,6 +46,10 @@ export const createCustomer = async (email, name, userId = null) => {
  * Uses unified plan structure with standardized metadata
  */
 export const createCheckoutSession = async (userId, plan, customerId = null) => {
+  if (!stripe) {
+    throw new Error('Stripe is not configured. Please set STRIPE_SECRET_KEY environment variable.');
+  }
+
   if (!isValidTier(plan)) {
     throw new Error(`Invalid plan: ${plan}. Must be PRO or ENTERPRISE.`);
   }
@@ -91,6 +101,10 @@ export const createCheckoutSession = async (userId, plan, customerId = null) => 
  * Create portal session for subscription management
  */
 export const createPortalSession = async (customerId) => {
+  if (!stripe) {
+    throw new Error('Stripe is not configured. Please set STRIPE_SECRET_KEY environment variable.');
+  }
+
   const session = await stripe.billingPortal.sessions.create({
     customer: customerId,
     return_url: `${process.env.FRONTEND_URL}/account`
@@ -131,7 +145,8 @@ export const handleWebhook = async (event) => {
       break;
     
     default:
-      console.log(`Unhandled event type: ${event.type}`);
+      // Unhandled event type - silently ignore
+      break;
   }
 };
 
@@ -139,6 +154,10 @@ export const handleWebhook = async (event) => {
  * Get subscription from Stripe
  */
 export const getStripeSubscription = async (subscriptionId) => {
+  if (!stripe) {
+    throw new Error('Stripe is not configured. Please set STRIPE_SECRET_KEY environment variable.');
+  }
+
   return await stripe.subscriptions.retrieve(subscriptionId);
 };
 
@@ -146,6 +165,10 @@ export const getStripeSubscription = async (subscriptionId) => {
  * Cancel subscription in Stripe
  */
 export const cancelStripeSubscription = async (subscriptionId, immediately = false) => {
+  if (!stripe) {
+    throw new Error('Stripe is not configured. Please set STRIPE_SECRET_KEY environment variable.');
+  }
+
   if (immediately) {
     return await stripe.subscriptions.cancel(subscriptionId);
   } else {

@@ -289,26 +289,160 @@ Create `.vscode/settings.json`:
 
 ## API Keys Setup
 
-### Google Gemini API Key
+All API keys must be configured in your `.env` file (project root). The application will validate required API keys at startup and exit with a clear error message if any are missing.
 
-1. Go to [Google AI Studio](https://makersuite.google.com/app/apikey)
+### Required API Keys
+
+#### Google Gemini API Key (Required)
+
+The primary AI provider. The application requires this key to function.
+
+1. Go to [Google AI Studio](https://aistudio.google.com/app/apikey)
 2. Create a new API key
-3. Add to `.env.local`:
+3. Add to `.env`:
    ```env
-   GEMINI_API_KEY=your_key_here
+   GEMINI_API_KEY=your_gemini_api_key_here
    ```
 
-### OpenAI API Key (Optional)
+**Note:** Without this key, the application will fail to start.
+
+### Optional AI Provider API Keys
+
+These enable additional AI providers that users can select in the application settings. If not configured, those provider options will be unavailable.
+
+#### OpenAI API Key (Optional)
 
 1. Go to [OpenAI Platform](https://platform.openai.com/api-keys)
 2. Create a new API key
-3. Store via Settings UI or backend API
+3. Add to `.env`:
+   ```env
+   OPENAI_API_KEY=your_openai_api_key_here
+   ```
 
-### Anthropic Claude API Key (Optional)
+#### Anthropic Claude API Key (Optional)
 
-1. Go to [Anthropic Console](https://console.anthropic.com/)
+1. Go to [Anthropic Console](https://console.anthropic.com/account/keys)
 2. Create an API key
-3. Store via Settings UI or backend API
+3. Add to `.env`:
+   ```env
+   ANTHROPIC_API_KEY=your_anthropic_api_key_here
+   ```
+
+#### Groq API Key (Optional)
+
+Used for Llama models via Groq.
+
+1. Go to [Groq Console](https://console.groq.com/keys)
+2. Create an API key
+3. Add to `.env`:
+   ```env
+   GROQ_API_KEY=your_groq_api_key_here
+   ```
+
+### Payment Provider API Keys
+
+#### Stripe (Optional)
+
+Required for Stripe payment processing and subscriptions.
+
+1. Go to [Stripe Dashboard](https://dashboard.stripe.com/)
+2. Navigate to **Developers** → **API keys**
+3. Copy your **Secret key**
+4. Add to `.env`:
+   ```env
+   STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key
+   STRIPE_PRICE_ID_PRO=price_xxxxx  # From Stripe Products dashboard
+   STRIPE_PRICE_ID_ENTERPRISE=price_xxxxx  # From Stripe Products dashboard
+   ```
+
+5. For webhooks (required for production):
+   ```bash
+   # Install Stripe CLI
+   stripe listen --forward-to localhost:3001/api/webhooks/stripe
+   ```
+   Copy the webhook signing secret (starts with `whsec_...`) to `.env`:
+   ```env
+   STRIPE_WEBHOOK_SECRET=whsec_xxxxx
+   ```
+
+#### PayPal (Optional)
+
+Required for PayPal payment processing and subscriptions.
+
+1. Go to [PayPal Developer Dashboard](https://developer.paypal.com/)
+2. Navigate to **My Apps & Credentials**
+3. Create a new app or use existing app
+4. Copy **Client ID** and **Secret**
+5. Add to `.env`:
+   ```env
+   PAYPAL_CLIENT_ID=your_paypal_client_id
+   PAYPAL_CLIENT_SECRET=your_paypal_client_secret
+   PAYPAL_MODE=sandbox  # or 'live' for production
+   PAYPAL_PLAN_ID_PRO=plan_xxxxx  # From PayPal Products dashboard
+   PAYPAL_PLAN_ID_ENTERPRISE=plan_xxxxx  # From PayPal Products dashboard
+   ```
+
+6. For webhooks (required for production):
+   - Go to **My Apps & Credentials** → **Webhooks**
+   - Create a webhook and copy the **Webhook ID**
+   - Add to `.env`:
+     ```env
+     PAYPAL_WEBHOOK_ID=your_paypal_webhook_id
+     ```
+
+### Email Service API Keys
+
+#### Resend (Optional)
+
+Used for sending transactional emails (quota warnings, password resets, etc.).
+
+1. Go to [Resend](https://resend.com/api-keys)
+2. Create an API key
+3. Add to `.env`:
+   ```env
+   EMAIL_API_KEY=re_xxxxx  # or RESEND_API_KEY
+   EMAIL_FROM=noreply@yourdomain.com
+   EMAIL_FROM_NAME=Nova‑XFinity AI
+   ```
+
+**Note:** If not configured, email features will be disabled and warnings will be logged.
+
+### Environment Variable Validation
+
+The application validates all required environment variables at startup:
+
+- **Required variables** (app will exit if missing):
+  - `DATABASE_URL`
+  - `SECRET` (JWT secret)
+  - `GEMINI_API_KEY` (primary AI provider)
+
+- **Optional variables** (warnings if missing, features unavailable):
+  - `OPENAI_API_KEY`
+  - `ANTHROPIC_API_KEY`
+  - `GROQ_API_KEY`
+  - `STRIPE_SECRET_KEY`
+  - `PAYPAL_CLIENT_ID` / `PAYPAL_CLIENT_SECRET`
+  - `EMAIL_API_KEY` / `RESEND_API_KEY`
+
+When the application starts, you'll see validation output:
+
+```
+✅ All required environment variables are set
+⚠️  Environment Variable Warnings:
+   - Optional API key not set: OPENAI_API_KEY (some features may be unavailable)
+   - Optional API key not set: STRIPE_SECRET_KEY (some features may be unavailable)
+```
+
+If required variables are missing:
+
+```
+❌ Missing Required Environment Variables:
+   - Missing required environment variable: DATABASE_URL
+   - Missing critical API key: GEMINI_API_KEY
+
+💡 Please set all required environment variables in your .env file.
+   See .env.example for a complete list of required variables.
+```
 
 ## Database Access
 
@@ -444,14 +578,32 @@ npx prisma generate
 | Variable | Description | Required |
 |----------|-------------|----------|
 | `DATABASE_URL` | PostgreSQL connection string | Yes |
-| `REDIS_URL` | Redis connection string | Yes |
-| `JWT_SECRET` | JWT signing secret | Yes |
-| `JWT_REFRESH_SECRET` | Refresh token secret | Yes |
-| `NODE_ENV` | Environment (development/production) | Yes |
-| `PORT` | Server port | Yes |
-| `CORS_ORIGIN` | Allowed CORS origins | Yes |
-| `EMAIL_SERVICE` | Email provider | No |
-| `EMAIL_API_KEY` | Email API key | No |
+| `SECRET` | JWT signing secret | Yes |
+| `GEMINI_API_KEY` | Gemini API key (primary AI provider) | Yes |
+| `OPENAI_API_KEY` | OpenAI API key | No |
+| `ANTHROPIC_API_KEY` | Anthropic/Claude API key | No |
+| `GROQ_API_KEY` | Groq API key (for Llama models) | No |
+| `STRIPE_SECRET_KEY` | Stripe secret key | No |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret | No |
+| `STRIPE_PRICE_ID_PRO` | Stripe price ID for Pro plan | No |
+| `STRIPE_PRICE_ID_ENTERPRISE` | Stripe price ID for Enterprise plan | No |
+| `PAYPAL_CLIENT_ID` | PayPal client ID | No |
+| `PAYPAL_CLIENT_SECRET` | PayPal client secret | No |
+| `PAYPAL_MODE` | PayPal mode (sandbox/live) | No |
+| `PAYPAL_PLAN_ID_PRO` | PayPal plan ID for Pro plan | No |
+| `PAYPAL_PLAN_ID_ENTERPRISE` | PayPal plan ID for Enterprise plan | No |
+| `PAYPAL_WEBHOOK_ID` | PayPal webhook ID | No |
+| `EMAIL_API_KEY` | Resend API key | No |
+| `RESEND_API_KEY` | Resend API key (alternative name) | No |
+| `EMAIL_FROM` | Email sender address | No |
+| `EMAIL_FROM_NAME` | Email sender name | No |
+| `FRONTEND_URL` | Frontend URL for redirects | No |
+| `PORT` | Server port | No (default: 3001) |
+| `CORS_ORIGIN` | Allowed CORS origins | No (default: http://localhost:3000) |
+| `NODE_ENV` | Environment (development/production) | No |
+| `DEFAULT_AI_PROVIDER` | Default AI provider (gemini/openai/anthropic/llama) | No (default: gemini) |
+
+**Note:** See `.env.example` in the project root for a complete list with descriptions.
 
 ## Access Points
 

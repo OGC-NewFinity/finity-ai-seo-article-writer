@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import htm from 'htm';
-import { performResearch } from '../services/geminiResearchService.js';
+import { performResearch } from '../frontend/src/services/geminiResearchService.js';
+import OnboardingBanner from './common/OnboardingBanner.js';
+import Tooltip from './common/Tooltip.js';
 
 const html = htm.bind(React.createElement);
 
@@ -63,18 +65,32 @@ const Research = () => {
 
   return html`
     <div className="max-w-6xl mx-auto space-y-12 animate-fadeIn pb-20">
-      <div className="bg-white p-12 rounded-[2.5rem] shadow-sm border border-gray-100 text-center relative overflow-hidden">
+      <div className="bg-slate-900 p-12 rounded-[2.5rem] shadow-sm border border-slate-800 text-center relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50 opacity-20 rounded-full -mr-32 -mt-32 blur-3xl"></div>
         
         <div className="relative z-10">
-          <h2 className="text-4xl font-black text-slate-800 mb-3 tracking-tight">Research Intelligence Lab</h2>
-          <p className="text-slate-500 mb-12 font-medium max-w-xl mx-auto">Ground your articles and campaigns in real-time web data using the Gemini Search Grounding engine.</p>
+          <h2 className="text-4xl font-black text-white mb-3 tracking-tight">Research Intelligence Lab</h2>
+          <p className="text-slate-400 mb-8 font-medium max-w-xl mx-auto">Ground your articles and campaigns in real-time web data using the Gemini Search Grounding engine.</p>
           
+          <${OnboardingBanner}
+            id="research-welcome"
+            title="Welcome to Research Intelligence Lab!"
+            message="Enter your research query to get real-time, grounded information from the web. Our AI will analyze sources and synthesize findings with citations. Use quick search buttons for common queries."
+            icon="fa-microscope"
+            type="info"
+          />
+
           <div className="relative max-w-3xl mx-auto group">
+            <div className="flex items-center gap-2 mb-3 justify-center">
+              <${Tooltip} text="Enter your research question or topic. Be specific for better results. Examples: 'Latest statistics on AI adoption in healthcare', 'Current trends in renewable energy 2024'." position="bottom">
+                <i className="fa-solid fa-circle-question text-slate-400 text-sm cursor-help hover:text-blue-400 transition-colors"></i>
+              </${Tooltip}>
+              <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Research Query</span>
+            </div>
             <input 
               type="text" 
-              className="w-full pl-16 pr-44 py-6 bg-slate-50 border border-slate-200 rounded-[2rem] focus:ring-8 focus:ring-blue-100 focus:outline-none text-xl font-bold text-slate-700 transition-all placeholder-slate-400 shadow-inner"
-              placeholder="Search for stats, news, or trends..."
+              className="w-full pl-16 pr-44 py-6 bg-slate-800 border border-slate-700 rounded-[2rem] focus:ring-8 focus:ring-blue-900/50 focus:outline-none text-xl font-bold text-white transition-all placeholder-slate-500 shadow-inner"
+              placeholder="Example: 'Latest statistics on React framework adoption in enterprise applications'"
               value=${query}
               onChange=${e => setQuery(e.target.value)}
               onKeyDown=${e => e.key === 'Enter' && handleResearch()}
@@ -98,7 +114,7 @@ const Research = () => {
                  key=${s.label}
                  onClick=${() => handleResearch(s.prompt)}
                  disabled=${loading}
-                 className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black text-slate-500 uppercase tracking-widest hover:border-blue-500 hover:text-blue-600 transition-all disabled:opacity-30"
+                 className="px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-[10px] font-black text-slate-300 uppercase tracking-widest hover:border-blue-500 hover:text-blue-400 transition-all disabled:opacity-30"
                >
                  ${s.label}
                </button>
@@ -108,7 +124,7 @@ const Research = () => {
           ${loading && html`
             <div className="mt-8 animate-fadeIn">
               <p className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] mb-2">${statusMsg}</p>
-              <div className="w-48 h-1 bg-slate-100 rounded-full mx-auto overflow-hidden">
+              <div className="w-48 h-1 bg-slate-800 rounded-full mx-auto overflow-hidden border border-slate-700">
                 <div className="bg-blue-600 h-full w-1/3 animate-progressLoop"></div>
               </div>
             </div>
@@ -119,26 +135,26 @@ const Research = () => {
       ${results && html`
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
           <div className="lg:col-span-2 space-y-8">
-            <div className="bg-white p-12 rounded-[2.5rem] shadow-sm border border-gray-100 relative">
+            <div className="bg-slate-900 p-12 rounded-[2.5rem] shadow-sm border border-slate-800 relative">
               <div className="absolute top-8 right-12 flex items-center space-x-2">
                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
                  <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest">Grounded Result</span>
               </div>
-              <h3 className="text-xs font-black mb-10 text-slate-800 uppercase tracking-widest flex items-center">
+              <h3 className="text-xs font-black mb-10 text-slate-100 uppercase tracking-widest flex items-center">
                  <i className="fa-solid fa-file-lines text-blue-600 mr-3 text-lg"></i> Research Synthesis
               </h3>
-              <div className="prose prose-slate prose-lg max-w-none text-slate-600 leading-relaxed font-medium whitespace-pre-wrap editor-html-content">
+              <div className="prose prose-invert prose-lg max-w-none text-slate-300 leading-relaxed font-medium whitespace-pre-wrap editor-html-content">
                 ${results.summary}
               </div>
               
-              <div className="mt-12 pt-8 border-t border-slate-50 flex justify-between items-center">
+              <div className="mt-12 pt-8 border-t border-slate-800 flex justify-between items-center">
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Citations provided by Google Search Tooling</p>
                 <button 
                   onClick=${() => {
                     navigator.clipboard.writeText(results.summary);
                     alert("Research copied to clipboard.");
                   }}
-                  className="px-6 py-2 bg-slate-50 text-slate-600 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-100 transition-all"
+                  className="px-6 py-2 bg-slate-800 text-slate-300 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-700 transition-all border border-slate-700"
                 >
                   <i className="fa-solid fa-copy mr-2"></i> Copy Summary
                 </button>
@@ -178,16 +194,16 @@ const Research = () => {
               </ul>
             </div>
 
-            <div className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm">
-               <h4 className="text-[10px] font-black text-slate-800 uppercase tracking-widest mb-4">Research Impact</h4>
+            <div className="bg-slate-900 p-8 rounded-[2rem] border border-slate-800 shadow-sm">
+               <h4 className="text-[10px] font-black text-slate-100 uppercase tracking-widest mb-4">Research Impact</h4>
                <div className="space-y-4">
-                  <div className="flex justify-between items-center py-3 border-b border-slate-50">
+                  <div className="flex justify-between items-center py-3 border-b border-slate-800">
                      <span className="text-[10px] font-bold text-slate-400 uppercase">Search Recency</span>
-                     <span className="text-[10px] font-black text-blue-600 uppercase tracking-tight">Real-Time</span>
+                     <span className="text-[10px] font-black text-blue-500 uppercase tracking-tight">Real-Time</span>
                   </div>
-                  <div className="flex justify-between items-center py-3 border-b border-slate-50">
+                  <div className="flex justify-between items-center py-3 border-b border-slate-800">
                      <span className="text-[10px] font-bold text-slate-400 uppercase">Grounding Mode</span>
-                     <span className="text-[10px] font-black text-blue-600 uppercase tracking-tight">Live Web Analytics</span>
+                     <span className="text-[10px] font-black text-blue-500 uppercase tracking-tight">Live Web Analytics</span>
                   </div>
                   <div className="flex justify-between items-center py-3">
                      <span className="text-[10px] font-bold text-slate-400 uppercase">Trust Score</span>

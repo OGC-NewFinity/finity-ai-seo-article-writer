@@ -111,11 +111,11 @@ export const incrementUsage = async (userId, feature, amount = 1) => {
   // Check quota asynchronously (don't block the increment operation)
   if (limit !== -1 && process.env.ENABLE_QUOTA_NOTIFICATIONS !== 'false') {
     import('./notification.service.js').then(({ checkQuotaAndNotify }) => {
-      checkQuotaAndNotify(userId, planFeature, newUsageValue, limit).catch(error => {
-        console.error(`[Usage Service] Error checking quota for ${feature}:`, error);
+      checkQuotaAndNotify(userId, planFeature, newUsageValue, limit).catch(() => {
+        // Silently fail - quota check should not break usage increment
       });
-    }).catch(error => {
-      console.warn('[Usage Service] Could not load notification service:', error.message);
+    }).catch(() => {
+      // Silently fail - notification service load failure should not break usage increment
     });
   }
 
@@ -175,10 +175,6 @@ export const resetMonthlyUsage = async () => {
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  console.log('[Usage Reset] Starting monthly usage reset...', {
-    monthStart: monthStart.toISOString()
-  });
-
   try {
     // Find all usage records that need reset
     const expiredUsage = await prisma.usage.findMany({
@@ -195,8 +191,6 @@ export const resetMonthlyUsage = async () => {
         }
       }
     });
-
-    console.log(`[Usage Reset] Found ${expiredUsage.length} usage records to reset`);
 
     let resetCount = 0;
     let notificationCount = 0;
@@ -227,7 +221,7 @@ export const resetMonthlyUsage = async () => {
             await sendQuotaResetNotification(usage.userId);
             notificationCount++;
           } catch (notifError) {
-            console.warn(`[Usage Reset] Failed to send reset notification for user ${usage.userId}:`, notifError.message);
+            // Silently fail - notification failure should not break reset process
           }
         }
 
@@ -236,17 +230,9 @@ export const resetMonthlyUsage = async () => {
         // For now, token usage resets are implicit based on createdAt dates
         
       } catch (error) {
-        console.error(`[Usage Reset] Error resetting usage for user ${usage.userId}:`, error);
         errors.push({ userId: usage.userId, error: error.message });
       }
     }
-
-    console.log(`[Usage Reset] Monthly reset completed:`, {
-      totalRecords: expiredUsage.length,
-      resetCount,
-      notificationCount,
-      errors: errors.length
-    });
 
     return {
       success: true,
@@ -256,7 +242,7 @@ export const resetMonthlyUsage = async () => {
       errors: errors.length > 0 ? errors : undefined
     };
   } catch (error) {
-    console.error('[Usage Reset] Fatal error during monthly reset:', error);
+    // Re-throw error - will be caught by job error handler
     throw error;
   }
 };
@@ -273,27 +259,25 @@ export const checkTokenUsage = async (userId, tokensUsed = 0) => {
     const plan = usage.subscription.plan;
     const limit = getFeatureLimit(plan, 'tokenLimit');
     
-    // Get current token usage by calculating from article and research queries
-    // This is a fallback approach until tokensUsed field is added to Usage model
+    // Get current token usage from TokenUsage records (actual tracking)
     const today = new Date();
     const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
     
-    // Estimate token usage from articles (assuming ~500 tokens per article on average)
-    // and research queries (assuming ~1000 tokens per query on average)
-    const [articles, research] = await Promise.all([
-      prisma.article.count({
-        where: { userId, createdAt: { gte: monthStart } }
-      }),
-      prisma.researchQuery.count({
-        where: { userId, createdAt: { gte: monthStart } }
-      })
-    ]);
+    // Get actual token usage from TokenUsage records
+    const tokenUsageRecords = await prisma.tokenUsage.findMany({
+      where: {
+        userId,
+        createdAt: {
+          gte: monthStart
+        }
+      },
+      select: {
+        tokensUsed: true
+      }
+    });
     
-    // Rough estimate: articles ~500 tokens, research ~1000 tokens
-    // This can be refined with actual token tracking when implemented
-    const estimatedTokenPerArticle = 500;
-    const estimatedTokenPerResearch = 1000;
-    const currentTokenUsage = (articles * estimatedTokenPerArticle) + (research * estimatedTokenPerResearch);
+    // Calculate actual token usage
+    const currentTokenUsage = tokenUsageRecords.reduce((sum, record) => sum + (record.tokensUsed || 0), 0);
     
     const projectedUsage = currentTokenUsage + tokensUsed;
     

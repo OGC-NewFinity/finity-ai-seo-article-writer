@@ -29,7 +29,7 @@ export const authenticate = async (req, res, next) => {
     // Verify token using the same SECRET as FastAPI backend
     const secret = process.env.SECRET;
     if (!secret) {
-      console.error('SECRET environment variable is not set');
+      // Critical configuration error - will be logged by error handler
       return res.status(500).json({
         success: false,
         error: {
@@ -85,8 +85,7 @@ export const authenticate = async (req, res, next) => {
       });
     }
 
-    // Handle other errors
-    console.error('Authentication error:', error);
+    // Handle other errors - error will be logged by centralized error handler
     return res.status(401).json({
       success: false,
       error: {

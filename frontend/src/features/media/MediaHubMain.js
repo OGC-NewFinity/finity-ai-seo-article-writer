@@ -94,7 +94,7 @@ const MediaHubMain = () => {
     setResultImage(null);
     setResultVideo(null);
     setResultAudio(null);
-    setStatusMessage('Finity Engine Initiating Video Synthesis...');
+    setStatusMessage('Nova‑XFinity Engine Initiating Video Synthesis...');
     
     const messages = [
       'Analyzing temporal coherence...',

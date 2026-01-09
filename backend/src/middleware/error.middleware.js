@@ -1,5 +1,17 @@
+import { logError } from './logger.middleware.js';
+
+/**
+ * Global error handler middleware
+ * Handles all errors thrown in the application
+ * 
+ * @param {Error} err - Error object
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @param {Function} next - Express next middleware function
+ */
 export const errorHandler = (err, req, res, next) => {
-  console.error('Error:', err);
+  // Log error using centralized logger
+  logError(err, req);
 
   const statusCode = err.statusCode || 500;
   const message = err.message || 'Internal Server Error';

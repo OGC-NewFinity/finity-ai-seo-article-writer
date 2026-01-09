@@ -1,7 +1,7 @@
 
 import React from 'react';
 import htm from 'htm';
-import { PROVIDER_OPTIONS } from '../../../constants.js';
+import { PROVIDER_OPTIONS } from '../../../../constants.js';
 
 const html = htm.bind(React.createElement);
 
@@ -18,12 +18,12 @@ const WriterToolbar = ({ sections, setAutoTriggerAllMedia, analyzeSEO, loading, 
            </div>
         </div>
         <div className="flex space-x-3">
-          <button onClick=${() => setAutoTriggerAllMedia(true)} disabled=${sections.length === 0} className="px-5 py-2.5 text-[10px] font-black uppercase bg-slate-800 text-white rounded-xl border border-slate-700 disabled:opacity-50"><i className="fa-solid fa-images mr-2 text-blue-400"></i> FinityHub Media</button>
+          <button onClick=${() => setAutoTriggerAllMedia(true)} disabled=${sections.length === 0} className="px-5 py-2.5 text-[10px] font-black uppercase bg-slate-800 text-white rounded-xl border border-slate-700 disabled:opacity-50"><i className="fa-solid fa-images mr-2 text-blue-400"></i> Nova‑XFinity Media</button>
           <button onClick=${analyzeSEO} disabled=${loading || sections.length === 0} className="px-5 py-2.5 text-[10px] font-black uppercase bg-emerald-500 text-white rounded-xl shadow-lg shadow-emerald-500/10">SEO Audit</button>
           <button 
             onClick=${() => {
               if (sections.length === 0 || sections.some(s => !s.body)) {
-                alert("Generate all content blocks before publishing.");
+                alert("Please generate all content blocks before publishing. Ensure all sections have content to continue.");
                 return;
               }
               setIsPublishingModalOpen(true);

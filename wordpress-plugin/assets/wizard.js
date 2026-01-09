@@ -1,5 +1,5 @@
 /**
- * Finity AI Setup Wizard JavaScript
+ * Nova‑XFinity AI Setup Wizard JavaScript
  * 
  * Handles multi-step wizard navigation, form validation, and AJAX requests
  */
@@ -57,9 +57,9 @@
         });
         
         // Auto-save on input change (optional, for better UX)
-        $('#finity-wizard-form input, #finity-wizard-form select').on('change', function() {
+        $('#nova-xfinity-wizard-form input, #nova-xfinity-wizard-form select').on('change', function() {
             // Mark step as having changes
-            $(this).closest('.finity-wizard-step-content').data('has-changes', true);
+            $(this).closest('.nova-xfinity-wizard-step-content').data('has-changes', true);
         });
     }
 
@@ -138,7 +138,7 @@
                     
                     // Redirect after short delay
                     setTimeout(function() {
-                        window.location.href = response.data.redirect_url || finityWizard.ajaxUrl.replace('admin-ajax.php', 'options-general.php?page=finity-ai-settings');
+                        window.location.href = response.data.redirect_url || novaXFinityWizard.ajaxUrl.replace('admin-ajax.php', 'options-general.php?page=nova-xfinity-ai-settings');
                     }, 2000);
                 } else {
                     alert(response.data.message || finityWizard.strings.error);
@@ -176,13 +176,13 @@
      */
     function updateStepDisplay(step) {
         // Hide all step contents
-        $('.finity-wizard-step-content').hide();
+        $('.nova-xfinity-wizard-step-content').hide();
         
         // Show current step
-        $('.finity-wizard-step-content[data-step="' + step + '"]').show();
+        $('.nova-xfinity-wizard-step-content[data-step="' + step + '"]').show();
         
         // Update progress indicator
-        $('.finity-wizard-step').each(function() {
+        $('.nova-xfinity-wizard-step').each(function() {
             var stepNum = parseInt($(this).data('step'));
             $(this).removeClass('active completed');
             
@@ -409,7 +409,7 @@
      * Show success message
      */
     function showSuccessMessage() {
-        $('.finity-wizard-complete').prepend(
+        $('.nova-xfinity-wizard-complete').prepend(
             '<div class="notice notice-success is-dismissible"><p>' + 
             'Setup completed successfully! Redirecting to settings...' + 
             '</p></div>'

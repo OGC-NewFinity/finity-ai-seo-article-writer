@@ -1,5 +1,5 @@
 /**
- * Finity AI Admin JavaScript
+ * Nova‑XFinity AI Admin JavaScript
  * 
  * Handles admin interface interactions including:
  * - Content generation via AJAX

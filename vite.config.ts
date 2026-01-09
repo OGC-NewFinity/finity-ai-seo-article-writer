@@ -6,6 +6,7 @@ export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
     return {
       base: '/', // ✅ Ensure base path is root
+      publicDir: path.resolve(__dirname, 'frontend/public'), // ✅ Configure public directory
       server: {
         port: 3000,
         host: '0.0.0.0',

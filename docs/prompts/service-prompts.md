@@ -46,7 +46,7 @@ Negative Constraints:
 II. POST CONFIGURATION PARAMETERS
 - Adhere to Article Type, Language (regional spelling), Article Size, and POV.
 
-III. MEDIA FINITYHUB (IMAGE LOGIC)
+III. MEDIA NOVA‑XFINITY HUB (IMAGE LOGIC)
 - Featured Image: Every article MUST have a primary "Featured Image" planned in the initial metadata.
 - Asset Distribution: Distribute requested images across the article.
 - Metadata Format: <!-- IMAGE_PROMPT: { "style": "USER_STYLE", "aspect": "USER_ASPECT", "alt": "SEO_ALT", "filename": "URL_SAFE_NAME", "caption": "READER_CAPTION", "prompt": "DETAILED_VISUAL_PROMPT" } -->
@@ -309,7 +309,7 @@ export const generateSection = async (
 System Prompt: ${SYSTEM_INSTRUCTIONS}
 
 User Prompt:
-Create a branded Finity AI CTA for topic: ${topic}. Keyphrase: ${focusKeyphrase}
+Create a branded Nova‑XFinity AI CTA for topic: ${topic}. Keyphrase: ${focusKeyphrase}
 ```
 
 **Input Variables:**
@@ -325,21 +325,21 @@ Create a branded Finity AI CTA for topic: ${topic}. Keyphrase: ${focusKeyphrase}
 <div class="cta-block">
   <h3>Ready to Master React Hooks?</h3>
   <p>Take your React development to the next level with our comprehensive React Hooks tutorial...</p>
-  <a href="#" class="cta-button">Get Started with Finity AI</a>
+  <a href="#" class="cta-button">Get Started with Nova‑XFinity AI</a>
 </div>
 ```
 
 **Usage Context:**
 - Called when user adds a CTA block to the article
 - Typically placed at the end of articles
-- Branded with "Finity AI" or "Nova‑XFinity" messaging
+- Branded with "Nova‑XFinity AI" messaging
 
 **Implementation:**
 ```javascript
 // backend/src/services/ai/gemini.article.js
 export const generateCTA = async (topic, keywords, focusKeyphrase) => {
   const text = await callAI(
-    `Create a branded Finity AI CTA for topic: ${topic}. Keyphrase: ${focusKeyphrase}`,
+    `Create a branded Nova‑XFinity AI CTA for topic: ${topic}. Keyphrase: ${focusKeyphrase}`,
     SYSTEM_INSTRUCTIONS,
     false // HTML output
   );

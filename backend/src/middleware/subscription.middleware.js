@@ -4,7 +4,7 @@
  * Uses unified plan structure for validation
  */
 
-import { hasFeatureAccess } from '../services/subscription.service.js';
+import { hasFeatureAccess } from '../features/subscription/services/subscription.service.js';
 import { canPerformAction } from '../services/usage.service.js';
 import { isValidTier, getAvailableUpgrades } from '../utils/unifiedPlans.js';
 

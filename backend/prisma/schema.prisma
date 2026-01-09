@@ -31,6 +31,7 @@ model User {
   platformApiKey PlatformApiKey?
   notifications Notification[]
   feedbacks     Feedback[]
+  generationFailures GenerationFailure[]
   
   @@map("users")
 }
@@ -250,6 +251,28 @@ model TokenUsage {
   @@index([action])
   @@index([source])
   @@map("token_usage")
+}
+
+model GenerationFailure {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  service     String   // Service name (e.g., 'article_generation', 'image_generation', 'video_generation', 'research', 'seo_analysis')
+  model       String?  // AI model used (e.g., 'gemini-3-pro-preview', 'gpt-4o')
+  provider    String?  // AI provider (e.g., 'gemini', 'openai', 'anthropic', 'groq')
+  errorType   String   @map("error_type") // Error type (e.g., 'API_ERROR', 'QUOTA_EXCEEDED', 'VALIDATION_ERROR', 'TIMEOUT', 'UNKNOWN')
+  errorMessage String  @db.Text @map("error_message") // Error message
+  inputSnippet String? @db.Text @map("input_snippet") // Snippet of input that caused the failure (truncated for privacy)
+  metadata    Json?    // Additional metadata (request details, response status, etc.)
+  createdAt   DateTime @default(now()) @map("created_at")
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([service])
+  @@index([errorType])
+  @@index([createdAt])
+  @@index([provider])
+  @@map("generation_failures")
 }
 
 model PlatformApiKey {

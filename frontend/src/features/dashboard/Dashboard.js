@@ -2,7 +2,8 @@
 import React from 'react';
 import htm from 'htm';
 import { useAuth } from '@/hooks';
-import { ROADMAP_DATA } from '../../../constants.js';
+import { ROADMAP_DATA } from '../../../../constants.js';
+import OnboardingBanner from '../../../../components/common/OnboardingBanner.js';
 
 const html = htm.bind(React.createElement);
 
@@ -19,7 +20,7 @@ const Dashboard = () => {
               <h3 className="text-2xl font-black mb-2">Welcome, Admin!</h3>
               <p className="text-purple-100 text-sm font-medium">You have administrative access to the system.</p>
             </div>
-            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+            <div className="w-16 h-16 bg-slate-100/20 rounded-full flex items-center justify-center">
               <i className="fa-solid fa-shield-halved text-2xl"></i>
             </div>
           </div>
@@ -27,9 +28,17 @@ const Dashboard = () => {
       `}
       
       <header>
-        <h2 className="text-3xl font-black text-slate-800 tracking-tight">Agent Overview</h2>
-        <p className="text-slate-500 mt-2 font-medium">Monitoring your SEO performance and content velocity.</p>
+        <h2 className="text-3xl font-black text-white tracking-tight">Agent Overview</h2>
+        <p className="text-slate-400 mt-2 font-medium">Monitoring your SEO performance and content velocity.</p>
       </header>
+
+      <${OnboardingBanner}
+        id="dashboard-welcome"
+        title="Welcome to Nova‑XFinity Dashboard!"
+        message="Your central hub for monitoring content creation and SEO performance. Track your articles, analyze SEO scores, and review the development roadmap."
+        icon="fa-gauge-high"
+        type="info"
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         ${[
@@ -37,30 +46,30 @@ const Dashboard = () => {
           { icon: 'fa-chart-line', color: 'emerald', value: '85%', label: 'Avg. SEO Score' },
           { icon: 'fa-bolt', color: 'purple', value: '0.8s', label: 'Response Time' }
         ].map((stat, i) => html`
-          <div key=${i} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center text-center dashboard-card">
-            <div className=${`w-12 h-12 bg-${stat.color}-50 rounded-xl flex items-center justify-center text-${stat.color}-600 mb-4`}>
+          <div key=${i} className="bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-800 flex flex-col items-center text-center dashboard-card">
+            <div className=${`w-12 h-12 bg-${stat.color}-900/30 border border-${stat.color}-700 rounded-xl flex items-center justify-center text-${stat.color}-400 mb-4`}>
               <i className=${`fa-solid ${stat.icon} text-lg`}></i>
             </div>
-            <h3 className="text-2xl font-black text-slate-800">${stat.value}</h3>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">${stat.label}</p>
+            <h3 className="text-2xl font-black text-white">${stat.value}</h3>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">${stat.label}</p>
           </div>
         `)}
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-        <h3 className="text-xl font-black mb-8 flex items-center text-slate-800">
-          <i className="fa-solid fa-map text-blue-600 mr-3"></i>
+      <div className="bg-slate-900 rounded-2xl shadow-sm border border-slate-800 p-8">
+        <h3 className="text-xl font-black mb-8 flex items-center text-white">
+          <i className="fa-solid fa-map text-blue-500 mr-3"></i>
           Development Roadmap
         </h3>
-        <div className="relative border-l-2 border-slate-100 ml-4 space-y-10">
+        <div className="relative border-l-2 border-slate-800 ml-4 space-y-10">
           ${ROADMAP_DATA.map((item, idx) => html`
             <div key=${idx} className="relative pl-10">
-              <div className="absolute -left-[11px] top-0 w-5 h-5 bg-white rounded-full border-4 border-blue-600 shadow-sm"></div>
-              <h4 className="font-black text-slate-800 text-sm">
+              <div className="absolute -left-[11px] top-0 w-5 h-5 bg-slate-900 rounded-full border-4 border-blue-600 shadow-sm"></div>
+              <h4 className="font-black text-white text-sm">
                 ${item.step} 
-                <span className="text-[9px] bg-slate-100 px-2 py-0.5 rounded-md ml-3 font-black text-slate-500 uppercase tracking-widest">${item.tech}</span>
+                <span className="text-[9px] bg-slate-800 border border-slate-700 px-2 py-0.5 rounded-md ml-3 font-black text-slate-300 uppercase tracking-widest">${item.tech}</span>
               </h4>
-              <p className="text-slate-500 text-xs mt-2 leading-relaxed font-medium">${item.desc}</p>
+              <p className="text-slate-400 text-xs mt-2 leading-relaxed font-medium">${item.desc}</p>
             </div>
           `)}
         </div>

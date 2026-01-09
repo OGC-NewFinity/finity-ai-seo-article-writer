@@ -5,9 +5,13 @@ const html = htm.bind(React.createElement);
 
 const Loading = () => {
   return html`
-    <div className="flex items-center justify-center min-h-screen bg-gray-50">
+    <div className="flex items-center justify-center min-h-screen bg-slate-950">
       <div className="text-center">
-        <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+        <img 
+          src="/brand-identity/logo/nova-logo.png" 
+          alt="Nova‑XFinity AI Logo" 
+          className="w-16 h-16 mx-auto mb-4 animate-pulse"
+        />
         <p className="text-slate-400 font-medium">Loading...</p>
       </div>
     </div>
