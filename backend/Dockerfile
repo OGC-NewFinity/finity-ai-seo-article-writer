@@ -11,6 +11,9 @@ COPY package*.json ./
 # Install dependencies
 RUN npm install
 
+# Verify critical dependencies are installed (using import for ES modules)
+RUN node --input-type=module -e "import('@google/generative-ai').then(() => console.log('✅ @google/generative-ai verified')).catch(() => { console.error('❌ ERROR: @google/generative-ai not found!'); process.exit(1); })"
+
 # Copy application code
 COPY . .
 

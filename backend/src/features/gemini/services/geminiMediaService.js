@@ -11,7 +11,7 @@
  * - Media data encoding/decoding utilities
  */
 
-import { GoogleGenAI, Modality } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { getApiKey } from '../../../services/ai/gemini.shared.js';
 
 /**
@@ -23,14 +23,13 @@ import { getApiKey } from '../../../services/ai/gemini.shared.js';
  * @returns {Promise<string|null>} Base64-encoded image data URL or null if generation fails
  */
 export const generateImage = async (prompt, aspectRatio = "16:9", style = "Photorealistic") => {
-  const ai = new GoogleGenAI({ apiKey: getApiKey() });
-  const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash-image',
-    contents: { parts: [{ text: `Professional asset. Style: ${style}. Subject: ${prompt}.` }] },
-    config: { imageConfig: { aspectRatio } },
-  });
+  const genAI = new GoogleGenerativeAI(getApiKey());
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-image' });
+  const result = await model.generateContent(`Professional asset. Style: ${style}. Subject: ${prompt}.`);
+  const response = await result.response;
   
-  for (const part of response.candidates[0].content.parts) {
+  const parts = response.candidates?.[0]?.content?.parts || [];
+  for (const part of parts) {
     if (part.inlineData) {
       return `data:image/png;base64,${part.inlineData.data}`;
     }
@@ -49,23 +48,20 @@ export const generateImage = async (prompt, aspectRatio = "16:9", style = "Photo
  * @returns {Promise<string|null>} Base64-encoded edited image data URL or null if editing fails
  */
 export const editImage = async (base64ImageData, mimeType, prompt, aspectRatio = "16:9") => {
-  const ai = new GoogleGenAI({ apiKey: getApiKey() });
+  const genAI = new GoogleGenerativeAI(getApiKey());
   
   // Extract base64 data if it includes data URL prefix
   const imageData = base64ImageData.split(',')[1] || base64ImageData;
   
-  const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash-image',
-    contents: {
-      parts: [
-        { inlineData: { data: imageData, mimeType } },
-        { text: `Modify the provided image: "${prompt}".` }
-      ]
-    },
-    config: { imageConfig: { aspectRatio } }
-  });
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-image' });
+  const result = await model.generateContent([
+    { inlineData: { data: imageData, mimeType } },
+    `Modify the provided image: "${prompt}".`
+  ]);
+  const response = await result.response;
   
-  for (const part of response.candidates[0].content.parts) {
+  const parts = response.candidates?.[0]?.content?.parts || [];
+  for (const part of parts) {
     if (part.inlineData) {
       return `data:image/png;base64,${part.inlineData.data}`;
     }
@@ -105,54 +101,11 @@ export const generateVideo = async (
   duration = '9s',
   startFrameBase64 = null
 ) => {
-  const apiKey = getApiKey();
-  const ai = new GoogleGenAI({ apiKey });
+  // Note: Video generation is not available in @google/generative-ai package
+  // This would need to use REST API directly or a different package
+  throw new Error('Video generation is not yet supported with the current SDK. Please use REST API directly.');
   
-  // Compose enhanced prompt
-  const composedPrompt = composeVideoPrompt(prompt, style);
-  
-  const requestConfig = {
-    model: 'veo-3.1-fast-generate-preview',
-    prompt: `${composedPrompt}. Duration: ${duration}.`,
-    config: { 
-      numberOfVideos: 1, 
-      resolution: resolution === '720p' || resolution === '1080p' ? resolution : '720p', 
-      aspectRatio: aspectRatio === '16:9' || aspectRatio === '9:16' ? aspectRatio : '16:9'
-    }
-  };
-  
-  // Add start frame if provided
-  if (startFrameBase64) {
-    const frameData = startFrameBase64.split(',')[1] || startFrameBase64;
-    requestConfig.image = { 
-      imageBytes: frameData, 
-      mimeType: 'image/png' 
-    };
-  }
-  
-  // Start video generation operation
-  let operation = await ai.models.generateVideos(requestConfig);
-  
-  // Poll for completion
-  while (!operation.done) {
-    await new Promise(r => setTimeout(r, 10000)); // Wait 10 seconds between polls
-    operation = await ai.operations.getVideosOperation({ operation });
-    
-    // Check for operation error
-    if (operation.error) {
-      throw new Error(`Video Generation Operation Failed: ${operation.error.message || 'Unknown Error'}`);
-    }
-  }
-
-  const videoMeta = operation.response?.generatedVideos?.[0]?.video;
-  if (!videoMeta || !videoMeta.uri) {
-    throw new Error("Video generation completed but no URI was returned.");
-  }
-
-  const downloadLink = videoMeta.uri;
-  // Ensure the URL parameter joining is correct
-  const separator = downloadLink.includes('?') ? '&' : '?';
-  return `${downloadLink}${separator}key=${apiKey}`;
+  // TODO: Implement video generation using REST API
 };
 
 /**
@@ -182,26 +135,11 @@ export const composeEditingPrompt = (description, operation = "modify") => {
  * @returns {Promise<string|null>} Base64-encoded audio data URL or null if generation fails
  */
 export const generateAudio = async (text, voice = 'Kore') => {
-  const ai = new GoogleGenAI({ apiKey: getApiKey() });
-  const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash-preview-tts",
-    contents: [{ parts: [{ text: `Say with a professional marketing tone: ${text}` }] }],
-    config: {
-      responseModalities: [Modality.AUDIO],
-      speechConfig: {
-        voiceConfig: {
-          prebuiltVoiceConfig: { voiceName: voice },
-        },
-      },
-    },
-  });
+  // Note: Audio/TTS generation is not available in @google/generative-ai package
+  // This would need to use REST API directly or a different package
+  throw new Error('Audio/TTS generation is not yet supported with the current SDK. Please use REST API directly.');
   
-  const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-  if (!base64Audio) {
-    return null;
-  }
-  
-  return `data:audio/pcm;base64,${base64Audio}`;
+  // TODO: Implement audio generation using REST API
 };
 
 /**

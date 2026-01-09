@@ -7,6 +7,7 @@ import MediaOutput from './MediaOutput.js';
 import MediaPresets from './MediaPresets.js';
 import OnboardingBanner from '../../../../components/common/OnboardingBanner.js';
 import Tooltip from '../../../../components/common/Tooltip.js';
+import { showError } from '../../utils/errorHandler.js';
 
 const html = htm.bind(React.createElement);
 
@@ -28,7 +29,7 @@ const ImageGeneration = () => {
       setResultImage(url);
     } catch (e) {
       console.error(e);
-      alert("Image generation failed. Please check your prompt and try again, or contact support if the issue persists.");
+      showError(e, 'IMAGE_GENERATION_FAILED');
     } finally {
       setLoading(false);
     }

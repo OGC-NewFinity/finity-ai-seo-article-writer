@@ -3,7 +3,7 @@
  * Common functions used across all Gemini service modules
  */
 
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { SYSTEM_INSTRUCTIONS } from "../../../constants.js";
 
 /**
@@ -88,16 +88,17 @@ export const callAI = async (prompt, systemPrompt, jsonMode = false) => {
 
   try {
     if (config.id === 'gemini') {
-      const ai = new GoogleGenAI({ apiKey: config.key });
-      const response = await ai.models.generateContent({
+      const genAI = new GoogleGenerativeAI(config.key);
+      const model = genAI.getGenerativeModel({
         model: config.model,
-        contents: prompt,
-        config: {
-          systemInstruction: systemPrompt,
+        systemInstruction: systemPrompt,
+        generationConfig: {
           ...(jsonMode ? { responseMimeType: "application/json" } : {})
         }
       });
-      return response.text;
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      return response.text();
     }
 
     // Fallback standard Fetch for other providers
@@ -143,13 +144,14 @@ export const callAI = async (prompt, systemPrompt, jsonMode = false) => {
   } catch (error) {
     // Silent Fallback to Gemini if it's not the primary
     if (config.id !== 'gemini' && process.env.GEMINI_API_KEY) {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-      const response = await ai.models.generateContent({
+      const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+      const model = genAI.getGenerativeModel({
         model: 'gemini-3-flash-preview',
-        contents: `[FALLBACK MODE] ${prompt}`,
-        config: { systemInstruction: systemPrompt }
+        systemInstruction: systemPrompt
       });
-      return response.text;
+      const result = await model.generateContent(`[FALLBACK MODE] ${prompt}`);
+      const response = await result.response;
+      return response.text();
     }
     throw error;
   }

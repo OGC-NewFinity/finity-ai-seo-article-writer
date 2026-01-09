@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import htm from 'htm';
 import api from '../../services/api.js';
 import AuthLayout from './AuthLayout.js';
+import { getErrorMessage } from '../../utils/errorHandler.js';
 
 const html = htm.bind(React.createElement);
 
@@ -17,7 +18,7 @@ const ResetPassword = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const tokenParam = urlParams.get('token');
     if (!tokenParam) {
-      setError('Invalid reset token. Please request a new password reset.');
+      setError(getErrorMessage('Invalid reset token', 'AUTH_TOKEN_INVALID'));
     } else {
       setToken(tokenParam);
     }
@@ -29,12 +30,12 @@ const ResetPassword = () => {
     setMessage('');
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError(getErrorMessage('Passwords do not match', 'VALIDATION_ERROR'));
       return;
     }
 
     if (password.length < 8) {
-      setError('Password must be at least 8 characters long');
+      setError(getErrorMessage('Password must be at least 8 characters long', 'VALIDATION_ERROR'));
       return;
     }
 
@@ -50,7 +51,7 @@ const ResetPassword = () => {
         window.location.href = '/login';
       }, 2000);
     } catch (err) {
-      setError(err.response?.data?.detail || 'An error occurred. Please try again.');
+      setError(getErrorMessage(err, 'AUTH_FAILED'));
     } finally {
       setLoading(false);
     }

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import htm from 'htm';
 import { useAuth } from '@/hooks';
 import AuthLayout from './AuthLayout.js';
+import { getErrorMessage } from '../../utils/errorHandler.js';
 
 const html = htm.bind(React.createElement);
 
@@ -32,17 +33,17 @@ const Register = () => {
 
     // Validation
     if (!formData.agreedToTerms) {
-      setError('You must agree to the Privacy Policy, Terms of Service, and Return & Refund Policy');
+      setError(getErrorMessage('You must agree to the Privacy Policy, Terms of Service, and Return & Refund Policy', 'VALIDATION_ERROR'));
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      setError(getErrorMessage('Passwords do not match', 'VALIDATION_ERROR'));
       return;
     }
 
     if (formData.password.length < 8) {
-      setError('Password must be at least 8 characters long');
+      setError(getErrorMessage('Password must be at least 8 characters long', 'VALIDATION_ERROR'));
       return;
     }
 
@@ -71,7 +72,7 @@ const Register = () => {
     if (loginWithProvider) {
       loginWithProvider(provider);
     } else {
-      setError('Social login is not available. Please use email and password.');
+      setError(getErrorMessage('Social login is not available', 'OAUTH_FAILED'));
       setLoading(false);
     }
   };

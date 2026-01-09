@@ -3,6 +3,7 @@ import htm from 'htm';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks';
 import subscriptionApi from '../../services/subscriptionApi.js';
+import { showError, getErrorMessage } from '../../utils/errorHandler.js';
 import SubscriptionCard from '../../../../components/Account/SubscriptionCard.js';
 import UsageStats from './UsageStats.js';
 import PlanComparison from './PlanComparison.js';
@@ -51,12 +52,12 @@ const Subscription = () => {
         // Clear status after 5 seconds
         setTimeout(() => setConfirmationStatus(null), 5000);
       } else {
-        throw new Error(response.data.error?.message || 'Failed to execute subscription');
+        throw new Error(response.data.error?.message || 'Subscription activation failed');
       }
     } catch (err) {
       console.error('PayPal execution error:', err);
       setConfirmationStatus('error');
-      setError(err.response?.data?.error?.message || 'Failed to activate subscription. Please contact support.');
+      setError(getErrorMessage(err, 'NETWORK_ERROR'));
       // Remove query params
       navigate('/subscription', { replace: true });
     }
@@ -70,7 +71,7 @@ const Subscription = () => {
 
     if (canceled === 'true') {
       setConfirmationStatus('error');
-      setError('PayPal checkout was canceled.');
+      setError(getErrorMessage('PayPal checkout was canceled by user', 'VALIDATION_ERROR'));
       // Remove query params
       navigate('/subscription', { replace: true });
       return;
@@ -108,11 +109,7 @@ const Subscription = () => {
       }
     } catch (err) {
       console.error('Failed to load subscription data:', err);
-      setError(
-        err.response?.data?.error?.message ||
-        err.message ||
-        'Failed to load subscription information. Please try again.'
-      );
+      setError(getErrorMessage(err, 'NETWORK_ERROR'));
     } finally {
       setLoading(false);
     }
@@ -131,7 +128,7 @@ const Subscription = () => {
       }
     } catch (err) {
       console.error('Failed to create checkout session:', err);
-      alert(err.response?.data?.error?.message || 'Failed to start checkout. Please try again.');
+      showError(err, 'NETWORK_ERROR');
       setActionLoading(false);
     }
   };
@@ -149,7 +146,7 @@ const Subscription = () => {
       }
     } catch (err) {
       console.error('Failed to create portal session:', err);
-      alert(err.response?.data?.error?.message || 'Failed to open billing portal. Please try again.');
+      showError(err, 'NETWORK_ERROR');
     } finally {
       setActionLoading(false);
     }
@@ -165,13 +162,15 @@ const Subscription = () => {
       const response = await subscriptionApi.post('/api/subscription/cancel');
 
       if (response.data.success) {
-        alert('Subscription will be cancelled at the end of the current period.');
+        // Show success message using structured format
+        const successMsg = getErrorMessage('Subscription will be cancelled at the end of the current period. You can reactivate it anytime before then.', 'VALIDATION_ERROR');
+        alert(successMsg);
         // Reload subscription data to reflect the change
         await loadSubscriptionData();
       }
     } catch (err) {
       console.error('Failed to cancel subscription:', err);
-      alert(err.response?.data?.error?.message || 'Failed to cancel subscription. Please try again.');
+      showError(err, 'NETWORK_ERROR');
     } finally {
       setActionLoading(false);
     }
@@ -183,13 +182,14 @@ const Subscription = () => {
       const response = await subscriptionApi.post('/api/subscription/reactivate');
 
       if (response.data.success) {
-        alert('Subscription reactivated successfully!');
+        // Show success message
+        alert('Subscription reactivated successfully! Your subscription is now active.');
         // Reload subscription data to reflect the change
         await loadSubscriptionData();
       }
     } catch (err) {
       console.error('Failed to reactivate subscription:', err);
-      alert(err.response?.data?.error?.message || 'Failed to reactivate subscription. Please try again.');
+      showError(err, 'NETWORK_ERROR');
     } finally {
       setActionLoading(false);
     }

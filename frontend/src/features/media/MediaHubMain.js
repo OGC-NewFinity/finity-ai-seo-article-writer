@@ -7,6 +7,7 @@ import MediaHubHeader from './MediaHubHeader.js';
 import MediaHubParameters from './MediaHubParameters.js';
 import MediaOutput from './MediaOutput.js';
 import MediaPresets from './MediaPresets.js';
+import { showError, getErrorMessage } from '../../utils/errorHandler.js';
 
 const html = htm.bind(React.createElement);
 
@@ -56,7 +57,7 @@ const MediaHubMain = () => {
       setResultImage(url);
     } catch (e) {
       console.error(e);
-      alert("Generation failed.");
+      showError(e, 'IMAGE_GENERATION_FAILED');
     } finally {
       setLoading(false);
     }
@@ -72,7 +73,7 @@ const MediaHubMain = () => {
       setResultImage(url);
     } catch (e) {
       console.error(e);
-      alert("Editing failed.");
+      showError(e, 'IMAGE_GENERATION_FAILED');
     } finally {
       setLoading(false);
     }
@@ -85,7 +86,7 @@ const MediaHubMain = () => {
     if (typeof window.aistudio !== 'undefined') {
       const hasKey = await window.aistudio.hasSelectedApiKey();
       if (!hasKey) {
-        alert("Veo video generation requires a paid API key.");
+        showError('Video generation requires a valid paid API key. Go to Settings to configure your API key.', 'API_KEY_MISSING');
         await window.aistudio.openSelectKey();
       }
     }
@@ -129,10 +130,10 @@ const MediaHubMain = () => {
     } catch (e) {
       console.error(e);
       if (e.message?.includes("Requested entity was not found.")) {
-         alert("API Key error. Please re-select your key.");
+         showError(e, 'API_KEY_INVALID');
          if (typeof window.aistudio !== 'undefined') await window.aistudio.openSelectKey();
       } else {
-         alert("Synthesis failed.");
+         showError(e, 'VIDEO_GENERATION_FAILED');
       }
     } finally {
       clearInterval(interval);
@@ -167,7 +168,7 @@ const MediaHubMain = () => {
    */
   const handleTranscribeAudio = async (audioFile) => {
     if (!audioFile) {
-      alert('Please select an audio file to transcribe');
+      showError('Please select an audio file to transcribe', 'VALIDATION_ERROR');
       return;
     }
 
@@ -186,12 +187,19 @@ const MediaHubMain = () => {
       
       // Result contains: { text, language, confidence, duration, segments }
       console.log('Transcription result:', result);
-      alert(`Transcription complete!\n\nText: ${result.text?.substring(0, 200)}...`);
+      // Show success notification instead of alert
+      const notification = document.createElement('div');
+      notification.innerHTML = `<div class="fixed top-4 right-4 bg-emerald-600 text-white px-6 py-4 rounded-xl shadow-lg z-50 max-w-md">
+        <div class="font-bold text-sm mb-2">Transcription Complete!</div>
+        <div class="text-xs">${result.text?.substring(0, 200)}...</div>
+      </div>`;
+      document.body.appendChild(notification);
+      setTimeout(() => notification.remove(), 5000);
       
       return result;
     } catch (error) {
       console.error('Transcription error:', error);
-      alert(`Transcription failed: ${error.message}`);
+      showError(error, 'GENERATION_FAILED');
       throw error;
     } finally {
       setLoading(false);
@@ -218,7 +226,7 @@ const MediaHubMain = () => {
    */
   const handleSummarizeVideo = async (videoFile) => {
     if (!videoFile) {
-      alert('Please select a video file to summarize');
+      showError('Please select a video file to summarize', 'VALIDATION_ERROR');
       return;
     }
 
@@ -252,12 +260,20 @@ const MediaHubMain = () => {
       
       // Result contains: { summary, keyframes, topics, duration, insights, transcript }
       console.log('Video summary result:', result);
-      alert(`Video summary complete!\n\nSummary: ${result.summary?.substring(0, 200)}...\n\nKeyframes: ${result.keyframes?.length || 0}`);
+      // Show success notification instead of alert
+      const notification = document.createElement('div');
+      notification.innerHTML = `<div class="fixed top-4 right-4 bg-emerald-600 text-white px-6 py-4 rounded-xl shadow-lg z-50 max-w-md">
+        <div class="font-bold text-sm mb-2">Video Summary Complete!</div>
+        <div class="text-xs mb-1">${result.summary?.substring(0, 200)}...</div>
+        <div class="text-xs">Keyframes: ${result.keyframes?.length || 0}</div>
+      </div>`;
+      document.body.appendChild(notification);
+      setTimeout(() => notification.remove(), 5000);
       
       return result;
     } catch (error) {
       console.error('Video summarization error:', error);
-      alert(`Video summarization failed: ${error.message}`);
+      showError(error, 'GENERATION_FAILED');
       throw error;
     } finally {
       clearInterval(interval);

@@ -12,38 +12,63 @@ The Nova‑XFinity AI Article Writer uses a multi-provider architecture that abs
 
 ### Architecture Diagram
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    User Interface Layer                      │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐    │
-│  │ ChatGPT 3.0  │  │  Gemini AI   │  │ Nova‑XFinity Agent  │    │
-│  │   Engine     │  │   Engine     │  │ (Recommended) │    │
-│  └──────────────┘  └──────────────┘  └──────────────┘    │
-│  ┌──────────────┐  ┌──────────────┐                      │
-│  │ Image Engine │  │ Video Engine │                      │
-│  └──────────────┘  └──────────────┘                      │
-└─────────────────────────────────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│              Provider Routing Layer (Backend)                │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐    │
-│  │   OpenAI     │  │   Gemini     │  │  Anthropic   │    │
-│  │   (GPT-4o)   │  │ (Gemini 3)   │  │   (Claude)   │    │
-│  └──────────────┘  └──────────────┘  └──────────────┘    │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐    │
-│  │  Groq/Llama  │  │ Nova‑XFinity Agent │  │ Media APIs   │    │
-│  │  (Llama 3.3) │  │ Orchestrator │  │ (Gemini Veo) │    │
-│  └──────────────┘  └──────────────┘  └──────────────┘    │
-└─────────────────────────────────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│              External AI Service Providers                    │
-│  • OpenAI API          • Google Gemini API                   │
-│  • Anthropic API      • Groq API                            │
-│  • Gemini Image API    • Gemini Veo (Video)                  │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+graph TD
+    A[AI Request] --> B[Provider Manager]
+    
+    B --> C{Service Type?}
+    
+    C -->|Text Generation| D[Text Provider Router]
+    C -->|Image Generation| E[Image Provider Router]
+    C -->|Video Generation| F[Video Provider Router]
+    C -->|Audio Generation| G[Audio Provider Router]
+    C -->|Research Query| H[Research Provider Router]
+    
+    D --> I1[OpenAI<br/>gpt-4o]
+    D --> I2[Gemini<br/>gemini-3-pro]
+    D --> I3[Claude<br/>claude-3-5-sonnet]
+    D --> I4[Groq<br/>llama-3.3-70b]
+    
+    E --> J1[Gemini Image<br/>gemini-2.5-flash-image]
+    E --> J2[Stability AI<br/>stable-diffusion]
+    E --> J3[Replicate<br/>Image Models]
+    
+    F --> K1[Gemini Veo<br/>veo-3.1-fast-generate]
+    F --> K2[Runway<br/>Video Models]
+    F --> K3[Luma<br/>Video Models]
+    
+    G --> L1[Gemini TTS<br/>text-to-speech]
+    G --> L2[Suno<br/>Music Generation]
+    G --> L3[ElevenLabs<br/>Voice Synthesis]
+    
+    H --> M1[Gemini<br/>Google Search Grounding]
+    H --> M2[OpenAI<br/>Web Search]
+    H --> M3[Pinecone/Weaviate<br/>Vector Search]
+    
+    I1 -->|Fallback Chain| I2
+    I2 -->|Fallback Chain| I3
+    I3 -->|Fallback Chain| I4
+    
+    J1 -->|Fallback Chain| J2
+    J2 -->|Fallback Chain| J3
+    
+    K1 -->|Fallback Chain| K2
+    K2 -->|Fallback Chain| K3
+    
+    N[Load Balancing Logic] --> B
+    N -->|Route by Capability| C
+    N -->|Route by Cost| C
+    N -->|Route by Latency| C
+    
+    O[Fallback Manager] --> B
+    O -->|On Failure| P[Try Next Provider]
+    P -->|If All Fail| Q[Return Error]
+    
+    style A fill:#e1f5ff
+    style B fill:#fff4e1
+    style N fill:#ffe1f5
+    style O fill:#ffe1f5
+    style Q fill:#ffcccc
 ```
 
 ## Supported Providers

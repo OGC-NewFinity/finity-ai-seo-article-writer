@@ -1,0 +1,556 @@
+/**
+ * Nova‑XFinity AI Setup Wizard Styles
+ * 
+ * Updated to use Plasma Design System
+ */
+
+.nova-xfinity-setup-wizard {
+  max-width: 900px;
+  margin: 0 auto;
+  background: var(--plasma-bg-secondary);
+  border-radius: var(--plasma-radius-lg);
+  overflow: hidden;
+  box-shadow: var(--plasma-shadow-elevated);
+  color: var(--plasma-text-primary);
+}
+
+/* Wizard Header */
+.wizard-header {
+  background: linear-gradient(135deg, var(--plasma-violet) 0%, var(--plasma-pink) 100%);
+  padding: var(--plasma-spacing-2xl) var(--plasma-spacing-xl);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.wizard-header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(0, 255, 198, 0.1) 0%, transparent 70%);
+  animation: plasma-pulse 4s ease-in-out infinite;
+}
+
+@keyframes plasma-pulse {
+  0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.5; }
+  50% { transform: scale(1.1) rotate(180deg); opacity: 0.8; }
+}
+
+.wizard-logo {
+  margin-bottom: var(--plasma-spacing-lg);
+}
+
+.wizard-logo img {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--plasma-radius-lg);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.wizard-header h1 {
+  color: #fff;
+  margin: 0 0 var(--plasma-spacing-sm) 0;
+  font-size: var(--plasma-font-size-2xl);
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  position: relative;
+  z-index: 1;
+}
+
+.wizard-header p {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: var(--plasma-font-size-lg);
+  margin: 0;
+  position: relative;
+  z-index: 1;
+}
+
+/* Progress Indicator - Use Plasma Step Indicator */
+.wizard-progress {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--plasma-spacing-xl);
+  background: var(--plasma-bg-primary);
+  border-bottom: 1px solid var(--plasma-border-default);
+  position: relative;
+}
+
+.wizard-progress::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 10%;
+  right: 10%;
+  height: 2px;
+  background: var(--plasma-border-default);
+  z-index: 0;
+}
+
+.wizard-progress-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  transition: all 0.3s ease;
+}
+
+.progress-step-number {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--plasma-bg-secondary);
+  border: 2px solid var(--plasma-border-default);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: var(--plasma-font-size-lg);
+  color: var(--plasma-text-tertiary);
+  margin-bottom: var(--plasma-spacing-sm);
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.wizard-progress-step.active .progress-step-number {
+  background: transparent;
+  border-color: var(--plasma-neon-teal);
+  color: var(--plasma-neon-teal);
+  box-shadow: var(--plasma-glow-teal);
+  transform: scale(1.1);
+}
+
+.wizard-progress-step.completed .progress-step-number {
+  background: var(--plasma-neon-teal);
+  border-color: var(--plasma-neon-teal);
+  color: var(--plasma-bg-primary);
+  box-shadow: var(--plasma-glow-teal);
+  animation: checkmark-pop 0.3s ease;
+}
+
+@keyframes checkmark-pop {
+  0% { transform: scale(0.8); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+.progress-step-label {
+  font-size: var(--plasma-font-size-sm);
+  color: var(--plasma-text-tertiary);
+  text-align: center;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.wizard-progress-step.active .progress-step-label {
+  color: var(--plasma-neon-teal);
+  font-weight: 600;
+}
+
+.wizard-progress-step.completed .progress-step-label {
+  color: var(--plasma-text-primary);
+}
+
+/* Wizard Body */
+.wizard-body {
+  padding: var(--plasma-spacing-2xl);
+  min-height: 400px;
+  background: var(--plasma-bg-secondary);
+}
+
+.wizard-step-content {
+  animation: fadeInSlide 0.4s ease;
+}
+
+@keyframes fadeInSlide {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.wizard-step-content h2 {
+  color: var(--plasma-text-primary);
+  margin: 0 0 var(--plasma-spacing-sm) 0;
+  font-size: var(--plasma-font-size-2xl);
+  font-weight: 600;
+}
+
+.step-description {
+  color: var(--plasma-text-secondary);
+  font-size: var(--plasma-font-size-base);
+  margin-bottom: var(--plasma-spacing-xl);
+  line-height: 1.6;
+}
+
+/* Welcome Step */
+.wizard-welcome {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.welcome-icon {
+  font-size: 64px;
+  margin-bottom: var(--plasma-spacing-lg);
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.welcome-description {
+  color: var(--plasma-text-secondary);
+  font-size: var(--plasma-font-size-lg);
+  line-height: 1.8;
+  max-width: 600px;
+  margin: 0 auto var(--plasma-spacing-2xl);
+}
+
+.welcome-features {
+  display: flex;
+  flex-direction: column;
+  gap: var(--plasma-spacing-lg);
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: var(--plasma-spacing-md);
+  padding: var(--plasma-spacing-md) var(--plasma-spacing-lg);
+  background: var(--plasma-bg-primary);
+  border-radius: var(--plasma-radius-md);
+  border: 2px solid var(--plasma-border-default);
+  transition: all 0.3s ease;
+}
+
+.feature-item:hover {
+  background: var(--plasma-bg-tertiary);
+  border-color: var(--plasma-neon-teal);
+  box-shadow: var(--plasma-glow-teal);
+  transform: translateX(5px);
+}
+
+.feature-icon {
+  font-size: 24px;
+}
+
+.feature-item span:last-child {
+  color: var(--plasma-text-primary);
+  font-size: var(--plasma-font-size-base);
+  font-weight: 500;
+}
+
+/* Form Elements - Use Plasma UI System */
+.wizard-form-group {
+  margin-bottom: var(--plasma-spacing-lg);
+}
+
+.wizard-form-group label {
+  display: block;
+  color: var(--plasma-text-primary);
+  font-weight: 600;
+  margin-bottom: var(--plasma-spacing-sm);
+  font-size: var(--plasma-font-size-sm);
+}
+
+.wizard-form-group input,
+.wizard-form-group select {
+  width: 100%;
+  padding: var(--plasma-spacing-sm) var(--plasma-spacing-md);
+  background: var(--plasma-bg-secondary);
+  border: 2px solid var(--plasma-border-default);
+  border-radius: var(--plasma-radius-md);
+  color: var(--plasma-text-primary);
+  font-size: var(--plasma-font-size-base);
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+
+.wizard-form-group input:focus,
+.wizard-form-group select:focus {
+  outline: none;
+  border-color: var(--plasma-neon-teal);
+  box-shadow: var(--plasma-glow-teal);
+  background: var(--plasma-bg-tertiary);
+}
+
+.wizard-form-group input.error,
+.wizard-form-group select.error {
+  border-color: var(--plasma-pink);
+  box-shadow: 0 0 20px rgba(255, 60, 172, 0.3);
+}
+
+.wizard-form-group input[type="password"] {
+  font-family: 'Courier New', monospace;
+  letter-spacing: 1px;
+}
+
+.input-with-validation {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.input-with-validation input {
+  flex: 1;
+}
+
+.validation-badge {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.validation-badge.success {
+  background: rgba(0, 255, 198, 0.1);
+  color: var(--plasma-neon-teal);
+  border: 1px solid var(--plasma-neon-teal);
+}
+
+.validation-badge.error {
+  background: rgba(255, 60, 172, 0.1);
+  color: var(--plasma-pink);
+  border: 1px solid var(--plasma-pink);
+}
+
+.validation-badge.loading {
+  background: rgba(88, 100, 255, 0.1);
+  color: var(--plasma-violet);
+  border: 1px solid var(--plasma-violet);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.error-message {
+  color: var(--plasma-pink);
+  font-size: var(--plasma-font-size-sm);
+  margin-top: var(--plasma-spacing-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--plasma-spacing-xs);
+}
+
+.error-message::before {
+  content: '⚠';
+  font-size: 16px;
+}
+
+.field-description {
+  color: var(--plasma-text-secondary);
+  font-size: var(--plasma-font-size-sm);
+  margin-top: var(--plasma-spacing-sm);
+  line-height: 1.5;
+}
+
+/* Review Step */
+.wizard-review-summary {
+  background: var(--plasma-bg-primary);
+  border-radius: var(--plasma-radius-md);
+  padding: var(--plasma-spacing-xl);
+  border: 2px solid var(--plasma-border-default);
+  margin-bottom: var(--plasma-spacing-xl);
+}
+
+.review-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--plasma-spacing-md) 0;
+  border-bottom: 1px solid var(--plasma-border-default);
+}
+
+.review-item:last-child {
+  border-bottom: none;
+}
+
+.review-label {
+  color: var(--plasma-text-secondary);
+  font-weight: 500;
+  font-size: var(--plasma-font-size-sm);
+}
+
+.review-value {
+  color: var(--plasma-text-primary);
+  font-weight: 600;
+  font-size: var(--plasma-font-size-base);
+  display: flex;
+  align-items: center;
+  gap: var(--plasma-spacing-sm);
+}
+
+.review-status {
+  font-size: var(--plasma-font-size-lg);
+}
+
+.review-status.success {
+  color: var(--plasma-neon-teal);
+}
+
+.wizard-notice {
+  background: var(--plasma-bg-tertiary);
+  border-left: 4px solid var(--plasma-violet);
+  padding: var(--plasma-spacing-md) var(--plasma-spacing-lg);
+  border-radius: var(--plasma-radius-sm);
+  margin-top: var(--plasma-spacing-lg);
+}
+
+.wizard-notice p {
+  margin: 0;
+  color: var(--plasma-text-secondary);
+  font-size: var(--plasma-font-size-sm);
+  line-height: 1.6;
+}
+
+.wizard-notice strong {
+  color: var(--plasma-text-primary);
+}
+
+/* Navigation */
+.wizard-navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--plasma-spacing-xl);
+  background: var(--plasma-bg-primary);
+  border-top: 1px solid var(--plasma-border-default);
+}
+
+.wizard-nav-right {
+  display: flex;
+  gap: var(--plasma-spacing-sm);
+  margin-left: auto;
+}
+
+.wizard-navigation .button {
+  min-width: 140px;
+  padding: var(--plasma-spacing-sm) var(--plasma-spacing-lg);
+  height: auto;
+  font-size: var(--plasma-font-size-base);
+  font-weight: 600;
+  border-radius: var(--plasma-radius-md);
+  border: 2px solid;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: var(--plasma-font-family);
+}
+
+.wizard-navigation .button-secondary {
+  background: var(--plasma-bg-elevated);
+  border-color: var(--plasma-border-default);
+  color: var(--plasma-text-primary);
+}
+
+.wizard-navigation .button-secondary:hover:not(:disabled) {
+  background: var(--plasma-bg-tertiary);
+  border-color: var(--plasma-text-secondary);
+  transform: scale(1.02);
+}
+
+.wizard-navigation .button-primary {
+  background: transparent;
+  border-color: var(--plasma-neon-teal);
+  color: var(--plasma-neon-teal);
+  box-shadow: var(--plasma-glow-teal);
+}
+
+.wizard-navigation .button-primary:hover:not(:disabled) {
+  background: rgba(0, 255, 198, 0.1);
+  transform: translateY(-2px);
+  box-shadow: var(--plasma-glow-teal-strong);
+}
+
+.wizard-navigation .button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* Responsive Design */
+@media screen and (max-width: 782px) {
+  .nova-xfinity-setup-wizard {
+    margin: 10px;
+    border-radius: 0;
+  }
+
+  .wizard-header {
+    padding: var(--plasma-spacing-xl) var(--plasma-spacing-lg);
+  }
+
+  .wizard-header h1 {
+    font-size: var(--plasma-font-size-xl);
+  }
+
+  .wizard-progress {
+    flex-direction: column;
+    gap: var(--plasma-spacing-lg);
+    padding: var(--plasma-spacing-lg);
+  }
+
+  .wizard-progress::before {
+    display: none;
+  }
+
+  .wizard-progress-step {
+    width: 100%;
+    flex-direction: row;
+    gap: var(--plasma-spacing-md);
+    justify-content: flex-start;
+  }
+
+  .progress-step-number {
+    flex-shrink: 0;
+  }
+
+  .wizard-body {
+    padding: var(--plasma-spacing-xl) var(--plasma-spacing-lg);
+  }
+
+  .wizard-navigation {
+    flex-direction: column;
+    gap: var(--plasma-spacing-md);
+    padding: var(--plasma-spacing-lg);
+  }
+
+  .wizard-nav-right {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .wizard-navigation .button {
+    width: 100%;
+  }
+
+  .input-with-validation {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .validation-badge {
+    align-self: flex-start;
+  }
+}
+
+/* WordPress Admin Compatibility */
+.nova-xfinity-setup-wizard .button {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+}

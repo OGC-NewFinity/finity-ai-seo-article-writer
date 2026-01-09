@@ -19,6 +19,73 @@ This document describes the complete lifecycle of an AI service call, from the m
 - **Quota Enforcement:** Built-in usage tracking and quota management
 - **Response Standardization:** Consistent response formatting across all providers
 
+### AI Service Flow Diagram
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant UI as UI Components<br/>(Writer/MediaHub/Research)
+    participant ServiceRouter as Service Router<br/>(WriterService/MediaService)
+    participant InputOpt as Input Optimizer<br/>(Sanitize & Validate)
+    participant QuotaCheck as Quota Checker<br/>(Usage Validation)
+    participant ProviderMgr as Provider Manager<br/>(Route Selection)
+    participant AIProvider as AI Provider<br/>(OpenAI/Gemini/Claude)
+    participant OutputOpt as Output Optimizer<br/>(Clean & Format)
+    participant ResponseHandler as Response Handler<br/>(Transform & Enrich)
+    participant UIRenderer as UI Renderer<br/>(Display Results)
+
+    User->>UI: Enter Prompt/Input
+    UI->>ServiceRouter: Request Generation
+    
+    ServiceRouter->>InputOpt: Optimize Input
+    InputOpt->>InputOpt: Sanitize Text
+    InputOpt->>InputOpt: Extract Keywords
+    InputOpt->>InputOpt: Build Prompt
+    InputOpt-->>ServiceRouter: Optimized Input
+    
+    ServiceRouter->>QuotaCheck: Validate Quota
+    QuotaCheck->>QuotaCheck: Check Usage Limits
+    alt Quota Exceeded
+        QuotaCheck-->>UI: Error: Quota Exceeded
+        UI-->>User: Show Error Message
+    else Quota Available
+        QuotaCheck-->>ServiceRouter: Quota Valid
+        
+        ServiceRouter->>ProviderMgr: Get Provider Config
+        ProviderMgr->>ProviderMgr: Select Provider
+        ProviderMgr->>ProviderMgr: Build Payload
+        ProviderMgr-->>ServiceRouter: Provider Ready
+        
+        ServiceRouter->>AIProvider: Execute AI Call
+        AIProvider->>AIProvider: Process Request
+        alt Provider Success
+            AIProvider-->>ServiceRouter: Raw Response
+        else Provider Failure
+            AIProvider-->>ProviderMgr: Error Response
+            ProviderMgr->>ProviderMgr: Try Fallback Provider
+            ProviderMgr->>AIProvider: Retry with Fallback
+            AIProvider-->>ServiceRouter: Fallback Response
+        end
+        
+        ServiceRouter->>OutputOpt: Process Response
+        OutputOpt->>OutputOpt: Clean HTML/Text
+        OutputOpt->>OutputOpt: Remove Markdown
+        OutputOpt->>OutputOpt: Format Content
+        OutputOpt-->>ServiceRouter: Cleaned Output
+        
+        ServiceRouter->>ResponseHandler: Transform Response
+        ResponseHandler->>ResponseHandler: Add Metadata
+        ResponseHandler->>ResponseHandler: Enrich with Context
+        ResponseHandler->>QuotaCheck: Increment Usage
+        ResponseHandler-->>ServiceRouter: Final Response
+        
+        ServiceRouter->>UIRenderer: Deliver Response
+        UIRenderer->>UIRenderer: Update State
+        UIRenderer->>UIRenderer: Render Content
+        UIRenderer-->>User: Display Results
+    end
+```
+
 ---
 
 ## Input Entry Points

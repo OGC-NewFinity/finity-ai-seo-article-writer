@@ -11,6 +11,7 @@ import MediaPresets from './MediaPresets.js';
 import AudioBlock from './AudioBlock.js';
 import OnboardingBanner from '../../../../components/common/OnboardingBanner.js';
 import Tooltip from '../../../../components/common/Tooltip.js';
+import { showError } from '../../utils/errorHandler.js';
 
 const html = htm.bind(React.createElement);
 
@@ -62,7 +63,7 @@ const VideoGeneration = () => {
     if (typeof window.aistudio !== 'undefined') {
       const hasKey = await window.aistudio.hasSelectedApiKey();
       if (!hasKey) {
-        alert("Video generation requires a valid API key. Please configure your API key in settings to continue.");
+        showError('Video generation requires a valid paid API key. Go to Settings to configure your API key.', 'API_KEY_MISSING');
         await window.aistudio.openSelectKey();
         return;
       }
@@ -106,10 +107,10 @@ const VideoGeneration = () => {
     } catch (e) {
       console.error(e);
       if (e.message?.includes("Requested entity was not found.")) {
-         alert("API key validation failed. Please verify your API key settings and try again, or contact support if the issue persists.");
+         showError(e, 'API_KEY_INVALID');
          if (typeof window.aistudio !== 'undefined') await window.aistudio.openSelectKey();
       } else {
-         alert("Video generation failed. Please check your prompt and try again, or contact support if the issue persists.");
+         showError(e, 'VIDEO_GENERATION_FAILED');
       }
     } finally {
       clearInterval(interval);

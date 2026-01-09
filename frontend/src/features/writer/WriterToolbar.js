@@ -2,6 +2,7 @@
 import React from 'react';
 import htm from 'htm';
 import { PROVIDER_OPTIONS } from '../../../../constants.js';
+import { showError } from '../../utils/errorHandler.js';
 
 const html = htm.bind(React.createElement);
 
@@ -23,7 +24,7 @@ const WriterToolbar = ({ sections, setAutoTriggerAllMedia, analyzeSEO, loading, 
           <button 
             onClick=${() => {
               if (sections.length === 0 || sections.some(s => !s.body)) {
-                alert("Please generate all content blocks before publishing. Ensure all sections have content to continue.");
+                showError('Please generate all content blocks before publishing. Ensure all sections have content to continue.', 'VALIDATION_ERROR');
                 return;
               }
               setIsPublishingModalOpen(true);

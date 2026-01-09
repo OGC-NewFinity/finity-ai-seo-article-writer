@@ -4,7 +4,7 @@
  */
 
 import prisma from '../../config/database.js';
-import { updateSubscriptionPlan } from '../subscription.service.js';
+import { updateSubscriptionPlan } from '../../features/subscription/services/subscription.service.js';
 import { extractTierFromMetadata, extractTierFromStripePriceId, isValidTier } from '../../utils/unifiedPlans.js';
 
 /**

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import htm from 'htm';
 import api from '../../services/api.js';
 import AuthLayout from './AuthLayout.js';
+import { getErrorMessage } from '../../utils/errorHandler.js';
 
 const html = htm.bind(React.createElement);
 
@@ -39,7 +40,7 @@ const VerifyEmail = () => {
         window.location.href = '/login';
       }, 2000);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Invalid or expired verification token.');
+      setError(getErrorMessage(err, 'AUTH_TOKEN_INVALID'));
     } finally {
       setLoading(false);
     }
@@ -47,7 +48,7 @@ const VerifyEmail = () => {
 
   const handleResendVerification = async () => {
     if (!email) {
-      setError('Email address is required to resend verification.');
+      setError(getErrorMessage('Email address is required to resend verification', 'VALIDATION_ERROR'));
       return;
     }
 
@@ -60,10 +61,10 @@ const VerifyEmail = () => {
       if (response.data.success) {
         setMessage('Verification email has been resent! Please check your inbox.');
       } else {
-        setError(response.data.message || 'Failed to resend verification email.');
+        setError(getErrorMessage(response.data.message || 'Failed to resend verification email', 'NETWORK_ERROR'));
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to resend verification email. Please try again.');
+      setError(getErrorMessage(err, 'NETWORK_ERROR'));
     } finally {
       setResending(false);
     }

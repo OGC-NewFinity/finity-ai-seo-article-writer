@@ -1,522 +1,97 @@
-# Service Prompts Library
+# Service Prompt Structures
 
-This document centralizes all AI prompt templates used across the Nova‑XFinity platform. Prompts are organized by domain (Article, SEO, Media) with detailed documentation for each template including purpose, input variables, expected output format, and usage context.
+This document defines the structure and examples of prompt formats used by each AI service within the Nova‑XFinity ecosystem. Each service section includes required/optional fields, formatting rules, examples, special tokens, and supported models.
 
 ---
 
 ## Table of Contents
 
-- [Article Domain](#article-domain)
-  - [System Instructions](#system-instructions)
-  - [Generate Metadata](#generate-metadata)
-  - [Generate Outline](#generate-outline)
-  - [Generate Section](#generate-section)
-  - [Generate CTA](#generate-cta)
-  - [Check Plagiarism](#check-plagiarism)
-  - [Analyze SEO](#analyze-seo)
-- [Media Domain](#media-domain)
-  - [Generate Image](#generate-image)
-  - [Edit Image](#edit-image)
-  - [Generate Video](#generate-video)
-  - [Generate Audio (TTS)](#generate-audio-tts)
-- [Prompt Maintenance Guidelines](#prompt-maintenance-guidelines)
+- [1. Image Generation](#1-image-generation)
+- [2. Content Writing](#2-content-writing)
+- [3. Research Assistant](#3-research-assistant)
+- [4. Voiceover Generator](#4-voiceover-generator)
+- [5. AI Coding Helper](#5-ai-coding-helper)
 
 ---
 
-## Article Domain
+## 1. Image Generation
 
-### System Instructions
+**Service Purpose:** Generate high-quality images from text prompts with style and aspect ratio control.
 
-**Purpose:** Base system prompt that defines the AI's role, output format, and content guidelines for all article generation tasks.
+### Required Fields
 
-**Location:** `constants.js`
+| Field | Type | Description | Example |
+|-------|------|-------------|---------|
+| `prompt` | `string` | Text description of the image | `"A futuristic cityscape at sunset"` |
+| `style` | `string` | Visual style for the image | `"Photorealistic"` |
+| `model` | `string` | AI model identifier | `"gemini-2.5-flash-image"` |
+| `aspectRatio` | `string` | Image dimensions ratio | `"16:9"` |
 
-**Template:**
-```
-ROLE: You are the Nova‑XFinity AI SEO Content Engine, a Senior Technical Journalist. Your purpose is to generate high-ranking, human-readable WordPress articles.
+### Optional Fields
 
-I. OUTPUT ARCHITECTURE & LAYOUT
-Context: You output content for the Editor Workspace (Layer 2).
-Strict Format: Output RAW HTML ONLY.
-Negative Constraints: 
-- NO conversational filler.
-- NO markdown code fences.
-- Start immediately with the first <h1> or <h2> tag.
+| Field | Type | Description | Default |
+|-------|------|-------------|---------|
+| `mimeType` | `string` | Image MIME type (for editing) | `"image/png"` |
+| `base64ImageData` | `string` | Base64 image data (for editing) | `null` |
 
-II. POST CONFIGURATION PARAMETERS
-- Adhere to Article Type, Language (regional spelling), Article Size, and POV.
+### Prompt Formatting Rules
 
-III. MEDIA NOVA‑XFINITY HUB (IMAGE LOGIC)
-- Featured Image: Every article MUST have a primary "Featured Image" planned in the initial metadata.
-- Asset Distribution: Distribute requested images across the article.
-- Metadata Format: <!-- IMAGE_PROMPT: { "style": "USER_STYLE", "aspect": "USER_ASPECT", "alt": "SEO_ALT", "filename": "URL_SAFE_NAME", "caption": "READER_CAPTION", "prompt": "DETAILED_VISUAL_PROMPT" } -->
+1. **System Prompt → User Prompt → Modifiers**
+   - System prompt: Not used (direct model call)
+   - User prompt: `"Professional asset. Style: ${style}. Subject: ${prompt}."`
+   - Configuration: Aspect ratio specified in model config
 
-IV. YOAST SEO & READABILITY
-- Sentence Length: 75% under 20 words.
-- Paragraphs: Max 150 words.
-- Active Voice: >90%.
-- Keyphrase: Include in SEO Title, Intro, and one subheading.
+2. **Format Structure:**
+   ```
+   Model: gemini-2.5-flash-image
+   
+   Prompt: Professional asset. Style: ${style}. Subject: ${prompt}.
+   
+   Configuration:
+   {
+     "imageConfig": {
+       "aspectRatio": "${aspectRatio}"
+     }
+   }
+   ```
 
-V. [PROVIDER SPECIFIC LOGIC]
-- If Gemini: Prioritize high-density context from RSS feeds.
-- If Claude: Prioritize technical accuracy and deep reasoning.
-- If OpenAI: Prioritize creative marketing hooks and SEO titles.
-- If Llama: Prioritize speed and concise summaries.
+### Example Prompts
 
-VI. [PULSE MODE / RSS SYNTHESIS]
-Objective: Process real-time expert data. Use Synthesis Mode for RSS summaries. Citations are mandatory.
-```
-
-**Input Variables:** None (base template)
-
-**Expected Output Format:** N/A (used as system instruction)
-
-**Usage Context:**
-- Prefixed to all article generation prompts
-- Ensures consistent output format and quality standards
-- Provider-specific optimizations are applied based on selected AI provider
-
-**Implementation:**
+**Example 1: Basic Image Generation**
 ```javascript
-// backend/src/services/ai/gemini.shared.js
-import { SYSTEM_INSTRUCTIONS } from "../../../constants.js";
-
-const systemPrompt = SYSTEM_INSTRUCTIONS;
-```
-
----
-
-### Generate Metadata
-
-**Purpose:** Generate SEO-optimized article metadata including focus keyphrase, SEO title, slug, meta description, and featured image specifications.
-
-**Location:** `backend/src/services/ai/gemini.article.js`
-
-**Template:**
-```
-System Prompt: ${SYSTEM_INSTRUCTIONS}
-Return a JSON object with: focusKeyphrase, seoTitle, slug, metaDescription, and featuredImage object.
-
-User Prompt:
-Topic: "${topic}"
-Keywords: "${keywords.join(', ')}"
-POV: ${pov}
-Type: ${articleType}
-SourceContext: ${sourceContext}
-ManualFocus: ${manualFocusKeyphrase}
-```
-
-**Input Variables:**
-
-| Variable | Type | Description | Example |
-|----------|------|-------------|---------|
-| `topic` | `string` | Main article topic/subject | `"React Hooks Guide"` |
-| `keywords` | `string[]` | Array of SEO keywords | `["react", "hooks", "javascript"]` |
-| `articleType` | `string` | Type of article | `"How-to Guide"` |
-| `language` | `string` | Language variant | `"English (US)"` |
-| `articleSize` | `string` | Target word count range | `"Medium (1,200-1,800 words)"` |
-| `pov` | `string` | Point of view | `"First Person Singular"` |
-| `manualFocusKeyphrase` | `string` | Manual keyphrase override | `"react hooks tutorial"` |
-| `imageStyle` | `string` | Featured image style | `"Photorealistic"` |
-| `aspectRatio` | `string` | Image aspect ratio | `"16:9"` |
-| `sourceContext` | `string` | RSS feed data or source context | `"RSS feed content..."` |
-| `category` | `string` | Article category | `"Technical (Development/Engineering)"` |
-
-**Expected Output Format:**
-```json
 {
-  "focusKeyphrase": "react hooks tutorial",
-  "seoTitle": "Complete React Hooks Guide: useState, useEffect, and More",
-  "slug": "complete-react-hooks-guide",
-  "metaDescription": "Learn React Hooks with our comprehensive guide covering useState, useEffect, and advanced patterns for modern React development.",
-  "featuredImage": {
-    "style": "Photorealistic",
-    "aspect": "16:9",
-    "alt": "React Hooks tutorial guide",
-    "filename": "react-hooks-guide",
-    "caption": "Visual guide to React Hooks",
-    "prompt": "Professional illustration of React Hooks concepts with code examples"
-  }
+  prompt: "A modern workspace with natural lighting",
+  style: "Photorealistic",
+  model: "gemini-2.5-flash-image",
+  aspectRatio: "16:9"
 }
 ```
 
-**Usage Context:**
-- Called during article initialization in the Writer feature
-- First step in article generation workflow
-- Output is used to populate article metadata card and featured image block
-
-**Implementation:**
+**Example 2: Image Editing**
 ```javascript
-// backend/src/services/ai/gemini.article.js
-export const generateMetadata = async (
-  topic, keywords, articleType, language, articleSize, pov,
-  manualFocusKeyphrase, imageStyle, aspectRatio, sourceContext, category
-) => {
-  const systemPrompt = `${SYSTEM_INSTRUCTIONS}\nReturn a JSON object with: focusKeyphrase, seoTitle, slug, metaDescription, and featuredImage object.`;
-  const prompt = `Topic: "${topic}"\nKeywords: "${keywords.join(', ')}"\nPOV: ${pov}\nType: ${articleType}\nSourceContext: ${sourceContext}\nManualFocus: ${manualFocusKeyphrase}`;
-  
-  const text = await callAI(prompt, systemPrompt, true); // jsonMode = true
-  return JSON.parse(cleanAIOutput(text) || '{}');
-};
-```
-
-**API Endpoint:** `POST /api/articles/metadata`
-
----
-
-### Generate Outline
-
-**Purpose:** Generate an SEO-optimized article outline (array of section headings) based on topic, keywords, and article type.
-
-**Location:** `backend/src/services/ai/gemini.article.js`
-
-**Template:**
-```
-System Prompt: ${SYSTEM_INSTRUCTIONS}
-Return a JSON array of section headings ONLY.
-
-User Prompt:
-Create an SEO outline for: "${topic}". Context: ${category}. Keywords: ${keywords.join(',')}
-```
-
-**Input Variables:**
-
-| Variable | Type | Description | Example |
-|----------|------|-------------|---------|
-| `topic` | `string` | Main article topic | `"React Hooks Guide"` |
-| `keywords` | `string[]` | Array of SEO keywords | `["react", "hooks"]` |
-| `articleType` | `string` | Type of article | `"How-to Guide"` |
-| `language` | `string` | Language variant | `"English (US)"` |
-| `articleSize` | `string` | Target word count range | `"Medium (1,200-1,800 words)"` |
-| `pov` | `string` | Point of view | `"First Person Singular"` |
-| `sourceContext` | `string` | RSS feed data or source context | `"RSS feed content..."` |
-| `category` | `string` | Article category | `"Technical (Development/Engineering)"` |
-
-**Expected Output Format:**
-```json
-[
-  "Introduction to React Hooks",
-  "Understanding useState Hook",
-  "Working with useEffect",
-  "Custom Hooks Pattern",
-  "Common Hooks Patterns",
-  "Best Practices and Tips",
-  "Conclusion"
-]
-```
-
-**Usage Context:**
-- Called after metadata generation
-- Used to populate section list in Writer interface
-- Each heading becomes a section that can be generated individually
-
-**Implementation:**
-```javascript
-// backend/src/services/ai/gemini.article.js
-export const generateOutline = async (
-  topic, keywords, articleType, language, articleSize, pov, sourceContext, category
-) => {
-  const systemPrompt = `${SYSTEM_INSTRUCTIONS}\nReturn a JSON array of section headings ONLY.`;
-  const prompt = `Create an SEO outline for: "${topic}". Context: ${category}. Keywords: ${keywords.join(',')}`;
-  
-  const text = await callAI(prompt, systemPrompt, true); // jsonMode = true
-  return JSON.parse(cleanAIOutput(text) || '[]');
-};
-```
-
-**API Endpoint:** `POST /api/articles/outline`
-
----
-
-### Generate Section
-
-**Purpose:** Generate HTML content for a specific article section based on section title, topic, and context.
-
-**Location:** `backend/src/services/ai/gemini.article.js`
-
-**Template:**
-```
-System Prompt: ${SYSTEM_INSTRUCTIONS}
-
-User Prompt:
-Write the content for the section: "${sectionTitle}". Topic: "${topic}". Type: "${articleType}". RSS_Data: "${sourceContext}"
-```
-
-**Input Variables:**
-
-| Variable | Type | Description | Example |
-|----------|------|-------------|---------|
-| `sectionTitle` | `string` | Title of the section to generate | `"Introduction to React Hooks"` |
-| `topic` | `string` | Main article topic | `"React Hooks Guide"` |
-| `keywords` | `string[]` | Array of SEO keywords | `["react", "hooks"]` |
-| `tone` | `string` | Writing tone | `"Professional"` |
-| `articleType` | `string` | Type of article | `"How-to Guide"` |
-| `language` | `string` | Language variant | `"English (US)"` |
-| `articleSize` | `string` | Target word count range | `"Medium (1,200-1,800 words)"` |
-| `pov` | `string` | Point of view | `"First Person Singular"` |
-| `imageQuantity` | `string` | Number of images to include | `"2"` |
-| `aspectRatio` | `string` | Image aspect ratio | `"16:9"` |
-| `imageStyle` | `string` | Image style | `"Photorealistic"` |
-| `sourceContext` | `string` | RSS feed data or source context | `"RSS feed content..."` |
-| `category` | `string` | Article category | `"Technical (Development/Engineering)"` |
-
-**Expected Output Format:**
-```html
-<h2>Introduction to React Hooks</h2>
-<p>React Hooks revolutionized how we write React components by allowing functional components to manage state and side effects...</p>
-<!-- IMAGE_PROMPT: { "style": "Photorealistic", "aspect": "16:9", "alt": "React Hooks diagram", "filename": "react-hooks-intro", "caption": "Visual representation of React Hooks", "prompt": "Professional diagram showing React Hooks architecture" } -->
-<p>In this comprehensive guide, we'll explore the most commonly used hooks and their practical applications...</p>
-```
-
-**Usage Context:**
-- Called for each section when user clicks "Generate" on a section
-- Output is inserted into the section block in the Writer interface
-- May include embedded `IMAGE_PROMPT` comments for image generation
-
-**Implementation:**
-```javascript
-// backend/src/services/ai/gemini.article.js
-export const generateSection = async (
-  sectionTitle, topic, keywords, tone, articleType, language, articleSize, pov,
-  imageQuantity, aspectRatio, imageStyle, sourceContext, category
-) => {
-  const systemPrompt = SYSTEM_INSTRUCTIONS;
-  const prompt = `Write the content for the section: "${sectionTitle}". Topic: "${topic}". Type: "${articleType}". RSS_Data: "${sourceContext}"`;
-  
-  const text = await callAI(prompt, systemPrompt, false); // jsonMode = false (HTML output)
-  return cleanAIOutput(text);
-};
-```
-
-**API Endpoint:** `POST /api/articles/section`
-
-**Notes:**
-- Output must be raw HTML (no markdown)
-- Must start with `<h1>` or `<h2>` tag
-- Can include `<!-- IMAGE_PROMPT: ... -->` comments for image placeholders
-- Must follow SEO guidelines: 75% sentences under 20 words, paragraphs max 150 words, >90% active voice
-
----
-
-### Generate CTA
-
-**Purpose:** Generate a branded Call-to-Action (CTA) block for the end of an article.
-
-**Location:** `backend/src/services/ai/gemini.article.js`
-
-**Template:**
-```
-System Prompt: ${SYSTEM_INSTRUCTIONS}
-
-User Prompt:
-Create a branded Nova‑XFinity AI CTA for topic: ${topic}. Keyphrase: ${focusKeyphrase}
-```
-
-**Input Variables:**
-
-| Variable | Type | Description | Example |
-|----------|------|-------------|---------|
-| `topic` | `string` | Main article topic | `"React Hooks Guide"` |
-| `keywords` | `string[]` | Array of SEO keywords | `["react", "hooks"]` |
-| `focusKeyphrase` | `string` | Primary focus keyphrase | `"react hooks tutorial"` |
-
-**Expected Output Format:**
-```html
-<div class="cta-block">
-  <h3>Ready to Master React Hooks?</h3>
-  <p>Take your React development to the next level with our comprehensive React Hooks tutorial...</p>
-  <a href="#" class="cta-button">Get Started with Nova‑XFinity AI</a>
-</div>
-```
-
-**Usage Context:**
-- Called when user adds a CTA block to the article
-- Typically placed at the end of articles
-- Branded with "Nova‑XFinity AI" messaging
-
-**Implementation:**
-```javascript
-// backend/src/services/ai/gemini.article.js
-export const generateCTA = async (topic, keywords, focusKeyphrase) => {
-  const text = await callAI(
-    `Create a branded Nova‑XFinity AI CTA for topic: ${topic}. Keyphrase: ${focusKeyphrase}`,
-    SYSTEM_INSTRUCTIONS,
-    false // HTML output
-  );
-  return cleanAIOutput(text);
-};
-```
-
-**API Endpoint:** `POST /api/articles/cta`
-
----
-
-### Check Plagiarism
-
-**Purpose:** Analyze article content for originality and potential plagiarism issues.
-
-**Location:** `backend/src/services/ai/gemini.article.js`
-
-**Template:**
-```
-System Prompt: ${SYSTEM_INSTRUCTIONS}
-
-User Prompt:
-Scan for originality: ${content.substring(0, 5000)}
-```
-
-**Input Variables:**
-
-| Variable | Type | Description | Example |
-|----------|------|-------------|---------|
-| `content` | `string` | Article content to check | `"<h1>Article content...</h1>"` |
-
-**Expected Output Format:**
-```json
 {
-  "originalityScore": 95,
-  "flaggedSections": [],
-  "recommendations": [
-    "Content appears original",
-    "Consider adding more unique insights"
-  ],
-  "similarityPercentage": 5
+  prompt: "Add a sunset sky in the background",
+  style: "Photorealistic",
+  model: "gemini-2.5-flash-image",
+  aspectRatio: "16:9",
+  base64ImageData: "data:image/png;base64,...",
+  mimeType: "image/png"
 }
 ```
 
-**Usage Context:**
-- Called when user requests plagiarism check
-- Content is truncated to first 5000 characters for analysis
-- Used to ensure content originality before publishing
+### Special Tokens
 
-**Implementation:**
-```javascript
-// backend/src/services/ai/gemini.article.js
-export const checkPlagiarism = async (content) => {
-  const text = await callAI(
-    `Scan for originality: ${content.substring(0, 5000)}`,
-    SYSTEM_INSTRUCTIONS,
-    true // JSON output
-  );
-  return JSON.parse(cleanAIOutput(text) || '{}');
-};
-```
+- `IMAGE_PROMPT` comment: `<!-- IMAGE_PROMPT: { "style": "...", "aspect": "...", "alt": "...", "filename": "...", "caption": "...", "prompt": "..." } -->`
+  - Used in article content to mark image generation points
+  - Parsed by Writer component to trigger inline image generation
 
-**API Endpoint:** `POST /api/articles/plagiarism`
+### Supported Models
 
-**Notes:**
-- Content is limited to 5000 characters for API efficiency
-- Returns JSON with originality metrics and recommendations
+- **Primary:** `gemini-2.5-flash-image` (Google Gemini)
+- **Planned Fallbacks:** Stability AI, Replicate
 
----
+### Supported Styles
 
-### Analyze SEO
-
-**Purpose:** Perform SEO audit on article content, analyzing keyphrase density, readability, and optimization opportunities.
-
-**Location:** `backend/src/services/ai/gemini.article.js`
-
-**Template:**
-```
-System Prompt: ${SYSTEM_INSTRUCTIONS}
-
-User Prompt:
-SEO audit: ${keywords[0]}. Content: ${content.substring(0, 5000)}
-```
-
-**Input Variables:**
-
-| Variable | Type | Description | Example |
-|----------|------|-------------|---------|
-| `content` | `string` | Article content to analyze | `"<h1>Article content...</h1>"` |
-| `keywords` | `string[]` | Array of SEO keywords (first used as focus) | `["react hooks", "react tutorial"]` |
-
-**Expected Output Format:**
-```json
-{
-  "overallScore": 85,
-  "metrics": {
-    "keyphraseDensity": 2.5,
-    "avgSentenceLength": 18,
-    "introPresence": true,
-    "passiveVoicePercentage": 8,
-    "subheadingDistribution": "Well-structured with H2 and H3 tags"
-  },
-  "readabilityLabel": "Easy to Read",
-  "suggestions": [
-    "Increase keyphrase density to 2.5-3%",
-    "Add keyphrase to one more subheading",
-    "Reduce average sentence length slightly"
-  ]
-}
-```
-
-**Usage Context:**
-- Called when user requests SEO audit in Writer interface
-- Displays results in SEO Audit Report component
-- Content is truncated to first 5000 characters for analysis
-
-**Implementation:**
-```javascript
-// backend/src/services/ai/gemini.article.js
-export const analyzeSEO = async (content, keywords) => {
-  const text = await callAI(
-    `SEO audit: ${keywords[0]}. Content: ${content.substring(0, 5000)}`,
-    SYSTEM_INSTRUCTIONS,
-    true // JSON output
-  );
-  return JSON.parse(cleanAIOutput(text) || '{}');
-};
-```
-
-**API Endpoint:** `POST /api/articles/seo`
-
-**Notes:**
-- Uses first keyword as primary focus keyphrase
-- Content is limited to 5000 characters for API efficiency
-- Returns comprehensive SEO metrics and actionable suggestions
-
----
-
-## Media Domain
-
-### Generate Image
-
-**Purpose:** Generate a high-quality image from a text prompt with specified style and aspect ratio.
-
-**Location:** `backend/src/services/ai/gemini.media.js`
-
-**Template:**
-```
-Model: gemini-2.5-flash-image
-
-Prompt:
-Professional asset. Style: ${style}. Subject: ${prompt}.
-
-Configuration:
-{
-  "imageConfig": {
-    "aspectRatio": "${aspectRatio}"
-  }
-}
-```
-
-**Input Variables:**
-
-| Variable | Type | Description | Example | Default |
-|----------|------|-------------|---------|---------|
-| `prompt` | `string` | Text description of image | `"A futuristic cityscape at sunset"` | Required |
-| `aspectRatio` | `string` | Image aspect ratio | `"16:9"` | `"16:9"` |
-| `style` | `string` | Visual style | `"Photorealistic"` | `"Photorealistic"` |
-
-**Supported Aspect Ratios:**
-- `"1:1"` (Square)
-- `"4:3"` (Standard)
-- `"3:4"` (Portrait)
-- `"16:9"` (Widescreen)
-- `"9:16"` (Vertical)
-
-**Supported Styles:**
 - `"Photorealistic"`
 - `"Cinematic"`
 - `"Minimalist"`
@@ -524,399 +99,537 @@ Configuration:
 - `"Digital Illustration"`
 - `"Vintage Photography"`
 - `"Corporate Clean"`
+- `"Abstract"`
+- `"Technical Diagram"`
+- `"Data Visualization"`
 
-**Expected Output Format:**
-```
-data:image/png;base64,{base64_encoded_image_data}
-```
+### Supported Aspect Ratios
 
-**Usage Context:**
-- Called from Media Hub for standalone image generation
-- Called from Writer ImageBlock component when generating article images
-- Used for featured images and inline article images
-
-**Implementation:**
-```javascript
-// backend/src/services/ai/gemini.media.js
-export const generateImage = async (prompt, aspectRatio = "16:9", style = "Photorealistic") => {
-  const ai = new GoogleGenAI({ apiKey: getApiKey() });
-  const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash-image',
-    contents: { parts: [{ text: `Professional asset. Style: ${style}. Subject: ${prompt}.` }] },
-    config: { imageConfig: { aspectRatio } },
-  });
-  
-  for (const part of response.candidates[0].content.parts) {
-    if (part.inlineData) return `data:image/png;base64,${part.inlineData.data}`;
-  }
-  return null;
-};
-```
-
-**API Endpoint:** `POST /api/media/images`
-
-**Notes:**
-- Returns base64-encoded PNG image as data URI
-- Image generation is synchronous (returns immediately)
-- Model: `gemini-2.5-flash-image`
-
----
-
-### Edit Image
-
-**Purpose:** Modify an existing image based on a text prompt describing desired changes.
-
-**Location:** `backend/src/services/ai/gemini.media.js`
-
-**Template:**
-```
-Model: gemini-2.5-flash-image
-
-Input:
-- Base64 image data (inlineData)
-- Text prompt: Modify the provided image: "${prompt}".
-
-Configuration:
-{
-  "imageConfig": {
-    "aspectRatio": "${aspectRatio}"
-  }
-}
-```
-
-**Input Variables:**
-
-| Variable | Type | Description | Example | Default |
-|----------|------|-------------|---------|---------|
-| `base64ImageData` | `string` | Base64 encoded image (with or without data URI prefix) | `"data:image/png;base64,..."` | Required |
-| `mimeType` | `string` | MIME type of input image | `"image/png"` | Required |
-| `prompt` | `string` | Description of desired modifications | `"Add a sunset sky in the background"` | Required |
-| `aspectRatio` | `string` | Output aspect ratio | `"16:9"` | `"16:9"` |
-
-**Expected Output Format:**
-```
-data:image/png;base64,{base64_encoded_edited_image_data}
-```
-
-**Usage Context:**
-- Called from Writer ImageBlock when user clicks "AI Refinement"
-- Allows users to iteratively improve generated images
-- Used for fine-tuning article images
-
-**Implementation:**
-```javascript
-// backend/src/services/ai/gemini.media.js
-export const editImage = async (base64ImageData, mimeType, prompt, aspectRatio = "16:9") => {
-  const ai = new GoogleGenAI({ apiKey: getApiKey() });
-  const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash-image',
-    contents: {
-      parts: [
-        { inlineData: { data: base64ImageData.split(',')[1] || base64ImageData, mimeType } },
-        { text: `Modify the provided image: "${prompt}".` }
-      ]
-    },
-    config: { imageConfig: { aspectRatio } }
-  });
-  
-  for (const part of response.candidates[0].content.parts) {
-    if (part.inlineData) return `data:image/png;base64,${part.inlineData.data}`;
-  }
-  return null;
-};
-```
-
-**API Endpoint:** `POST /api/media/images/edit`
-
-**Notes:**
-- Base64 data can include or exclude `data:image/png;base64,` prefix
-- Returns edited image as base64-encoded PNG data URI
-- Model: `gemini-2.5-flash-image`
-
----
-
-### Generate Video
-
-**Purpose:** Generate a short-form video from a text prompt with style, resolution, aspect ratio, and duration control.
-
-**Location:** `backend/src/services/ai/gemini.media.js`
-
-**Template:**
-```
-Model: veo-3.1-fast-generate-preview
-
-Prompt:
-Visual Style: ${style}. Duration: ${duration}. ${prompt}
-
-Configuration:
-{
-  "numberOfVideos": 1,
-  "resolution": "${resolution}",
-  "aspectRatio": "${aspectRatio}"
-}
-
-Optional:
-{
-  "image": {
-    "imageBytes": "${startFrameBase64}",
-    "mimeType": "image/png"
-  }
-}
-```
-
-**Input Variables:**
-
-| Variable | Type | Description | Example | Default |
-|----------|------|-------------|---------|---------|
-| `prompt` | `string` | Text description of video | `"A drone flying over a mountain range"` | Required |
-| `style` | `string` | Visual style | `"Cinematic"` | `"Cinematic"` |
-| `resolution` | `string` | Video resolution | `"1080p"` | `"720p"` |
-| `aspectRatio` | `string` | Video aspect ratio | `"16:9"` | `"16:9"` |
-| `duration` | `string` | Video duration | `"15s"` | `"9s"` |
-| `startFrameBase64` | `string\|null` | Optional starting frame image | `"data:image/png;base64,..."` | `null` |
-
-**Supported Resolutions:**
-- `"720p"`
-- `"1080p"`
-
-**Supported Aspect Ratios:**
+- `"1:1"` (Square)
+- `"4:3"` (Standard)
+- `"3:4"` (Portrait)
 - `"16:9"` (Widescreen)
-- `"9:16"` (Portrait/Vertical)
+- `"9:16"` (Vertical)
 
-**Supported Durations:**
-- `"5s"`
-- `"9s"`
-- `"25s"`
+### Output Format
 
-**Expected Output Format:**
-```
-https://generativelanguage.googleapis.com/v1beta/{operation_id}?key={api_key}
-```
+- Base64-encoded PNG data URI: `data:image/png;base64,{base64_encoded_image_data}`
 
-**Usage Context:**
-- Called from Media Hub for video generation
-- Video generation is asynchronous (returns operation URL)
-- Operation must be polled until completion
-- Used for social media content and article video assets
+### Implementation Location
 
-**Implementation:**
-```javascript
-// backend/src/services/ai/gemini.media.js
-export const generateVideo = async (
-  prompt, style = 'Cinematic', resolution = '720p', 
-  aspectRatio = '16:9', duration = '9s', startFrameBase64 = null
-) => {
-  const apiKey = getApiKey();
-  const ai = new GoogleGenAI({ apiKey });
-  
-  const requestConfig = {
-    model: 'veo-3.1-fast-generate-preview',
-    prompt: `Visual Style: ${style}. Duration: ${duration}. ${prompt}`,
-    config: { 
-      numberOfVideos: 1, 
-      resolution: resolution === '720p' || resolution === '1080p' ? resolution : '720p', 
-      aspectRatio: aspectRatio === '16:9' || aspectRatio === '9:16' ? aspectRatio : '16:9'
-    }
-  };
-  
-  if (startFrameBase64) {
-    requestConfig.image = { 
-      imageBytes: startFrameBase64.split(',')[1] || startFrameBase64, 
-      mimeType: 'image/png' 
-    };
-  }
-  
-  let operation = await ai.models.generateVideos(requestConfig);
-  
-  // Poll until operation completes
-  while (!operation.done) {
-    await new Promise(r => setTimeout(r, 10000)); // Wait 10 seconds
-    operation = await ai.operations.getVideosOperation({operation});
-    
-    if (operation.error) {
-      throw new Error(`Video Generation Operation Failed: ${operation.error.message || 'Unknown Error'}`);
-    }
-  }
-  
-  const videoMeta = operation.response?.generatedVideos?.[0]?.video;
-  if (!videoMeta || !videoMeta.uri) {
-    throw new Error("Video generation completed but no URI was returned.");
-  }
-  
-  const downloadLink = videoMeta.uri;
-  const separator = downloadLink.includes('?') ? '&' : '?';
-  return `${downloadLink}${separator}key=${apiKey}`;
-};
-```
-
-**API Endpoint:** `POST /api/media/videos`
-
-**Notes:**
-- Video generation is **asynchronous** - operation must be polled
-- Polling interval: 10 seconds
-- Returns download URL with API key appended
-- Model: `veo-3.1-fast-generate-preview`
-- Can optionally start from a base64-encoded image frame
+- **Service:** `backend/src/features/gemini/services/geminiMediaService.js`
+- **API Endpoint:** `POST /api/media/images`
+- **Frontend:** `frontend/src/features/media/ImageGeneration.js`
 
 ---
 
-### Generate Audio (TTS)
+## 2. Content Writing
 
-**Purpose:** Convert text to speech using AI voice synthesis with professional marketing tone.
+**Service Purpose:** Generate SEO-optimized articles with structured metadata, outlines, and sections.
 
-**Location:** `backend/src/services/ai/gemini.media.js`
+### Required Fields
 
-**Template:**
-```
-Model: gemini-2.5-flash-preview-tts
+| Field | Type | Description | Example |
+|-------|------|-------------|---------|
+| `topic` | `string` | Main article topic/subject | `"React Hooks Guide"` |
+| `keywords` | `string[]` | Array of SEO keywords | `["react", "hooks", "javascript"]` |
+| `articleType` | `string` | Type of article | `"How-to Guide"` |
+| `language` | `string` | Language variant | `"English (US)"` |
+| `articleSize` | `string` | Target word count range | `"Medium (1,200-1,800 words)"` |
+| `pov` | `string` | Point of view | `"First Person Singular"` |
 
-Prompt:
-Say with a professional marketing tone: ${text}
+### Optional Fields
 
-Configuration:
+| Field | Type | Description | Default |
+|-------|------|-------------|---------|
+| `manualFocusKeyphrase` | `string` | Manual keyphrase override | `""` |
+| `imageStyle` | `string` | Featured image style | `"Photorealistic"` |
+| `aspectRatio` | `string` | Image aspect ratio | `"16:9"` |
+| `sourceContext` | `string` | RSS feed data or source context | `""` |
+| `category` | `string` | Article category | `"Technical (Development/Engineering)"` |
+| `tone` | `string` | Writing tone | `"Professional"` |
+| `imageQuantity` | `number` | Number of images per section | `2` |
+| `SEO` | `boolean` | Enable SEO optimization | `true` |
+| `metadata` | `object` | Additional metadata | `null` |
+
+### Prompt Formatting Rules
+
+1. **System Prompt → User Prompt → Modifiers**
+   - System prompt: `SYSTEM_INSTRUCTIONS` (from `constants.js`)
+   - User prompt: Structured with topic, keywords, type, context
+   - Modifiers: Provider-specific optimizations applied automatically
+
+2. **Format Structure:**
+   ```
+   System Prompt: ${SYSTEM_INSTRUCTIONS}
+   [Optional: Return format instruction]
+   
+   User Prompt:
+   Topic: "${topic}"
+   Keywords: "${keywords.join(', ')}"
+   POV: ${pov}
+   Type: ${articleType}
+   SourceContext: ${sourceContext}
+   ManualFocus: ${manualFocusKeyphrase}
+   ```
+
+3. **System Instructions Include:**
+   - Role definition: "Nova‑XFinity AI SEO Content Engine, Senior Technical Journalist"
+   - Output format: Raw HTML only (no markdown)
+   - SEO guidelines: 75% sentences under 20 words, paragraphs max 150 words, >90% active voice
+   - Provider-specific logic: Gemini (RSS feeds), Claude (technical accuracy), OpenAI (creative hooks), Llama (speed)
+
+### Example Prompts
+
+**Example 1: Generate Metadata**
+```javascript
 {
-  "responseModalities": ["AUDIO"],
-  "speechConfig": {
-    "voiceConfig": {
-      "prebuiltVoiceConfig": {
-        "voiceName": "${voice}"
-      }
-    }
-  }
+  topic: "Complete Guide to React Hooks",
+  keywords: ["react", "hooks", "javascript", "frontend"],
+  articleType: "How-to Guide",
+  language: "English (US)",
+  articleSize: "Medium (1,200-1,800 words)",
+  pov: "First Person Singular",
+  manualFocusKeyphrase: "react hooks tutorial",
+  imageStyle: "Photorealistic",
+  aspectRatio: "16:9",
+  sourceContext: "",
+  category: "Technical (Development/Engineering)"
 }
 ```
 
-**Input Variables:**
-
-| Variable | Type | Description | Example | Default |
-|----------|------|-------------|---------|---------|
-| `text` | `string` | Text to convert to speech | `"Welcome to our React Hooks tutorial"` | Required |
-| `voice` | `string` | Voice name | `"Kore"` | `"Kore"` |
-
-**Expected Output Format:**
+**System Prompt:**
 ```
-data:audio/pcm;base64,{base64_encoded_audio_data}
+${SYSTEM_INSTRUCTIONS}
+Return a JSON object with: focusKeyphrase, seoTitle, slug, metaDescription, and featuredImage object.
 ```
 
-**Usage Context:**
-- Called from Media Hub for audio generation
-- Used for podcast intros, article narration, and voiceovers
-- Audio format: PCM (Pulse Code Modulation)
+**User Prompt:**
+```
+Topic: "Complete Guide to React Hooks"
+Keywords: "react, hooks, javascript, frontend"
+POV: First Person Singular
+Type: How-to Guide
+SourceContext: 
+ManualFocus: react hooks tutorial
+```
 
-**Implementation:**
+**Example 2: Generate Section**
 ```javascript
-// backend/src/services/ai/gemini.media.js
-export const generateAudio = async (text, voice = 'Kore') => {
-  const ai = new GoogleGenAI({ apiKey: getApiKey() });
-  const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash-preview-tts",
-    contents: [{ parts: [{ text: `Say with a professional marketing tone: ${text}` }] }],
-    config: {
-      responseModalities: [Modality.AUDIO],
-      speechConfig: {
-        voiceConfig: {
-          prebuiltVoiceConfig: { voiceName: voice },
-        },
-      },
-    },
-  });
-  
-  const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-  if (!base64Audio) return null;
-  
-  return `data:audio/pcm;base64,${base64Audio}`;
-};
+{
+  sectionTitle: "Introduction to React Hooks",
+  topic: "Complete Guide to React Hooks",
+  keywords: ["react", "hooks"],
+  tone: "Professional",
+  articleType: "How-to Guide",
+  language: "English (US)",
+  articleSize: "Medium (1,200-1,800 words)",
+  pov: "First Person Singular",
+  imageQuantity: 2,
+  aspectRatio: "16:9",
+  imageStyle: "Photorealistic",
+  sourceContext: "",
+  category: "Technical (Development/Engineering)"
+}
 ```
 
-**API Endpoint:** `POST /api/media/audio`
+**System Prompt:**
+```
+${SYSTEM_INSTRUCTIONS}
+```
 
-**Notes:**
-- Returns PCM audio as base64-encoded data URI
-- Audio format: `data:audio/pcm;base64,...`
-- Sample rate: 24000 Hz (default)
-- Channels: 1 (mono)
-- Model: `gemini-2.5-flash-preview-tts`
-- Voice options may vary by provider
+**User Prompt:**
+```
+Write the content for the section: "Introduction to React Hooks". Topic: "Complete Guide to React Hooks". Type: "How-to Guide". RSS_Data: ""
+```
+
+### Special Tokens
+
+- `IMAGE_PROMPT` comment: `<!-- IMAGE_PROMPT: { "style": "...", "aspect": "...", "alt": "...", "filename": "...", "caption": "...", "prompt": "..." } -->`
+  - Embedded in section content to mark image generation points
+  - Automatically parsed and converted to images by Writer component
+
+### Supported Models
+
+- **Primary:** User-selected provider (Gemini, OpenAI, Claude, Llama)
+- **Fallback:** Gemini (automatic on failure)
+- **Models:**
+  - `gemini-3-pro-preview` (Google Gemini)
+  - `gpt-4o` (OpenAI)
+  - `claude-3-5-sonnet-20241022` (Anthropic)
+  - `llama-3.3-70b` (Groq)
+
+### Output Formats
+
+- **Metadata:** JSON object with `focusKeyphrase`, `seoTitle`, `slug`, `metaDescription`, `featuredImage`
+- **Outline:** JSON array of section heading strings
+- **Section:** Raw HTML content (no markdown fences, starts with `<h1>` or `<h2>`)
+- **CTA:** HTML block with branded styling
+
+### Implementation Location
+
+- **Service:** `backend/src/features/gemini/services/geminiWriterService.js`
+- **API Endpoints:**
+  - `POST /api/articles/metadata`
+  - `POST /api/articles/outline`
+  - `POST /api/articles/section`
+  - `POST /api/articles/cta`
+- **Frontend:** `frontend/src/features/writer/WriterMain.js`
 
 ---
 
-## Prompt Maintenance Guidelines
+## 3. Research Assistant
 
-### Consistency
+**Service Purpose:** Perform research queries with Google Search integration to provide real-time, grounded information with citations.
 
-1. **Naming Conventions:**
-   - Use descriptive function names: `generateMetadata`, `generateSection`, etc.
-   - Prefix media functions with media type: `generateImage`, `generateVideo`, `generateAudio`
+### Required Fields
 
-2. **Variable Naming:**
-   - Use camelCase for JavaScript variables
-   - Use descriptive names: `sectionTitle` not `title`, `focusKeyphrase` not `keyphrase`
+| Field | Type | Description | Example |
+|-------|------|-------------|---------|
+| `query` | `string` | Research question or topic | `"Latest statistics on AI adoption in healthcare"` |
+| `userId` | `string` | User ID for tracking | `"user_123"` |
 
-3. **Output Format:**
-   - Article prompts: HTML output (raw HTML, no markdown)
-   - Metadata/analysis prompts: JSON output
-   - Media prompts: Base64 data URIs
+### Optional Fields
 
-### Clarity
+| Field | Type | Description | Default |
+|-------|------|-------------|---------|
+| `focus` | `string` | Research focus type | `"all"` |
+| `maxResults` | `number` | Maximum number of sources | `10` |
+| `timeRange` | `string` | Time range for results | `"all"` |
 
-1. **Template Structure:**
-   - Always include System Prompt and User Prompt sections
-   - Document all input variables in a table
-   - Provide example values for each variable
+### Prompt Formatting Rules
 
-2. **Documentation:**
-   - Explain the purpose of each prompt
-   - Document expected output format with examples
-   - Include usage context and implementation examples
+1. **System Prompt → User Prompt → Modifiers**
+   - System prompt: Not explicitly set (uses model defaults)
+   - User prompt: `"Deep Research: ${query}"`
+   - Modifiers: Google Search tool enabled via model configuration
 
-3. **Error Handling:**
-   - Document potential error cases
-   - Include fallback behavior (e.g., JSON parsing with default values)
+2. **Format Structure:**
+   ```
+   Model: gemini-3-pro-preview
+   Tools: [{ googleSearch: {} }]
+   
+   Prompt: Deep Research: ${query}
+   ```
 
-### Maintainability
+3. **Google Search Integration:**
+   - Uses Gemini's built-in `googleSearch` tool
+   - Automatically extracts grounding metadata
+   - Filters and maps web sources to citations
 
-1. **Centralization:**
-   - Keep base system instructions in `constants.js`
-   - Import and reuse `SYSTEM_INSTRUCTIONS` across all article prompts
-   - Avoid duplicating prompt logic
+### Example Prompts
 
-2. **Version Control:**
-   - Document prompt changes in commit messages
-   - Track prompt performance and iterate based on results
-   - Maintain backward compatibility when possible
+**Example 1: Basic Research Query**
+```javascript
+{
+  userId: "user_123",
+  query: "Latest statistics on React framework adoption in enterprise applications"
+}
+```
 
-3. **Testing:**
-   - Test prompts with various input combinations
-   - Validate output format matches expected structure
-   - Monitor prompt performance and adjust as needed
+**Prompt:**
+```
+Deep Research: Latest statistics on React framework adoption in enterprise applications
+```
 
-4. **Provider Compatibility:**
-   - Document provider-specific optimizations in System Instructions
-   - Ensure prompts work across all supported providers (Gemini, OpenAI, Claude, Llama)
-   - Test fallback behavior when primary provider fails
+**Example 2: Research with Options**
+```javascript
+{
+  userId: "user_123",
+  query: "Current trends in renewable energy 2024",
+  focus: "trends",
+  maxResults: 15,
+  timeRange: "year"
+}
+```
+
+**Prompt:**
+```
+Deep Research: Current trends in renewable energy 2024
+```
+
+### Special Tokens
+
+- **Grounding Metadata:** Automatically extracted from response
+  - Format: `response.candidates[0].groundingMetadata.groundingChunks`
+  - Filtered for web sources: `chunk.web`
+  - Mapped to: `{ title: chunk.web.title, uri: chunk.web.uri }`
+
+### Supported Models
+
+- **Primary:** `gemini-3-pro-preview` (Google Gemini with Google Search tool)
+- **Fallback:** Standard Gemini (without search tool)
+
+### Output Format
+
+```json
+{
+  "summary": "Research synthesis text with citations...",
+  "sources": [
+    {
+      "title": "Source Title",
+      "uri": "https://example.com/article"
+    }
+  ]
+}
+```
+
+### Implementation Location
+
+- **Service:** `backend/src/features/providers/gemini/services/ResearchService.js`
+- **API Endpoint:** `POST /api/research/query`
+- **Frontend:** `components/Research.js`
+
+---
+
+## 4. Voiceover Generator
+
+**Service Purpose:** Convert text to speech using AI voice synthesis with professional marketing tone.
+
+### Required Fields
+
+| Field | Type | Description | Example |
+|-------|------|-------------|---------|
+| `text` | `string` | Text to convert to speech | `"Welcome to our React Hooks tutorial"` |
+
+### Optional Fields
+
+| Field | Type | Description | Default |
+|-------|------|-------------|---------|
+| `voice` | `string` | Voice name | `"Kore"` |
+| `tone` | `string` | Speaking tone | `"professional marketing"` |
+
+### Prompt Formatting Rules
+
+1. **System Prompt → User Prompt → Modifiers**
+   - System prompt: Not used (direct model call)
+   - User prompt: `"Say with a professional marketing tone: ${text}"`
+   - Configuration: Audio modality and voice config specified in model config
+
+2. **Format Structure:**
+   ```
+   Model: gemini-2.5-flash-preview-tts
+   
+   Prompt: Say with a professional marketing tone: ${text}
+   
+   Configuration:
+   {
+     "responseModalities": ["AUDIO"],
+     "speechConfig": {
+       "voiceConfig": {
+         "prebuiltVoiceConfig": {
+           "voiceName": "${voice}"
+         }
+       }
+     }
+   }
+   ```
+
+### Example Prompts
+
+**Example 1: Basic Voiceover**
+```javascript
+{
+  text: "Welcome to our comprehensive guide on React Hooks. In this tutorial, we'll explore the fundamentals of React Hooks and how they revolutionize component development.",
+  voice: "Kore"
+}
+```
+
+**Prompt:**
+```
+Say with a professional marketing tone: Welcome to our comprehensive guide on React Hooks. In this tutorial, we'll explore the fundamentals of React Hooks and how they revolutionize component development.
+```
+
+**Example 2: Video Introduction Voiceover**
+```javascript
+{
+  text: "Welcome to this Cinematic presentation about modern web development practices and best practices for building scalable applications.",
+  voice: "Kore"
+}
+```
+
+**Prompt:**
+```
+Say with a professional marketing tone: Welcome to this Cinematic presentation about modern web development practices and best practices for building scalable applications.
+```
+
+### Special Tokens
+
+- **Audio Data URI:** `data:audio/pcm;base64,{base64_encoded_audio_data}`
+- **Decoding:** Requires Web Audio API for playback
+  - Sample rate: 24000 Hz
+  - Channels: 1 (mono)
+  - Format: PCM (Pulse Code Modulation)
+
+### Supported Models
+
+- **Primary:** `gemini-2.5-flash-preview-tts` (Google Gemini TTS)
+- **Planned Fallbacks:** ElevenLabs, Suno
+
+### Supported Voices
+
+- `"Kore"` (default)
+- Additional voices (provider-dependent)
+
+### Output Format
+
+- Base64-encoded PCM audio data URI: `data:audio/pcm;base64,{base64_encoded_audio_data}`
+- Decoded via Web Audio API for browser playback
+
+### Implementation Location
+
+- **Service:** `backend/src/features/gemini/services/geminiMediaService.js`
+- **API Endpoint:** `POST /api/media/audio` (planned)
+- **Frontend:** `frontend/src/features/media/MediaHubMain.js`
+
+**Note:** Currently, audio generation requires REST API implementation as the SDK doesn't fully support TTS yet.
+
+---
+
+## 5. AI Coding Helper
+
+**Service Purpose:** Generate code snippets, functions, and scripts based on natural language descriptions.
+
+**Status:** Planned (not yet implemented)
+
+### Required Fields (Planned)
+
+| Field | Type | Description | Example |
+|-------|------|-------------|---------|
+| `description` | `string` | Natural language code description | `"Create a function that validates email addresses"` |
+| `language` | `string` | Programming language | `"javascript"` |
+
+### Optional Fields (Planned)
+
+| Field | Type | Description | Default |
+|-------|------|-------------|---------|
+| `context` | `string` | Additional context or requirements | `""` |
+| `style` | `string` | Code style preferences | `"modern"` |
+| `includeTests` | `boolean` | Generate unit tests | `false` |
+| `includeDocs` | `boolean` | Generate documentation | `false` |
+
+### Prompt Formatting Rules (Planned)
+
+1. **System Prompt → User Prompt → Modifiers**
+   - System prompt: `"You are an expert ${language} developer. Generate clean, well-documented code following best practices."`
+   - User prompt: `"Generate ${language} code for: ${description}"`
+   - Modifiers: Style preferences, test requirements, documentation needs
+
+2. **Format Structure (Planned):**
+   ```
+   System Prompt: You are an expert ${language} developer. Generate clean, well-documented code following best practices. ${style ? `Use ${style} coding style.` : ''} ${includeTests ? 'Include unit tests.' : ''} ${includeDocs ? 'Include JSDoc comments.' : ''}
+   
+   User Prompt:
+   Generate ${language} code for: ${description}
+   Context: ${context}
+   ```
+
+### Example Prompts (Planned)
+
+**Example 1: Basic Code Generation**
+```javascript
+{
+  description: "Create a function that validates email addresses using regex",
+  language: "javascript",
+  style: "modern",
+  includeTests: true,
+  includeDocs: true
+}
+```
+
+**System Prompt:**
+```
+You are an expert javascript developer. Generate clean, well-documented code following best practices. Use modern coding style. Include unit tests. Include JSDoc comments.
+```
+
+**User Prompt:**
+```
+Generate javascript code for: Create a function that validates email addresses using regex
+Context: 
+```
+
+**Example 2: React Component Generation**
+```javascript
+{
+  description: "Create a React component that displays a user profile card with avatar, name, and email",
+  language: "javascript",
+  context: "Using React 18+ with hooks, styled with Tailwind CSS",
+  style: "modern",
+  includeTests: false,
+  includeDocs: true
+}
+```
+
+**System Prompt:**
+```
+You are an expert javascript developer. Generate clean, well-documented code following best practices. Use modern coding style. Include JSDoc comments.
+```
+
+**User Prompt:**
+```
+Generate javascript code for: Create a React component that displays a user profile card with avatar, name, and email
+Context: Using React 18+ with hooks, styled with Tailwind CSS
+```
+
+### Special Tokens (Planned)
+
+- Code block markers: ````language` for syntax highlighting
+- Test markers: `// TEST:` for test code sections
+- Documentation markers: `/** JSDoc */` for function documentation
+
+### Supported Models (Planned)
+
+- **Primary:** User-selected provider (Gemini, OpenAI, Claude)
+- **Recommended:** `claude-3-5-sonnet-20241022` (for code generation accuracy)
+- **Fallback:** `gemini-3-pro-preview`
+
+### Supported Languages (Planned)
+
+- `"javascript"` / `"typescript"`
+- `"python"`
+- `"java"`
+- `"go"`
+- `"rust"`
+- `"sql"`
+- `"html"` / `"css"`
+
+### Output Format (Planned)
+
+- Code string with syntax highlighting markers
+- Optional: Separate test file
+- Optional: Documentation comments
+
+### Implementation Location (Planned)
+
+- **Service:** `backend/src/features/gemini/services/geminiCodeService.js` (new)
+- **API Endpoint:** `POST /api/code/generate` (planned)
+- **Frontend:** `frontend/src/features/code/CodeGenerator.js` (planned)
+
+---
+
+## General Prompt Guidelines
 
 ### Best Practices
 
-1. **Prompt Engineering:**
-   - Be specific about output format requirements
-   - Include examples in prompts when helpful
-   - Use clear, concise language
-   - Avoid ambiguous instructions
+1. **Be Specific:** Include all relevant context and requirements
+2. **Use Examples:** Reference similar outputs when possible
+3. **Set Constraints:** Specify output format, length, style clearly
+4. **Provider Optimization:** Leverage provider-specific strengths (Gemini for context, Claude for accuracy, OpenAI for creativity)
 
-2. **Input Validation:**
-   - Validate required parameters before calling AI
-   - Sanitize user input to prevent prompt injection
-   - Truncate long inputs to prevent token limits
+### Common Patterns
 
-3. **Output Processing:**
-   - Always use `cleanAIOutput()` for article content
-   - Parse JSON outputs with error handling
-   - Validate output structure matches expected format
+1. **System Instructions First:** Always prefix with system role/instructions
+2. **Structured User Input:** Use clear field labels (Topic:, Keywords:, etc.)
+3. **Output Format Hints:** Specify JSON, HTML, or text format expectations
+4. **Error Handling:** Include fallback instructions for edge cases
 
-4. **Performance:**
-   - Limit content length for analysis prompts (5000 chars)
-   - Use appropriate models for each task
-   - Implement caching where appropriate
+### Token Management
+
+- **Content Writing:** ~500-2000 tokens per section
+- **Image Generation:** ~50-100 tokens per prompt
+- **Research:** ~1000-5000 tokens (varies with source count)
+- **Voiceover:** ~10-50 tokens per second of audio
+- **Code Generation:** ~200-1000 tokens per function/component
 
 ---
 
@@ -925,3 +638,4 @@ export const generateAudio = async (text, voice = 'Kore') => {
 - [AI Service Flow](../planning/ai-service-flow.md) - Overall AI service architecture
 - [Provider Integration](../architecture/provider-integration.md) - Multi-provider support
 - [Backend Architecture](../architecture/backend-architecture.md) - Backend service structure
+- [UI Context Map](../development/ui-context-map.md) - Frontend component mappings

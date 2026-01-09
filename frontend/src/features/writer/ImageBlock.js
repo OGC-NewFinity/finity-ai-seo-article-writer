@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import htm from 'htm';
 import { generateImage, editImage } from '../../services/geminiMediaService.js';
+import { showError } from '../../utils/errorHandler.js';
 
 const html = htm.bind(React.createElement);
 
@@ -38,7 +39,7 @@ const ImageBlock = ({ rawContent, metadata: propMetadata, onImageGenerated, auto
       if (onImageGenerated) onImageGenerated(url);
     } catch (e) {
       console.error(e);
-      alert("Image generation failed. Please check your prompt and try again, or contact support if the issue persists.");
+      showError(e, 'IMAGE_GENERATION_FAILED');
     } finally {
       setLoading(false);
     }
@@ -54,7 +55,7 @@ const ImageBlock = ({ rawContent, metadata: propMetadata, onImageGenerated, auto
       setEditPrompt('');
     } catch (e) {
       console.error(e);
-      alert("AI image refinement failed. Please ensure your edit instructions are clear and try again.");
+      showError(e, 'IMAGE_GENERATION_FAILED');
     } finally {
       setLoading(false);
     }

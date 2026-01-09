@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import htm from 'htm';
 import api from '../../services/api.js';
 import AuthLayout from './AuthLayout.js';
+import { getErrorMessage } from '../../utils/errorHandler.js';
 
 const html = htm.bind(React.createElement);
 
@@ -21,7 +22,7 @@ const ForgotPassword = () => {
       await api.post('/auth/forgot-password', { email });
       setMessage('If the email exists, a password reset link has been sent to your inbox.');
     } catch (err) {
-      setError(err.response?.data?.detail || 'An error occurred. Please try again.');
+      setError(getErrorMessage(err, 'NETWORK_ERROR'));
     } finally {
       setLoading(false);
     }

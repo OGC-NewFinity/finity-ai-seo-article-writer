@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import htm from 'htm';
 import { generateCTA } from '../../services/geminiArticleService.js';
 import FeedbackWidget from '../../components/common/FeedbackWidget.js';
+import { showError } from '../../utils/errorHandler.js';
 
 const html = htm.bind(React.createElement);
 
@@ -18,7 +19,7 @@ const CTABlock = ({ topic, keywords, focusKeyphrase, onCTAGenerated, existingCTA
       if (onCTAGenerated) onCTAGenerated(result);
     } catch (e) {
       console.error(e);
-      alert("CTA generation failed.");
+      showError(e, 'GENERATION_FAILED');
     } finally {
       setLoading(false);
     }
@@ -57,8 +58,16 @@ const CTABlock = ({ topic, keywords, focusKeyphrase, onCTAGenerated, existingCTA
                   </div>
                   <button 
                     onClick=${() => {
-                      navigator.clipboard.writeText(content);
-                      alert("CTA HTML copied to clipboard.");
+                      navigator.clipboard.writeText(content).then(() => {
+                        // Success feedback - using a simple notification
+                        const notification = document.createElement('div');
+                        notification.textContent = 'CTA HTML copied to clipboard.';
+                        notification.className = 'fixed top-4 right-4 bg-emerald-600 text-white px-6 py-3 rounded-xl shadow-lg z-50 font-bold text-xs';
+                        document.body.appendChild(notification);
+                        setTimeout(() => notification.remove(), 3000);
+                      }).catch(() => {
+                        showError('Failed to copy CTA HTML to clipboard. Please try selecting and copying manually.', 'VALIDATION_ERROR');
+                      });
                     }}
                     className="px-8 py-3.5 bg-slate-800 text-slate-100 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-900/30 transition-all active:scale-95 shadow-xl border border-slate-700"
                   >

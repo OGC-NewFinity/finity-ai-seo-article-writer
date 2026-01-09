@@ -33,6 +33,33 @@ It consists of multiple services working in sync:
 * **Auth Service (FastAPI)** — Handles OAuth and email authentication flows
 * **Database (PostgreSQL)** — Stores users, subscriptions, referrals, and usage
 
+### Backend Routing Architecture
+
+```mermaid
+graph TD
+    A[Frontend<br/>React + Vite<br/>Port 3000] -->|REST API Calls| B[Node.js Backend<br/>Express.js<br/>Port 3001]
+    A -->|Auth Requests| C[Auth Backend<br/>FastAPI<br/>Port 8000]
+    
+    B -->|/api/articles| D[Article Service<br/>Generate Content<br/>SEO Optimization]
+    B -->|/api/media| E[Media Service<br/>Image/Video Generation<br/>File Management]
+    B -->|/api/research| F[Research Service<br/>Web Search<br/>Source Citation]
+    B -->|/api/stats| G[Stats Service<br/>Usage Tracking<br/>Analytics]
+    
+    C -->|/auth/login| H[Login Endpoint<br/>JWT Token Issuance]
+    C -->|/auth/register| I[Registration Endpoint<br/>User Creation]
+    C -->|/auth/oauth| J[OAuth Endpoints<br/>Google/Discord/Twitter]
+    C -->|/auth/jwt/login| K[JWT Login<br/>Email/Password]
+    C -->|/users/me| L[User Profile<br/>Account Management]
+    
+    B -->|Database Queries| M[(PostgreSQL<br/>Port 5432)]
+    C -->|Database Queries| M
+    
+    style A fill:#e1f5ff
+    style B fill:#fff4e1
+    style C fill:#ffe1f5
+    style M fill:#e1ffe1
+```
+
 ---
 
 ## 2. Services Breakdown

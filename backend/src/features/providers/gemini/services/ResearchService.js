@@ -3,7 +3,7 @@
  * Functions for performing research queries and analysis
  */
 
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { getApiKey } from '../../../../services/ai/gemini.shared.js';
 import { trackTokenUsage, estimateTokens } from '../../../../services/tokenTracking.service.js';
 import { logGenerationFailure } from '../../../../services/generationFailure.service.js';
@@ -25,18 +25,19 @@ export const performResearch = async (userId, query) => {
   try {
     tokensUsed = estimateTokens(query) * 5; // Research queries are more token-intensive
     
-    const ai = new GoogleGenAI({ apiKey: getApiKey() });
-    const response = await ai.models.generateContent({
+    const genAI = new GoogleGenerativeAI(getApiKey());
+    const model = genAI.getGenerativeModel({
       model: MODEL,
-      contents: `Deep Research: ${query}`,
-      config: { tools: [{ googleSearch: {} }] }
+      tools: [{ googleSearch: {} }]
     });
+    const result = await model.generateContent(`Deep Research: ${query}`);
+    const response = await result.response;
     
     const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks
       ?.filter(chunk => chunk.web)
       ?.map(chunk => ({ title: chunk.web?.title || 'Source', uri: chunk.web?.uri || '' })) || [];
     
-    const result = { summary: response.text, sources };
+    const researchResult = { summary: response.text(), sources };
     
     // Track token usage
     await trackTokenUsage(userId, tokensUsed, 'research', {
@@ -50,7 +51,7 @@ export const performResearch = async (userId, query) => {
       }
     });
     
-    return result;
+    return researchResult;
   } catch (error) {
     await logGenerationFailure(userId, 'research', error, {
       provider: PROVIDER,

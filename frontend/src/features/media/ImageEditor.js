@@ -7,6 +7,7 @@ import MediaUpload from './MediaUpload.js';
 import MediaOutput from './MediaOutput.js';
 import OnboardingBanner from '../../../../components/common/OnboardingBanner.js';
 import Tooltip from '../../../../components/common/Tooltip.js';
+import { showError } from '../../utils/errorHandler.js';
 
 const html = htm.bind(React.createElement);
 
@@ -39,7 +40,7 @@ const ImageEditor = () => {
       setResultImage(url);
     } catch (e) {
       console.error(e);
-      alert("Image editing failed. Please ensure your image is uploaded and your instructions are clear, then try again.");
+      showError(e, 'IMAGE_GENERATION_FAILED');
     } finally {
       setLoading(false);
       setStatusMessage('');

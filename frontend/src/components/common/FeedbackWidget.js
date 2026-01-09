@@ -56,7 +56,8 @@ const FeedbackWidget = ({
       }, 3000);
     } catch (error) {
       console.error('Error submitting feedback:', error);
-      alert('Failed to submit feedback. Please try again.');
+      const { showError } = await import('../../utils/errorHandler.js');
+      showError(error, 'NETWORK_ERROR');
     } finally {
       setSubmitting(false);
     }

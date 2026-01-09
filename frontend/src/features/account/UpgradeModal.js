@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import htm from 'htm';
 import subscriptionApi from '../../services/subscriptionApi.js';
+import { getErrorMessage } from '../../utils/errorHandler.js';
 
 const html = htm.bind(React.createElement);
 
@@ -51,7 +52,7 @@ const UpgradeModal = ({ currentPlan, onClose, onUpgrade }) => {
 
   const handlePayPalCheckout = async () => {
     if (!selectedPlan) {
-      setError('Please select a plan first');
+      setError(getErrorMessage('Please select a plan first', 'VALIDATION_ERROR'));
       return;
     }
 
@@ -70,14 +71,14 @@ const UpgradeModal = ({ currentPlan, onClose, onUpgrade }) => {
       }
     } catch (err) {
       console.error('PayPal checkout failed:', err);
-      setError(err.response?.data?.error?.message || 'Failed to start PayPal checkout. Please try again.');
+      setError(getErrorMessage(err, 'NETWORK_ERROR'));
       setLoading(false);
     }
   };
 
   const handleStripeCheckout = async () => {
     if (!selectedPlan) {
-      setError('Please select a plan first');
+      setError(getErrorMessage('Please select a plan first', 'VALIDATION_ERROR'));
       return;
     }
 
@@ -103,7 +104,7 @@ const UpgradeModal = ({ currentPlan, onClose, onUpgrade }) => {
       }
     } catch (error) {
       console.error('Stripe checkout failed:', error);
-      setError(error.response?.data?.error?.message || 'Failed to start Stripe checkout. Please try again.');
+      setError(getErrorMessage(error, 'NETWORK_ERROR'));
       setLoading(false);
     }
   };

@@ -19,6 +19,11 @@ define('NOVA_XFINITY_AI_VERSION', '1.0.0');
 define('NOVA_XFINITY_AI_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('NOVA_XFINITY_AI_PLUGIN_URL', plugin_dir_url(__FILE__));
 
+// Include setup files
+require_once NOVA_XFINITY_AI_PLUGIN_DIR . 'includes/setup-hooks.php';
+require_once NOVA_XFINITY_AI_PLUGIN_DIR . 'includes/setup-status.php';
+require_once NOVA_XFINITY_AI_PLUGIN_DIR . 'includes/token-sync.php';
+
 /**
  * Main Plugin Class
  * 
@@ -72,6 +77,9 @@ class Nova_XFinity_AI_SEO_Writer {
         
         // Register scheduled event handler for token sync retries
         add_action('nova_xfinity_ai_retry_token_sync', array($this, 'handle_retry_token_sync'), 10, 4);
+        
+        // Hook into AI generation results for token tracking
+        add_action('nova_xfinity_ai_generation_result', 'nova_xfinity_update_token_usage', 10, 2);
     }
     
     /**
@@ -129,6 +137,16 @@ class Nova_XFinity_AI_SEO_Writer {
                 'nova-xfinity-ai-settings',                     // Menu slug
                 array($this, 'render_settings_page')      // Callback function
             );
+            
+            // Add sync & stats page
+            add_submenu_page(
+                'options-general.php',                    // Parent slug (Settings)
+                __('Sync & Stats', 'nova-xfinity-ai'),    // Page title
+                __('Sync & Stats', 'nova-xfinity-ai'),    // Menu title
+                'manage_options',                         // Capability required
+                'nova-xfinity-ai-sync',                   // Menu slug
+                array($this, 'render_sync_page')         // Callback function
+            );
         }
     }
     
@@ -179,7 +197,7 @@ class Nova_XFinity_AI_SEO_Writer {
         // Add settings section
         add_settings_section(
             'nova_xfinity_ai_api_section',              // Section ID
-            __('API Configuration', 'nova-xfinity-ai'), // Section title
+            '', // Section title (rendered in callback)
             array($this, 'render_api_section'),   // Callback function
             'nova-xfinity-ai-settings'                  // Page slug
         );
@@ -187,7 +205,7 @@ class Nova_XFinity_AI_SEO_Writer {
         // Add settings section for content defaults
         add_settings_section(
             'nova_xfinity_ai_content_section',          // Section ID
-            __('Content Defaults', 'nova-xfinity-ai'),  // Section title
+            '', // Section title (rendered in callback)
             array($this, 'render_content_section'), // Callback function
             'nova-xfinity-ai-settings'                  // Page slug
         );
@@ -231,7 +249,7 @@ class Nova_XFinity_AI_SEO_Writer {
         // Add platform sync section
         add_settings_section(
             'nova_xfinity_ai_platform_section',         // Section ID
-            __('Platform Sync', 'nova-xfinity-ai'),    // Section title
+            '', // Section title (rendered in callback)
             array($this, 'render_platform_section'), // Callback function
             'nova-xfinity-ai-settings'                  // Page slug
         );
@@ -319,14 +337,14 @@ class Nova_XFinity_AI_SEO_Writer {
      * Render API section description
      */
     public function render_api_section() {
-        echo '<p>' . esc_html__('Configure API keys for AI providers. These keys will be used for content generation.', 'nova-xfinity-ai') . '</p>';
+        echo '<div class="nova-ui__card nova-ui__card--outlined" style="margin-bottom: var(--plasma-spacing-xl);"><div class="nova-ui__card__header"><h3 class="nova-ui__card__title">' . esc_html__('API Configuration', 'nova-xfinity-ai') . '</h3><p class="nova-ui__card__subtitle">' . esc_html__('Configure API keys for AI providers. These keys will be used for content generation.', 'nova-xfinity-ai') . '</p></div></div>';
     }
     
     /**
      * Render content section description
      */
     public function render_content_section() {
-        echo '<p>' . esc_html__('Set default values for content generation. These can be overridden when generating content.', 'nova-xfinity-ai') . '</p>';
+        echo '<div class="nova-ui__card nova-ui__card--outlined" style="margin-bottom: var(--plasma-spacing-xl);"><div class="nova-ui__card__body"><p style="color: var(--plasma-text-secondary); margin: 0;">' . esc_html__('Set default values for content generation. These can be overridden when generating content.', 'nova-xfinity-ai') . '</p></div></div>';
     }
     
     /**
@@ -336,20 +354,24 @@ class Nova_XFinity_AI_SEO_Writer {
         $settings = get_option('nova_xfinity_ai_settings', array());
         $value = isset($settings['openai_api_key']) ? esc_attr($settings['openai_api_key']) : '';
         ?>
-        <input 
-            type="password" 
-            id="openai_api_key" 
-            name="nova_xfinity_ai_settings[openai_api_key]" 
-            value="<?php echo $value; ?>" 
-            class="regular-text"
-            placeholder="sk-..."
-        />
-        <button type="button" class="button" id="test-openai-key" style="margin-left: 10px;">
-            <?php esc_html_e('Test Key', 'nova-xfinity-ai'); ?>
-        </button>
-        <p class="description">
-            <?php esc_html_e('Enter your OpenAI API key. Keep this secure and never share it publicly.', 'nova-xfinity-ai'); ?>
-        </p>
+        <div class="nova-plasma-form-group">
+            <input 
+                type="password" 
+                id="openai_api_key" 
+                name="nova_xfinity_ai_settings[openai_api_key]" 
+                value="<?php echo $value; ?>" 
+                class="nova-ui__input"
+                placeholder="sk-..."
+            />
+            <div style="display: flex; gap: var(--plasma-spacing-sm); margin-top: var(--plasma-spacing-sm);">
+                <button type="button" class="nova-ui__button nova-ui__button--secondary" id="test-openai-key">
+                    <?php esc_html_e('Test Key', 'nova-xfinity-ai'); ?>
+                </button>
+            </div>
+            <p class="nova-ui__input-helper">
+                <?php esc_html_e('Enter your OpenAI API key. Keep this secure and never share it publicly.', 'nova-xfinity-ai'); ?>
+            </p>
+        </div>
         <?php
     }
     
@@ -360,20 +382,24 @@ class Nova_XFinity_AI_SEO_Writer {
         $settings = get_option('nova_xfinity_ai_settings', array());
         $value = isset($settings['gemini_api_key']) ? esc_attr($settings['gemini_api_key']) : '';
         ?>
-        <input 
-            type="password" 
-            id="gemini_api_key" 
-            name="nova_xfinity_ai_settings[gemini_api_key]" 
-            value="<?php echo $value; ?>" 
-            class="regular-text"
-            placeholder="AIza..."
-        />
-        <button type="button" class="button" id="test-gemini-key" style="margin-left: 10px;">
-            <?php esc_html_e('Test Key', 'nova-xfinity-ai'); ?>
-        </button>
-        <p class="description">
-            <?php esc_html_e('Enter your Google Gemini API key. Keep this secure and never share it publicly.', 'nova-xfinity-ai'); ?>
-        </p>
+        <div class="nova-plasma-form-group">
+            <input 
+                type="password" 
+                id="gemini_api_key" 
+                name="nova_xfinity_ai_settings[gemini_api_key]" 
+                value="<?php echo $value; ?>" 
+                class="nova-ui__input"
+                placeholder="AIza..."
+            />
+            <div style="display: flex; gap: var(--plasma-spacing-sm); margin-top: var(--plasma-spacing-sm);">
+                <button type="button" class="nova-ui__button nova-ui__button--secondary" id="test-gemini-key">
+                    <?php esc_html_e('Test Key', 'nova-xfinity-ai'); ?>
+                </button>
+            </div>
+            <p class="nova-ui__input-helper">
+                <?php esc_html_e('Enter your Google Gemini API key. Keep this secure and never share it publicly.', 'nova-xfinity-ai'); ?>
+            </p>
+        </div>
         <?php
     }
     
@@ -392,16 +418,18 @@ class Nova_XFinity_AI_SEO_Writer {
             'technical' => __('Technical', 'nova-xfinity-ai'),
         );
         ?>
-        <select id="default_tone" name="nova_xfinity_ai_settings[default_tone]" class="regular-text">
-            <?php foreach ($tones as $key => $label) : ?>
-                <option value="<?php echo esc_attr($key); ?>" <?php selected($value, $key); ?>>
-                    <?php echo esc_html($label); ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
-        <p class="description">
-            <?php esc_html_e('Default writing tone/style for generated content.', 'nova-xfinity-ai'); ?>
-        </p>
+        <div class="nova-plasma-form-group">
+            <select id="default_tone" name="nova_xfinity_ai_settings[default_tone]" class="nova-ui__select">
+                <?php foreach ($tones as $key => $label) : ?>
+                    <option value="<?php echo esc_attr($key); ?>" <?php selected($value, $key); ?>>
+                        <?php echo esc_html($label); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+            <p class="nova-ui__select-helper">
+                <?php esc_html_e('Default writing tone/style for generated content.', 'nova-xfinity-ai'); ?>
+            </p>
+        </div>
         <?php
     }
     
@@ -412,19 +440,22 @@ class Nova_XFinity_AI_SEO_Writer {
         $settings = get_option('nova_xfinity_ai_settings', array());
         $value = isset($settings['max_word_count']) ? intval($settings['max_word_count']) : 1000;
         ?>
-        <input 
-            type="number" 
-            id="max_word_count" 
-            name="nova_xfinity_ai_settings[max_word_count]" 
-            value="<?php echo esc_attr($value); ?>" 
-            class="small-text"
-            min="100"
-            max="10000"
-            step="100"
-        />
-        <p class="description">
-            <?php esc_html_e('Maximum word count for generated articles. Default: 1000 words.', 'nova-xfinity-ai'); ?>
-        </p>
+        <div class="nova-plasma-form-group">
+            <input 
+                type="number" 
+                id="max_word_count" 
+                name="nova_xfinity_ai_settings[max_word_count]" 
+                value="<?php echo esc_attr($value); ?>" 
+                class="nova-ui__input"
+                style="max-width: 200px;"
+                min="100"
+                max="10000"
+                step="100"
+            />
+            <p class="nova-ui__input-helper">
+                <?php esc_html_e('Maximum word count for generated articles. Default: 1000 words.', 'nova-xfinity-ai'); ?>
+            </p>
+        </div>
         <?php
     }
     
@@ -432,7 +463,7 @@ class Nova_XFinity_AI_SEO_Writer {
      * Render platform section description
      */
     public function render_platform_section() {
-        echo '<p>' . esc_html__('Configure platform sync settings to synchronize token usage with the main platform.', 'nova-xfinity-ai') . '</p>';
+        echo '<div class="nova-ui__card nova-ui__card--outlined" style="margin-bottom: var(--plasma-spacing-xl);"><div class="nova-ui__card__header"><h3 class="nova-ui__card__title">' . esc_html__('Platform Sync', 'nova-xfinity-ai') . '</h3><p class="nova-ui__card__subtitle">' . esc_html__('Configure platform sync settings to synchronize token usage with the main platform.', 'nova-xfinity-ai') . '</p></div></div>';
     }
     
     /**
@@ -442,17 +473,19 @@ class Nova_XFinity_AI_SEO_Writer {
         $settings = get_option('nova_xfinity_ai_settings', array());
         $value = isset($settings['platform_api_key']) ? esc_attr($settings['platform_api_key']) : '';
         ?>
-        <input 
-            type="password" 
-            id="platform_api_key" 
-            name="nova_xfinity_ai_settings[platform_api_key]" 
-            value="<?php echo $value; ?>" 
-            class="regular-text"
-            placeholder="nova_xfinity_..."
-        />
-        <p class="description">
-            <?php esc_html_e('API key for authenticating with the platform. Get this from your platform account settings.', 'nova-xfinity-ai'); ?>
-        </p>
+        <div class="nova-plasma-form-group">
+            <input 
+                type="password" 
+                id="platform_api_key" 
+                name="nova_xfinity_ai_settings[platform_api_key]" 
+                value="<?php echo $value; ?>" 
+                class="nova-ui__input"
+                placeholder="nova_xfinity_..."
+            />
+            <p class="nova-ui__input-helper">
+                <?php esc_html_e('API key for authenticating with the platform. Get this from your platform account settings.', 'nova-xfinity-ai'); ?>
+            </p>
+        </div>
         <?php
     }
     
@@ -461,19 +494,21 @@ class Nova_XFinity_AI_SEO_Writer {
      */
     public function render_platform_api_url_field() {
         $settings = get_option('nova_xfinity_ai_settings', array());
-            $value = isset($settings['platform_api_url']) ? esc_attr($settings['platform_api_url']) : 'https://api.nova-xfinity.ai';
+        $value = isset($settings['platform_api_url']) ? esc_attr($settings['platform_api_url']) : 'https://api.nova-xfinity.ai';
         ?>
-        <input 
-            type="url" 
-            id="platform_api_url" 
-            name="nova_xfinity_ai_settings[platform_api_url]" 
-            value="<?php echo $value; ?>" 
-            class="regular-text"
-            placeholder="https://api.nova-xfinity.ai"
-        />
-        <p class="description">
-            <?php esc_html_e('Base URL of the platform API. Default: https://api.nova-xfinity.ai', 'nova-xfinity-ai'); ?>
-        </p>
+        <div class="nova-plasma-form-group">
+            <input 
+                type="url" 
+                id="platform_api_url" 
+                name="nova_xfinity_ai_settings[platform_api_url]" 
+                value="<?php echo $value; ?>" 
+                class="nova-ui__input"
+                placeholder="https://api.nova-xfinity.ai"
+            />
+            <p class="nova-ui__input-helper">
+                <?php esc_html_e('Base URL of the platform API. Default: https://api.nova-xfinity.ai', 'nova-xfinity-ai'); ?>
+            </p>
+        </div>
         <?php
     }
     
@@ -484,298 +519,109 @@ class Nova_XFinity_AI_SEO_Writer {
         $settings = get_option('nova_xfinity_ai_settings', array());
         $value = isset($settings['platform_user_id']) ? esc_attr($settings['platform_user_id']) : '';
         ?>
-        <input 
-            type="text" 
-            id="platform_user_id" 
-            name="nova_xfinity_ai_settings[platform_user_id]" 
-            value="<?php echo $value; ?>" 
-            class="regular-text"
-            placeholder="user-uuid-here"
-        />
-        <p class="description">
-            <?php esc_html_e('Your user ID on the platform. This is required for token usage synchronization.', 'nova-xfinity-ai'); ?>
-        </p>
+        <div class="nova-plasma-form-group">
+            <input 
+                type="text" 
+                id="platform_user_id" 
+                name="nova_xfinity_ai_settings[platform_user_id]" 
+                value="<?php echo $value; ?>" 
+                class="nova-ui__input"
+                placeholder="user-uuid-here"
+            />
+            <p class="nova-ui__input-helper">
+                <?php esc_html_e('Your user ID on the platform. This is required for token usage synchronization.', 'nova-xfinity-ai'); ?>
+            </p>
+        </div>
         <?php
+    }
+    
+    /**
+     * REST endpoint handler for validating API keys
+     * 
+     * @param WP_REST_Request $request REST API request object
+     * @return WP_REST_Response|WP_Error Response with validation result
+     */
+    public function rest_validate_api_key($request) {
+        $provider = $request->get_param('provider');
+        $api_key = $request->get_param('api_key');
+        
+        $result = $this->test_api_key($provider, $api_key);
+        
+        if (is_wp_error($result)) {
+            return rest_ensure_response(array(
+                'success' => false,
+                'valid' => false,
+                'message' => $result->get_error_message(),
+            ));
+        }
+        
+        return rest_ensure_response(array(
+            'success' => true,
+            'valid' => true,
+            'message' => __('API key is valid.', 'nova-xfinity-ai'),
+        ));
+    }
+    
+    /**
+     * REST endpoint handler for syncing token usage
+     * 
+     * @param WP_REST_Request $request REST API request object
+     * @return WP_REST_Response|WP_Error Response with sync result
+     */
+    public function rest_sync_token_usage($request) {
+        $params = $request->get_json_params();
+        $user_id = isset($params['user_id']) ? intval($params['user_id']) : null;
+        $async = isset($params['async']) ? (bool) $params['async'] : false;
+        
+        $result = nova_xfinity_sync_token_data($user_id, $async);
+        
+        if (is_wp_error($result)) {
+            return rest_ensure_response(array(
+                'success' => false,
+                'message' => $result->get_error_message(),
+            ));
+        }
+        
+        return rest_ensure_response(array(
+            'success' => true,
+            'message' => __('Token usage synced successfully.', 'nova-xfinity-ai'),
+            'data' => $result
+        ));
+    }
+    
+    /**
+     * REST endpoint handler for getting usage statistics
+     * 
+     * @param WP_REST_Request $request REST API request object
+     * @return WP_REST_Response Response with usage stats
+     */
+    public function rest_get_usage_stats($request) {
+        $user_id = $request->get_param('user_id');
+        $user_id = $user_id ? intval($user_id) : null;
+        
+        $usage = nova_xfinity_get_token_usage($user_id);
+        $errors = nova_xfinity_get_sync_errors($user_id);
+        
+        return rest_ensure_response(array(
+            'success' => true,
+            'usage' => $usage,
+            'errors' => $errors
+        ));
     }
     
     /**
      * Render wizard page
      * 
-     * Displays the multi-step setup wizard
+     * Displays the React-based multi-step setup wizard
      */
     public function render_wizard_page() {
         // Check user capabilities
         if (!current_user_can('manage_options')) {
             wp_die(__('You do not have sufficient permissions to access this page.', 'nova-xfinity-ai'));
         }
-        
-        // Get current settings if any
-        $settings = get_option('nova_xfinity_ai_settings', array());
         ?>
-        <div class="wrap nova-xfinity-wizard-container">
-            <div class="nova-xfinity-wizard-header">
-                <img 
-                    src="<?php echo esc_url(NOVA_XFINITY_AI_PLUGIN_URL . 'assets/nova-logo.png'); ?>" 
-                    alt="Nova‑XFinity AI Logo" 
-                    style="width: 64px; height: 64px; margin: 0 auto 20px; display: block;"
-                />
-                <h1><?php esc_html_e('Welcome to Nova‑XFinity AI SEO Writer', 'nova-xfinity-ai'); ?></h1>
-                <p class="description"><?php esc_html_e('Let\'s get you set up in just a few steps.', 'nova-xfinity-ai'); ?></p>
-            </div>
-            
-            <!-- Progress Indicator -->
-            <div class="nova-xfinity-wizard-progress">
-                <div class="nova-xfinity-wizard-steps">
-                    <div class="nova-xfinity-wizard-step" data-step="1">
-                        <div class="step-number">1</div>
-                        <div class="step-label"><?php esc_html_e('API Keys', 'nova-xfinity-ai'); ?></div>
-                    </div>
-                    <div class="nova-xfinity-wizard-step" data-step="2">
-                        <div class="step-number">2</div>
-                        <div class="step-label"><?php esc_html_e('Platform Sync', 'nova-xfinity-ai'); ?></div>
-                    </div>
-                    <div class="nova-xfinity-wizard-step" data-step="3">
-                        <div class="step-number">3</div>
-                        <div class="step-label"><?php esc_html_e('Defaults', 'nova-xfinity-ai'); ?></div>
-                    </div>
-                    <div class="nova-xfinity-wizard-step" data-step="4">
-                        <div class="step-number">4</div>
-                        <div class="step-label"><?php esc_html_e('Complete', 'nova-xfinity-ai'); ?></div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Wizard Steps -->
-            <form id="nova-xfinity-wizard-form" class="nova-xfinity-wizard-form">
-                <!-- Step 1: API Key & Provider Setup -->
-                <div class="nova-xfinity-wizard-step-content" data-step="1">
-                    <h2><?php esc_html_e('Step 1: API Key & Provider Setup', 'nova-xfinity-ai'); ?></h2>
-                    <p class="description"><?php esc_html_e('Configure your AI provider API keys. At least one provider is required.', 'nova-xfinity-ai'); ?></p>
-                    
-                    <table class="form-table">
-                        <tr>
-                            <th scope="row">
-                                <label for="wizard-openai-key"><?php esc_html_e('OpenAI API Key', 'nova-xfinity-ai'); ?></label>
-                            </th>
-                            <td>
-                                <input 
-                                    type="password" 
-                                    id="wizard-openai-key" 
-                                    name="openai_api_key" 
-                                    value="<?php echo isset($settings['openai_api_key']) ? esc_attr($settings['openai_api_key']) : ''; ?>" 
-                                    class="regular-text"
-                                    placeholder="sk-..."
-                                />
-                                <button type="button" class="button test-api-key" data-provider="openai">
-                                    <?php esc_html_e('Test', 'nova-xfinity-ai'); ?>
-                                </button>
-                                <span class="test-status" data-provider="openai"></span>
-                                <p class="description">
-                                    <?php esc_html_e('Enter your OpenAI API key. Get one at', 'nova-xfinity-ai'); ?> 
-                                    <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com</a>
-                                </p>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row">
-                                <label for="wizard-gemini-key"><?php esc_html_e('Gemini API Key', 'nova-xfinity-ai'); ?></label>
-                            </th>
-                            <td>
-                                <input 
-                                    type="password" 
-                                    id="wizard-gemini-key" 
-                                    name="gemini_api_key" 
-                                    value="<?php echo isset($settings['gemini_api_key']) ? esc_attr($settings['gemini_api_key']) : ''; ?>" 
-                                    class="regular-text"
-                                    placeholder="AIza..."
-                                />
-                                <button type="button" class="button test-api-key" data-provider="gemini">
-                                    <?php esc_html_e('Test', 'nova-xfinity-ai'); ?>
-                                </button>
-                                <span class="test-status" data-provider="gemini"></span>
-                                <p class="description">
-                                    <?php esc_html_e('Enter your Google Gemini API key. Get one at', 'nova-xfinity-ai'); ?> 
-                                    <a href="https://makersuite.google.com/app/apikey" target="_blank">makersuite.google.com</a>
-                                </p>
-                            </td>
-                        </tr>
-                    </table>
-                    
-                    <div class="wizard-step-validation" data-step="1">
-                        <p class="error-message" style="display: none; color: #dc3232;">
-                            <?php esc_html_e('Please configure at least one API key.', 'nova-xfinity-ai'); ?>
-                        </p>
-                    </div>
-                </div>
-                
-                <!-- Step 2: Platform Sync Setup -->
-                <div class="nova-xfinity-wizard-step-content" data-step="2" style="display: none;">
-                    <h2><?php esc_html_e('Step 2: Platform Sync Setup', 'nova-xfinity-ai'); ?></h2>
-                    <p class="description"><?php esc_html_e('Connect to the Nova‑XFinity AI platform to sync token usage and access advanced features.', 'nova-xfinity-ai'); ?></p>
-                    
-                    <table class="form-table">
-                        <tr>
-                            <th scope="row">
-                                <label for="wizard-platform-url"><?php esc_html_e('Platform API URL', 'nova-xfinity-ai'); ?></label>
-                            </th>
-                            <td>
-                                <input 
-                                    type="url" 
-                                    id="wizard-platform-url" 
-                                    name="platform_api_url" 
-                                    value="<?php echo isset($settings['platform_api_url']) ? esc_attr($settings['platform_api_url']) : 'https://api.nova-xfinity.ai'; ?>" 
-                                    class="regular-text"
-                                    placeholder="https://api.nova-xfinity.ai"
-                                />
-                                <p class="description">
-                                    <?php esc_html_e('Base URL of the platform API. Default: https://api.nova-xfinity.ai', 'nova-xfinity-ai'); ?>
-                                </p>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row">
-                                <label for="wizard-platform-key"><?php esc_html_e('Platform API Key', 'nova-xfinity-ai'); ?></label>
-                            </th>
-                            <td>
-                                <input 
-                                    type="password" 
-                                    id="wizard-platform-key" 
-                                    name="platform_api_key" 
-                                    value="<?php echo isset($settings['platform_api_key']) ? esc_attr($settings['platform_api_key']) : ''; ?>" 
-                                    class="regular-text"
-                                    placeholder="nova_xfinity_..."
-                                />
-                                <button type="button" class="button test-platform-key">
-                                    <?php esc_html_e('Verify', 'nova-xfinity-ai'); ?>
-                                </button>
-                                <span class="test-status" data-provider="platform"></span>
-                                <p class="description">
-                                    <?php esc_html_e('Get your API key from your Nova‑XFinity AI account settings.', 'nova-xfinity-ai'); ?>
-                                </p>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row">
-                                <label for="wizard-platform-user-id"><?php esc_html_e('Platform User ID', 'nova-xfinity-ai'); ?></label>
-                            </th>
-                            <td>
-                                <input 
-                                    type="text" 
-                                    id="wizard-platform-user-id" 
-                                    name="platform_user_id" 
-                                    value="<?php echo isset($settings['platform_user_id']) ? esc_attr($settings['platform_user_id']) : ''; ?>" 
-                                    class="regular-text"
-                                    placeholder="user-uuid-here"
-                                />
-                                <p class="description">
-                                    <?php esc_html_e('Your user ID on the platform. Find this in your account settings.', 'nova-xfinity-ai'); ?>
-                                </p>
-                            </td>
-                        </tr>
-                    </table>
-                    
-                    <div class="notice notice-info inline">
-                        <p><?php esc_html_e('Platform sync is optional. You can skip this step and configure it later in settings.', 'nova-xfinity-ai'); ?></p>
-                    </div>
-                </div>
-                
-                <!-- Step 3: Generation Defaults -->
-                <div class="nova-xfinity-wizard-step-content" data-step="3" style="display: none;">
-                    <h2><?php esc_html_e('Step 3: Generation Defaults', 'nova-xfinity-ai'); ?></h2>
-                    <p class="description"><?php esc_html_e('Set default values for content generation. These can be changed later in settings.', 'nova-xfinity-ai'); ?></p>
-                    
-                    <table class="form-table">
-                        <tr>
-                            <th scope="row">
-                                <label for="wizard-default-tone"><?php esc_html_e('Default Tone/Style', 'nova-xfinity-ai'); ?></label>
-                            </th>
-                            <td>
-                                <select id="wizard-default-tone" name="default_tone" class="regular-text">
-                                    <option value="professional" <?php selected(isset($settings['default_tone']) ? $settings['default_tone'] : 'professional', 'professional'); ?>>
-                                        <?php esc_html_e('Professional', 'nova-xfinity-ai'); ?>
-                                    </option>
-                                    <option value="casual" <?php selected(isset($settings['default_tone']) ? $settings['default_tone'] : '', 'casual'); ?>>
-                                        <?php esc_html_e('Casual', 'nova-xfinity-ai'); ?>
-                                    </option>
-                                    <option value="friendly" <?php selected(isset($settings['default_tone']) ? $settings['default_tone'] : '', 'friendly'); ?>>
-                                        <?php esc_html_e('Friendly', 'nova-xfinity-ai'); ?>
-                                    </option>
-                                    <option value="formal" <?php selected(isset($settings['default_tone']) ? $settings['default_tone'] : '', 'formal'); ?>>
-                                        <?php esc_html_e('Formal', 'nova-xfinity-ai'); ?>
-                                    </option>
-                                    <option value="conversational" <?php selected(isset($settings['default_tone']) ? $settings['default_tone'] : '', 'conversational'); ?>>
-                                        <?php esc_html_e('Conversational', 'nova-xfinity-ai'); ?>
-                                    </option>
-                                    <option value="technical" <?php selected(isset($settings['default_tone']) ? $settings['default_tone'] : '', 'technical'); ?>>
-                                        <?php esc_html_e('Technical', 'nova-xfinity-ai'); ?>
-                                    </option>
-                                </select>
-                                <p class="description">
-                                    <?php esc_html_e('Default writing tone/style for generated content.', 'nova-xfinity-ai'); ?>
-                                </p>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row">
-                                <label for="wizard-max-words"><?php esc_html_e('Max Word Count', 'nova-xfinity-ai'); ?></label>
-                            </th>
-                            <td>
-                                <input 
-                                    type="number" 
-                                    id="wizard-max-words" 
-                                    name="max_word_count" 
-                                    value="<?php echo isset($settings['max_word_count']) ? intval($settings['max_word_count']) : 1000; ?>" 
-                                    class="small-text"
-                                    min="100"
-                                    max="10000"
-                                    step="100"
-                                />
-                                <p class="description">
-                                    <?php esc_html_e('Maximum word count for generated articles. Default: 1000 words.', 'nova-xfinity-ai'); ?>
-                                </p>
-                            </td>
-                        </tr>
-                    </table>
-                </div>
-                
-                <!-- Step 4: Complete -->
-                <div class="nova-xfinity-wizard-step-content" data-step="4" style="display: none;">
-                    <div class="nova-xfinity-wizard-complete">
-                        <div class="complete-icon">✓</div>
-                        <h2><?php esc_html_e('Setup Complete!', 'nova-xfinity-ai'); ?></h2>
-                        <p><?php esc_html_e('Your Nova‑XFinity AI SEO Writer plugin is now configured and ready to use.', 'nova-xfinity-ai'); ?></p>
-                        <p>
-                            <a href="<?php echo admin_url('options-general.php?page=nova-xfinity-ai-settings'); ?>" class="button button-primary button-large">
-                                <?php esc_html_e('Go to Settings', 'nova-xfinity-ai'); ?>
-                            </a>
-                            <a href="<?php echo admin_url('options-general.php?page=nova-xfinity-ai-settings'); ?>" class="button button-large">
-                                <?php esc_html_e('Start Using Plugin', 'nova-xfinity-ai'); ?>
-                            </a>
-                        </p>
-                    </div>
-                </div>
-                
-                <!-- Navigation Buttons -->
-                <div class="nova-xfinity-wizard-navigation">
-                    <button type="button" class="button button-secondary wizard-prev" style="display: none;">
-                        <?php esc_html_e('Previous', 'nova-xfinity-ai'); ?>
-                    </button>
-                    <div class="wizard-nav-right">
-                        <button type="button" class="button button-secondary wizard-skip" data-step="2">
-                            <?php esc_html_e('Skip', 'nova-xfinity-ai'); ?>
-                        </button>
-                        <button type="button" class="button button-primary wizard-next">
-                            <?php esc_html_e('Next', 'nova-xfinity-ai'); ?>
-                        </button>
-                        <button type="button" class="button button-primary wizard-save" style="display: none;">
-                            <?php esc_html_e('Save & Continue', 'nova-xfinity-ai'); ?>
-                        </button>
-                        <button type="button" class="button button-primary wizard-complete" style="display: none;">
-                            <?php esc_html_e('Complete Setup', 'nova-xfinity-ai'); ?>
-                        </button>
-                    </div>
-                </div>
-            </form>
+        <div class="wrap nova-plasma-admin" id="nova-xfinity-setup-wizard-container">
+            <!-- React wizard will mount here -->
         </div>
         <?php
     }
@@ -783,7 +629,7 @@ class Nova_XFinity_AI_SEO_Writer {
     /**
      * Render admin settings page
      * 
-     * Displays the settings form with all configuration options
+     * Displays the settings form with all configuration options using Plasma design
      */
     public function render_settings_page() {
         // Check user capabilities
@@ -801,82 +647,281 @@ class Nova_XFinity_AI_SEO_Writer {
             );
         }
         
-        // Display any settings errors
-        settings_errors('nova_xfinity_ai_messages');
+        $settings = get_option('nova_xfinity_ai_settings', array());
+        $usage_data = nova_xfinity_get_token_usage();
+        
+        // Calculate totals
+        $total_calls = 0;
+        $total_successful = 0;
+        $total_failed = 0;
+        if ($usage_data) {
+            foreach ($usage_data as $user_data) {
+                $total_calls += isset($user_data['total_calls']) ? intval($user_data['total_calls']) : 0;
+                $total_successful += isset($user_data['successful_calls']) ? intval($user_data['successful_calls']) : 0;
+                $total_failed += isset($user_data['failed_calls']) ? intval($user_data['failed_calls']) : 0;
+            }
+        }
         ?>
-        <div class="wrap">
-            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
-                <img 
-                    src="<?php echo esc_url(NOVA_XFINITY_AI_PLUGIN_URL . 'assets/nova-logo.png'); ?>" 
-                    alt="Nova‑XFinity AI Logo" 
-                    style="width: 48px; height: 48px;"
-                />
-                <h1 style="margin: 0;"><?php echo esc_html(get_admin_page_title()); ?></h1>
-            </div>
-            
-            <p>
-                <a href="<?php echo admin_url('options-general.php?page=nova-xfinity-ai-wizard&reset_wizard=1'); ?>" class="button button-secondary">
-                    <?php esc_html_e('Run Setup Wizard Again', 'nova-xfinity-ai'); ?>
-                </a>
-            </p>
-            
-            <form action="options.php" method="post">
-                <?php
-                // Output nonce, action, and option_page fields
-                settings_fields('nova_xfinity_ai_settings_group');
-                
-                // Output settings sections and their fields
-                do_settings_sections('nova-xfinity-ai-settings');
-                
-                // Output save settings button
-                submit_button(__('Save Settings', 'nova-xfinity-ai'));
-                ?>
-            </form>
-            
-            <hr style="margin: 30px 0;" />
-            
-            <h2><?php esc_html_e('AI Content Generation', 'nova-xfinity-ai'); ?></h2>
-            <div id="nova-xfinity-ai-generator">
-                <table class="form-table">
-                    <tr>
-                        <th scope="row">
-                            <label for="generation-prompt"><?php esc_html_e('Prompt', 'nova-xfinity-ai'); ?></label>
-                        </th>
-                        <td>
-                            <textarea 
-                                id="generation-prompt" 
-                                name="generation-prompt" 
-                                rows="4" 
-                                class="large-text"
-                                placeholder="<?php esc_attr_e('Enter your content generation prompt here...', 'nova-xfinity-ai'); ?>"
-                            ></textarea>
-                            <p class="description">
-                                <?php esc_html_e('Describe the content you want to generate.', 'nova-xfinity-ai'); ?>
-                            </p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row">
-                            <label for="generation-provider"><?php esc_html_e('AI Provider', 'nova-xfinity-ai'); ?></label>
-                        </th>
-                        <td>
-                            <select id="generation-provider" name="generation-provider" class="regular-text">
-                                <option value="openai"><?php esc_html_e('OpenAI', 'nova-xfinity-ai'); ?></option>
-                                <option value="gemini"><?php esc_html_e('Gemini', 'nova-xfinity-ai'); ?></option>
-                            </select>
-                        </td>
-                    </tr>
-                </table>
-                <p class="submit">
-                    <button type="button" class="button button-primary" id="generate-content-btn">
-                        <?php esc_html_e('Generate Content', 'nova-xfinity-ai'); ?>
-                    </button>
-                    <span id="generation-status" style="margin-left: 10px;"></span>
-                </p>
-                <div id="generation-result" style="margin-top: 20px; display: none;">
-                    <h3><?php esc_html_e('Generated Content', 'nova-xfinity-ai'); ?></h3>
-                    <div id="generation-output" style="background: #f9f9f9; padding: 15px; border: 1px solid #ddd; border-radius: 4px; max-height: 400px; overflow-y: auto;"></div>
+        <div class="wrap nova-plasma-admin">
+            <div class="nova-plasma-container">
+                <div class="nova-plasma-header">
+                    <h1 class="nova-plasma-header__title"><?php echo esc_html(get_admin_page_title()); ?></h1>
+                    <p class="nova-plasma-header__subtitle"><?php esc_html_e('Configure your AI content generation settings', 'nova-xfinity-ai'); ?></p>
                 </div>
+                
+                <div class="nova-plasma-stats">
+                    <div class="nova-plasma-stat">
+                        <div class="nova-plasma-stat__value"><?php echo esc_html($total_calls); ?></div>
+                        <div class="nova-plasma-stat__label"><?php esc_html_e('Total Calls', 'nova-xfinity-ai'); ?></div>
+                    </div>
+                    <div class="nova-plasma-stat">
+                        <div class="nova-plasma-stat__value" style="color: var(--plasma-neon-teal);"><?php echo esc_html($total_successful); ?></div>
+                        <div class="nova-plasma-stat__label"><?php esc_html_e('Successful', 'nova-xfinity-ai'); ?></div>
+                    </div>
+                    <div class="nova-plasma-stat">
+                        <div class="nova-plasma-stat__value" style="color: var(--plasma-pink);"><?php echo esc_html($total_failed); ?></div>
+                        <div class="nova-plasma-stat__label"><?php esc_html_e('Failed', 'nova-xfinity-ai'); ?></div>
+                    </div>
+                </div>
+                
+                <div class="nova-plasma-form-row" style="margin-bottom: var(--plasma-spacing-lg);">
+                    <a href="<?php echo admin_url('options-general.php?page=nova-xfinity-ai-wizard&reset_wizard=1'); ?>" class="nova-ui__button nova-ui__button--secondary">
+                        <?php esc_html_e('Run Setup Wizard', 'nova-xfinity-ai'); ?>
+                    </a>
+                    <a href="<?php echo admin_url('options-general.php?page=nova-xfinity-ai-sync'); ?>" class="nova-ui__button nova-ui__button--secondary">
+                        <?php esc_html_e('Sync & Stats', 'nova-xfinity-ai'); ?>
+                    </a>
+                </div>
+                
+                <form action="options.php" method="post" class="nova-plasma-form">
+                    <?php
+                    settings_fields('nova_xfinity_ai_settings_group');
+                    do_settings_sections('nova-xfinity-ai-settings');
+                    ?>
+                    <div style="margin-top: var(--plasma-spacing-xl);">
+                        <button type="submit" class="nova-ui__button nova-ui__button--primary nova-ui__button--large">
+                            <?php esc_html_e('Save Settings', 'nova-xfinity-ai'); ?>
+                        </button>
+                    </div>
+                </form>
+                
+                <div style="margin-top: var(--plasma-spacing-2xl);">
+                    <h2 style="font-size: var(--plasma-font-size-xl); margin-bottom: var(--plasma-spacing-lg); color: var(--plasma-text-primary);">
+                        <?php esc_html_e('AI Content Generation', 'nova-xfinity-ai'); ?>
+                    </h2>
+                    <div class="nova-ui__card nova-ui__card--elevated">
+                        <div class="nova-ui__card__body">
+                            <div class="nova-plasma-form">
+                                <div class="nova-plasma-form-group">
+                                    <label for="generation-prompt" class="nova-ui__input-label">
+                                        <?php esc_html_e('Prompt', 'nova-xfinity-ai'); ?>
+                                    </label>
+                                    <textarea 
+                                        id="generation-prompt" 
+                                        name="generation-prompt" 
+                                        rows="4" 
+                                        class="nova-ui__input"
+                                        placeholder="<?php esc_attr_e('Enter your content generation prompt here...', 'nova-xfinity-ai'); ?>"
+                                        style="min-height: 120px; resize: vertical;"
+                                    ></textarea>
+                                </div>
+                                <div class="nova-plasma-form-group">
+                                    <label for="generation-provider" class="nova-ui__input-label">
+                                        <?php esc_html_e('AI Provider', 'nova-xfinity-ai'); ?>
+                                    </label>
+                                    <select id="generation-provider" name="generation-provider" class="nova-ui__select">
+                                        <option value="openai"><?php esc_html_e('OpenAI', 'nova-xfinity-ai'); ?></option>
+                                        <option value="gemini"><?php esc_html_e('Gemini', 'nova-xfinity-ai'); ?></option>
+                                    </select>
+                                </div>
+                                <div style="margin-top: var(--plasma-spacing-md);">
+                                    <button type="button" class="nova-ui__button nova-ui__button--primary" id="generate-content-btn">
+                                        <?php esc_html_e('Generate Content', 'nova-xfinity-ai'); ?>
+                                    </button>
+                                    <span id="generation-status" style="margin-left: var(--plasma-spacing-md);"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="generation-result" style="display: none;">
+                            <div class="nova-ui__card__body">
+                                <h3 style="font-size: var(--plasma-font-size-lg); margin-bottom: var(--plasma-spacing-md); color: var(--plasma-text-primary);">
+                                    <?php esc_html_e('Generated Content', 'nova-xfinity-ai'); ?>
+                                </h3>
+                                <div id="generation-output" style="background: var(--plasma-bg-primary); padding: var(--plasma-spacing-lg); border: 2px solid var(--plasma-border-default); border-radius: var(--plasma-radius-md); max-height: 400px; overflow-y: auto; color: var(--plasma-text-secondary); line-height: 1.8;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
+    }
+    
+    /**
+     * Render sync & stats page
+     * 
+     * Displays token usage statistics and sync controls
+     */
+    public function render_sync_page() {
+        // Check user capabilities
+        if (!current_user_can('manage_options')) {
+            wp_die(__('You do not have sufficient permissions to access this page.', 'nova-xfinity-ai'));
+        }
+        
+        $usage_data = nova_xfinity_get_token_usage();
+        $sync_errors = nova_xfinity_get_sync_errors();
+        $settings = get_option('nova_xfinity_ai_settings', array());
+        $is_sync_configured = !empty($settings['platform_api_key']) && !empty($settings['platform_user_id']);
+        
+        // Calculate totals
+        $total_calls = 0;
+        $total_successful = 0;
+        $total_failed = 0;
+        if ($usage_data && is_array($usage_data)) {
+            foreach ($usage_data as $user_data) {
+                $total_calls += isset($user_data['total_calls']) ? intval($user_data['total_calls']) : 0;
+                $total_successful += isset($user_data['successful_calls']) ? intval($user_data['successful_calls']) : 0;
+                $total_failed += isset($user_data['failed_calls']) ? intval($user_data['failed_calls']) : 0;
+            }
+        }
+        ?>
+        <div class="wrap nova-plasma-admin">
+            <div class="nova-plasma-container">
+                <div class="nova-plasma-header">
+                    <h1 class="nova-plasma-header__title"><?php esc_html_e('Sync & Statistics', 'nova-xfinity-ai'); ?></h1>
+                    <p class="nova-plasma-header__subtitle"><?php esc_html_e('Monitor token usage and sync data to the main dashboard', 'nova-xfinity-ai'); ?></p>
+                </div>
+                
+                <?php if (!$is_sync_configured): ?>
+                    <div class="nova-ui__card nova-ui__card--outlined" style="border-color: var(--plasma-sunburst); margin-bottom: var(--plasma-spacing-xl);">
+                        <div class="nova-ui__card__body">
+                            <p style="color: var(--plasma-text-primary); margin: 0;">
+                                <?php esc_html_e('Platform sync is not configured. Please complete the setup wizard to enable sync.', 'nova-xfinity-ai'); ?>
+                            </p>
+                            <a href="<?php echo admin_url('options-general.php?page=nova-xfinity-ai-wizard&reset_wizard=1'); ?>" class="nova-ui__button nova-ui__button--primary" style="margin-top: var(--plasma-spacing-md);">
+                                <?php esc_html_e('Run Setup Wizard', 'nova-xfinity-ai'); ?>
+                            </a>
+                        </div>
+                    </div>
+                <?php endif; ?>
+                
+                <div class="nova-plasma-stats">
+                    <div class="nova-plasma-stat">
+                        <div class="nova-plasma-stat__value"><?php echo esc_html($total_calls); ?></div>
+                        <div class="nova-plasma-stat__label"><?php esc_html_e('Total Calls', 'nova-xfinity-ai'); ?></div>
+                    </div>
+                    <div class="nova-plasma-stat">
+                        <div class="nova-plasma-stat__value" style="color: var(--plasma-neon-teal);"><?php echo esc_html($total_successful); ?></div>
+                        <div class="nova-plasma-stat__label"><?php esc_html_e('Successful', 'nova-xfinity-ai'); ?></div>
+                    </div>
+                    <div class="nova-plasma-stat">
+                        <div class="nova-plasma-stat__value" style="color: var(--plasma-pink);"><?php echo esc_html($total_failed); ?></div>
+                        <div class="nova-plasma-stat__label"><?php esc_html_e('Failed', 'nova-xfinity-ai'); ?></div>
+                    </div>
+                </div>
+                
+                <?php if ($is_sync_configured): ?>
+                    <div class="nova-ui__card" style="margin-bottom: var(--plasma-spacing-xl);">
+                        <div class="nova-ui__card__header">
+                            <h3 class="nova-ui__card__title"><?php esc_html_e('Sync Controls', 'nova-xfinity-ai'); ?></h3>
+                            <p class="nova-ui__card__subtitle"><?php esc_html_e('Manually trigger sync to the main dashboard', 'nova-xfinity-ai'); ?></p>
+                        </div>
+                        <div class="nova-ui__card__body">
+                            <div style="display: flex; gap: var(--plasma-spacing-md);">
+                                <button type="button" class="nova-ui__button nova-ui__button--primary" id="sync-all-btn">
+                                    <?php esc_html_e('Sync All Users', 'nova-xfinity-ai'); ?>
+                                </button>
+                                <button type="button" class="nova-ui__button nova-ui__button--secondary" id="sync-status-btn">
+                                    <?php esc_html_e('Check Sync Status', 'nova-xfinity-ai'); ?>
+                                </button>
+                            </div>
+                            <div id="sync-status-message" style="margin-top: var(--plasma-spacing-md);"></div>
+                        </div>
+                    </div>
+                <?php endif; ?>
+                
+                <div class="nova-ui__card">
+                    <div class="nova-ui__card__header">
+                        <h3 class="nova-ui__card__title"><?php esc_html_e('Usage by User', 'nova-xfinity-ai'); ?></h3>
+                    </div>
+                    <div class="nova-ui__card__body" style="padding: 0;">
+                        <?php if (empty($usage_data)): ?>
+                            <div style="padding: var(--plasma-spacing-xl); text-align: center; color: var(--plasma-text-secondary);">
+                                <?php esc_html_e('No usage data available yet.', 'nova-xfinity-ai'); ?>
+                            </div>
+                        <?php else: ?>
+                            <table class="nova-plasma-table">
+                                <thead>
+                                    <tr>
+                                        <th><?php esc_html_e('User', 'nova-xfinity-ai'); ?></th>
+                                        <th><?php esc_html_e('Total Calls', 'nova-xfinity-ai'); ?></th>
+                                        <th><?php esc_html_e('Successful', 'nova-xfinity-ai'); ?></th>
+                                        <th><?php esc_html_e('Failed', 'nova-xfinity-ai'); ?></th>
+                                        <th><?php esc_html_e('Last Synced', 'nova-xfinity-ai'); ?></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php if (is_array($usage_data)): 
+                                        foreach ($usage_data as $user_id => $data): 
+                                            $user = get_userdata($user_id);
+                                            if (!is_array($data)) continue;
+                                    ?>
+                                        <tr>
+                                            <td>
+                                                <strong><?php echo esc_html($user ? $user->display_name : sprintf(__('User #%d', 'nova-xfinity-ai'), $user_id)); ?></strong><br>
+                                                <small style="color: var(--plasma-text-tertiary);"><?php echo esc_html($user ? $user->user_email : ''); ?></small>
+                                            </td>
+                                            <td><?php echo esc_html(isset($data['total_calls']) ? $data['total_calls'] : 0); ?></td>
+                                            <td><span class="nova-plasma-badge nova-plasma-badge--success"><?php echo esc_html(isset($data['successful_calls']) ? $data['successful_calls'] : 0); ?></span></td>
+                                            <td><span class="nova-plasma-badge nova-plasma-badge--error"><?php echo esc_html(isset($data['failed_calls']) ? $data['failed_calls'] : 0); ?></span></td>
+                                            <td>
+                                                <?php if (isset($data['last_synced']) && $data['last_synced']): ?>
+                                                    <?php echo esc_html(date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($data['last_synced']))); ?>
+                                                <?php else: ?>
+                                                    <span style="color: var(--plasma-text-tertiary);"><?php esc_html_e('Never', 'nova-xfinity-ai'); ?></span>
+                                                <?php endif; ?>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; endif; ?>
+                                </tbody>
+                            </table>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                
+                <?php if (!empty($sync_errors)): ?>
+                    <div class="nova-ui__card" style="margin-top: var(--plasma-spacing-xl); border-color: var(--plasma-pink);">
+                        <div class="nova-ui__card__header">
+                            <h3 class="nova-ui__card__title" style="color: var(--plasma-pink);"><?php esc_html_e('Sync Errors', 'nova-xfinity-ai'); ?></h3>
+                        </div>
+                        <div class="nova-ui__card__body" style="padding: 0;">
+                            <table class="nova-plasma-table">
+                                <thead>
+                                    <tr>
+                                        <th><?php esc_html_e('User', 'nova-xfinity-ai'); ?></th>
+                                        <th><?php esc_html_e('Error', 'nova-xfinity-ai'); ?></th>
+                                        <th><?php esc_html_e('Timestamp', 'nova-xfinity-ai'); ?></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php if (is_array($sync_errors)): 
+                                        foreach ($sync_errors as $user_id => $errors): 
+                                            $user = get_userdata($user_id);
+                                            if (!is_array($errors)) continue;
+                                            foreach (array_slice($errors, -5) as $error): // Show last 5 errors
+                                                if (!is_array($error) || !isset($error['message'])) continue;
+                                    ?>
+                                        <tr>
+                                            <td><?php echo esc_html($user ? $user->display_name : sprintf(__('User #%d', 'nova-xfinity-ai'), $user_id)); ?></td>
+                                            <td><?php echo esc_html($error['message']); ?></td>
+                                            <td><?php echo esc_html(isset($error['timestamp']) ? date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($error['timestamp'])) : ''); ?></td>
+                                        </tr>
+                                    <?php endforeach; endforeach; endif; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
         <?php
@@ -890,28 +935,35 @@ class Nova_XFinity_AI_SEO_Writer {
      * @param string $hook Current admin page hook
      */
     public function enqueue_scripts($hook) {
-        // Load on settings page or wizard page
-        if ('settings_page_nova-xfinity-ai-settings' !== $hook && 'settings_page_nova-xfinity-ai-wizard' !== $hook) {
+        // Load on settings page, wizard page, or sync page
+        $allowed_pages = array(
+            'settings_page_nova-xfinity-ai-settings',
+            'settings_page_nova-xfinity-ai-wizard',
+            'settings_page_nova-xfinity-ai-sync'
+        );
+        
+        if (!in_array($hook, $allowed_pages)) {
             return;
         }
         
-        // Enqueue admin CSS
+        // Dequeue WordPress default admin styles for our pages
+        wp_dequeue_style('wp-admin');
+        
+        // Enqueue Plasma UI system CSS
         wp_enqueue_style(
-            'nova-xfinity-ai-admin',
-            NOVA_XFINITY_AI_PLUGIN_URL . 'assets/admin.css',
+            'nova-xfinity-ai-plasma-ui',
+            NOVA_XFINITY_AI_PLUGIN_URL . 'admin/assets/plasma-ui.css',
             array(),
             NOVA_XFINITY_AI_VERSION
         );
         
-        // Enqueue wizard CSS if on wizard page
-        if ('settings_page_nova-xfinity-ai-wizard' === $hook) {
-            wp_enqueue_style(
-                'nova-xfinity-ai-wizard',
-                NOVA_XFINITY_AI_PLUGIN_URL . 'assets/wizard.css',
-                array('nova-xfinity-ai-admin'),
-                NOVA_XFINITY_AI_VERSION
-            );
-        }
+        // Enqueue legacy admin CSS for backward compatibility (will be phased out)
+        wp_enqueue_style(
+            'nova-xfinity-ai-admin',
+            NOVA_XFINITY_AI_PLUGIN_URL . 'assets/admin.css',
+            array('nova-xfinity-ai-plasma-ui'),
+            NOVA_XFINITY_AI_VERSION
+        );
         
         // Enqueue admin JavaScript
         wp_enqueue_script(
@@ -922,12 +974,74 @@ class Nova_XFinity_AI_SEO_Writer {
             true
         );
         
-        // Enqueue wizard JavaScript if on wizard page
+        // Enqueue React-based wizard if on wizard page
         if ('settings_page_nova-xfinity-ai-wizard' === $hook) {
+            // Enqueue React and ReactDOM from CDN
             wp_enqueue_script(
-                'nova-xfinity-ai-wizard',
-                NOVA_XFINITY_AI_PLUGIN_URL . 'assets/wizard.js',
-                array('jquery', 'nova-xfinity-ai-admin'),
+                'react',
+                'https://unpkg.com/react@18/umd/react.production.min.js',
+                array(),
+                '18.2.0',
+                false
+            );
+            wp_enqueue_script(
+                'react-dom',
+                'https://unpkg.com/react-dom@18/umd/react-dom.production.min.js',
+                array('react'),
+                '18.2.0',
+                false
+            );
+            
+            // Enqueue UI components
+            wp_enqueue_script(
+                'nova-ui-button',
+                NOVA_XFINITY_AI_PLUGIN_URL . 'admin/components/ui/Button.js',
+                array('react', 'react-dom'),
+                NOVA_XFINITY_AI_VERSION,
+                true
+            );
+            wp_enqueue_script(
+                'nova-ui-input',
+                NOVA_XFINITY_AI_PLUGIN_URL . 'admin/components/ui/Input.js',
+                array('react', 'react-dom'),
+                NOVA_XFINITY_AI_VERSION,
+                true
+            );
+            wp_enqueue_script(
+                'nova-ui-select',
+                NOVA_XFINITY_AI_PLUGIN_URL . 'admin/components/ui/Select.js',
+                array('react', 'react-dom'),
+                NOVA_XFINITY_AI_VERSION,
+                true
+            );
+            wp_enqueue_script(
+                'nova-ui-card',
+                NOVA_XFINITY_AI_PLUGIN_URL . 'admin/components/ui/Card.js',
+                array('react', 'react-dom'),
+                NOVA_XFINITY_AI_VERSION,
+                true
+            );
+            wp_enqueue_script(
+                'nova-ui-steps',
+                NOVA_XFINITY_AI_PLUGIN_URL . 'admin/components/ui/StepIndicator.js',
+                array('react', 'react-dom'),
+                NOVA_XFINITY_AI_VERSION,
+                true
+            );
+            
+            // Enqueue setup wizard CSS (updated to use Plasma design)
+            wp_enqueue_style(
+                'nova-xfinity-ai-setup-wizard',
+                NOVA_XFINITY_AI_PLUGIN_URL . 'admin/assets/setup.css',
+                array('nova-xfinity-ai-plasma-ui'),
+                NOVA_XFINITY_AI_VERSION
+            );
+            
+            // Enqueue setup wizard component (compiled JS version)
+            wp_enqueue_script(
+                'nova-xfinity-ai-setup-wizard',
+                NOVA_XFINITY_AI_PLUGIN_URL . 'admin/components/SetupWizard.js',
+                array('react', 'react-dom', 'nova-ui-button', 'nova-ui-input', 'nova-ui-select', 'nova-ui-card', 'nova-ui-steps'),
                 NOVA_XFINITY_AI_VERSION,
                 true
             );
@@ -949,24 +1063,60 @@ class Nova_XFinity_AI_SEO_Writer {
             )
         ));
         
-        // Localize wizard script if on wizard page
-        if ('settings_page_nova-xfinity-ai-wizard' === $hook) {
-            wp_localize_script('nova-xfinity-ai-wizard', 'novaXFinityWizard', array(
+        // Localize sync page script if on sync page
+        if ('settings_page_nova-xfinity-ai-sync' === $hook) {
+            wp_localize_script('nova-xfinity-ai-sync-page', 'novaXFinityAI', array(
                 'ajaxUrl' => admin_url('admin-ajax.php'),
+                'restUrl' => rest_url('nova-xfinity-ai/v1/'),
+                'restNonce' => wp_create_nonce('wp_rest'),
+            ));
+        }
+        
+        // Enqueue sync page JavaScript if on sync page
+        if ('settings_page_nova-xfinity-ai-sync' === $hook) {
+            wp_enqueue_script(
+                'nova-xfinity-ai-sync-page',
+                NOVA_XFINITY_AI_PLUGIN_URL . 'admin/assets/sync-page.js',
+                array('jquery', 'nova-xfinity-ai-admin'),
+                NOVA_XFINITY_AI_VERSION,
+                true
+            );
+        }
+        
+        // Localize setup wizard script if on wizard page
+        if ('settings_page_nova-xfinity-ai-wizard' === $hook) {
+            wp_localize_script('nova-xfinity-ai-setup-wizard', 'novaXfinityWizard', array(
+                'ajaxUrl' => admin_url('admin-ajax.php'),
+                'restUrl' => rest_url('nova-xfinity-ai/v1/'),
                 'nonce' => wp_create_nonce('nova_xfinity_ai_wizard_nonce'),
+                'restNonce' => wp_create_nonce('wp_rest'),
+                'logoUrl' => NOVA_XFINITY_AI_PLUGIN_URL . 'assets/nova-logo.png',
                 'strings' => array(
                     'next' => __('Next', 'nova-xfinity-ai'),
                     'previous' => __('Previous', 'nova-xfinity-ai'),
-                    'skip' => __('Skip', 'nova-xfinity-ai'),
-                    'save' => __('Save & Continue', 'nova-xfinity-ai'),
-                    'testing' => __('Testing...', 'nova-xfinity-ai'),
-                    'verifying' => __('Verifying...', 'nova-xfinity-ai'),
-                    'valid' => __('Valid!', 'nova-xfinity-ai'),
-                    'invalid' => __('Invalid', 'nova-xfinity-ai'),
-                    'required' => __('This field is required', 'nova-xfinity-ai'),
+                    'complete' => __('Complete Setup', 'nova-xfinity-ai'),
                     'completing' => __('Completing setup...', 'nova-xfinity-ai'),
                 )
             ));
+            
+            // Add inline script to initialize React wizard
+            wp_add_inline_script('nova-xfinity-ai-setup-wizard', '
+                document.addEventListener("DOMContentLoaded", function() {
+                    const container = document.getElementById("nova-xfinity-setup-wizard-container");
+                    if (container && window.SetupWizard && window.React && window.ReactDOM) {
+                        const root = window.ReactDOM.createRoot(container);
+                        root.render(
+                            window.React.createElement(window.SetupWizard, {
+                                ajaxUrl: novaXfinityWizard.ajaxUrl,
+                                nonce: novaXfinityWizard.nonce,
+                                restUrl: novaXfinityWizard.restUrl,
+                                restNonce: novaXfinityWizard.restNonce,
+                                strings: novaXfinityWizard.strings
+                            })
+                        );
+                    }
+                });
+            ', 'after');
         }
     }
     
@@ -1038,6 +1188,39 @@ class Nova_XFinity_AI_SEO_Writer {
             'callback' => array($this, 'get_status'),
             'permission_callback' => array($this, 'check_permission'),
         ));
+        
+        // REST endpoint for validating API keys (for wizard)
+        register_rest_route('nova-xfinity-ai/v1', '/validate-key', array(
+            'methods' => 'POST',
+            'callback' => array($this, 'rest_validate_api_key'),
+            'permission_callback' => array($this, 'check_permission'),
+            'args' => array(
+                'provider' => array(
+                    'required' => true,
+                    'type' => 'string',
+                    'enum' => array('openai', 'gemini', 'stability', 'anthropic'),
+                ),
+                'api_key' => array(
+                    'required' => true,
+                    'type' => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ),
+            ),
+        ));
+        
+        // REST endpoint for syncing token usage
+        register_rest_route('nova-xfinity-ai/v1', '/sync-usage', array(
+            'methods' => 'POST',
+            'callback' => array($this, 'rest_sync_token_usage'),
+            'permission_callback' => array($this, 'check_sync_permission'),
+        ));
+        
+        // REST endpoint for getting token usage stats
+        register_rest_route('nova-xfinity-ai/v1', '/usage-stats', array(
+            'methods' => 'GET',
+            'callback' => array($this, 'rest_get_usage_stats'),
+            'permission_callback' => array($this, 'check_sync_permission'),
+        ));
     }
     
     /**
@@ -1047,6 +1230,17 @@ class Nova_XFinity_AI_SEO_Writer {
      */
     public function check_permission() {
         return current_user_can('edit_posts');
+    }
+    
+    /**
+     * Check user permission for sync endpoints
+     * 
+     * Requires manage_options capability for security
+     * 
+     * @return bool True if user has manage_options capability
+     */
+    public function check_sync_permission() {
+        return current_user_can('manage_options');
     }
     
     /**
@@ -1094,9 +1288,16 @@ class Nova_XFinity_AI_SEO_Writer {
         // Generate content using the appropriate provider
         $content = $this->generate_ai_content($prompt, $provider, $api_key, $tone, $max_words);
         
+        // Track token usage
+        $user_id = get_current_user_id();
         if (is_wp_error($content)) {
+            // Track failed call
+            do_action('nova_xfinity_ai_generation_result', $user_id, 'failed');
             return $content;
         }
+        
+        // Track successful call
+        do_action('nova_xfinity_ai_generation_result', $user_id, 'success');
         
         return rest_ensure_response(array(
             'success' => true,
@@ -1149,9 +1350,16 @@ class Nova_XFinity_AI_SEO_Writer {
         // Generate content
         $content = $this->generate_ai_content($prompt, $provider, $api_key, $tone, $max_words);
         
+        // Track token usage
+        $user_id = get_current_user_id();
         if (is_wp_error($content)) {
+            // Track failed call
+            do_action('nova_xfinity_ai_generation_result', $user_id, 'failed');
             wp_send_json_error(array('message' => $content->get_error_message()));
         }
+        
+        // Track successful call
+        do_action('nova_xfinity_ai_generation_result', $user_id, 'success');
         
         wp_send_json_success(array(
             'content' => $content,
@@ -1362,7 +1570,7 @@ class Nova_XFinity_AI_SEO_Writer {
     /**
      * Test API key validity
      * 
-     * @param string $provider AI provider (openai or gemini)
+     * @param string $provider AI provider (openai, gemini, stability, anthropic)
      * @param string $api_key API key to test
      * @return true|WP_Error True if valid, WP_Error if invalid
      */
@@ -1412,6 +1620,53 @@ class Nova_XFinity_AI_SEO_Writer {
             $body = json_decode(wp_remote_retrieve_body($response), true);
             
             if ($code === 400 && isset($body['error']) && strpos($body['error']['message'], 'API key') !== false) {
+                return new WP_Error('invalid_key', __('Invalid API key.', 'nova-xfinity-ai'));
+            }
+            
+            return true;
+        } elseif ($provider === 'stability') {
+            // Test Stability AI API key with a simple request
+            $response = wp_remote_get('https://api.stability.ai/v1/user/account', array(
+                'headers' => array(
+                    'Authorization' => 'Bearer ' . $api_key,
+                ),
+                'timeout' => 10,
+            ));
+            
+            if (is_wp_error($response)) {
+                return new WP_Error('api_error', $response->get_error_message());
+            }
+            
+            $code = wp_remote_retrieve_response_code($response);
+            if ($code === 401 || $code === 403) {
+                return new WP_Error('invalid_key', __('Invalid API key.', 'nova-xfinity-ai'));
+            }
+            
+            return true;
+        } elseif ($provider === 'anthropic') {
+            // Test Anthropic Claude API key with a simple request
+            $response = wp_remote_post('https://api.anthropic.com/v1/messages', array(
+                'headers' => array(
+                    'x-api-key' => $api_key,
+                    'anthropic-version' => '2023-06-01',
+                    'Content-Type' => 'application/json',
+                ),
+                'body' => json_encode(array(
+                    'model' => 'claude-3-haiku-20240307',
+                    'max_tokens' => 10,
+                    'messages' => array(
+                        array('role' => 'user', 'content' => 'test')
+                    )
+                )),
+                'timeout' => 10,
+            ));
+            
+            if (is_wp_error($response)) {
+                return new WP_Error('api_error', $response->get_error_message());
+            }
+            
+            $code = wp_remote_retrieve_response_code($response);
+            if ($code === 401 || $code === 403) {
                 return new WP_Error('invalid_key', __('Invalid API key.', 'nova-xfinity-ai'));
             }
             
@@ -1794,6 +2049,32 @@ class Nova_XFinity_AI_SEO_Writer {
             wp_send_json_error(array('message' => __('Insufficient permissions.', 'nova-xfinity-ai')));
         }
         
+        // Get form data from POST
+        $settings = get_option('nova_xfinity_ai_settings', array());
+        
+        // Update settings from POST data
+        if (isset($_POST['apiKey'])) {
+            $provider = isset($_POST['provider']) ? sanitize_text_field($_POST['provider']) : 'openai';
+            if ($provider === 'openai') {
+                $settings['openai_api_key'] = sanitize_text_field(trim($_POST['apiKey']));
+            } elseif ($provider === 'gemini') {
+                $settings['gemini_api_key'] = sanitize_text_field(trim($_POST['apiKey']));
+            } else {
+                $settings['api_key'] = sanitize_text_field(trim($_POST['apiKey']));
+            }
+        }
+        
+        if (isset($_POST['provider'])) {
+            $settings['provider'] = sanitize_text_field($_POST['provider']);
+        }
+        
+        if (isset($_POST['tokenQuota'])) {
+            $settings['token_quota'] = intval($_POST['tokenQuota']);
+        }
+        
+        // Save settings
+        update_option('nova_xfinity_ai_settings', $settings);
+        
         // Mark wizard as completed
         update_option('nova_xfinity_ai_wizard_completed', true);
         
@@ -1846,20 +2127,4 @@ Nova_XFinity_AI_SEO_Writer::get_instance();
  * Sets default options when plugin is activated
  * Marks wizard as not completed so it runs on first activation
  */
-register_activation_hook(__FILE__, function() {
-    // Set default settings if they don't exist
-    $default_settings = array(
-        'default_tone' => 'professional',
-        'max_word_count' => 1000,
-        'platform_api_url' => 'https://api.nova-xfinity.ai',
-    );
-    
-    add_option('nova_xfinity_ai_settings', $default_settings);
-    add_option('nova_xfinity_ai_app_url', 'http://localhost:3000');
-    
-    // Mark wizard as not completed so it runs on activation
-    delete_option('nova_xfinity_ai_wizard_completed');
-    
-    // Set transient to trigger wizard redirect
-    set_transient('nova_xfinity_ai_activation_redirect', true, 30);
-});
+register_activation_hook(__FILE__, 'nova_xfinity_ai_activation_hook');

@@ -1,0 +1,787 @@
+/**
+ * Nova‑XFinity AI Plasma Design System
+ * 
+ * Dark theme UI system matching main platform design
+ */
+
+/* ============================================
+   CSS Variables & Design Tokens
+   ============================================ */
+
+:root {
+    /* Colors - Plasma Palette */
+    --plasma-neon-teal: #00FFC6;
+    --plasma-sunburst: #FFBC25;
+    --plasma-violet: #5864FF;
+    --plasma-pink: #FF3CAC;
+    
+    /* Background Colors */
+    --plasma-bg-primary: #101010;
+    --plasma-bg-secondary: #181818;
+    --plasma-bg-tertiary: #1a1a1a;
+    --plasma-bg-elevated: #222222;
+    
+    /* Text Colors */
+    --plasma-text-primary: #FFFFFF;
+    --plasma-text-secondary: #B0B0B0;
+    --plasma-text-tertiary: #808080;
+    
+    /* Border Colors */
+    --plasma-border-default: #2a2a2a;
+    --plasma-border-focus: var(--plasma-neon-teal);
+    
+    /* Spacing */
+    --plasma-spacing-xs: 4px;
+    --plasma-spacing-sm: 8px;
+    --plasma-spacing-md: 16px;
+    --plasma-spacing-lg: 24px;
+    --plasma-spacing-xl: 32px;
+    --plasma-spacing-2xl: 48px;
+    
+    /* Typography */
+    --plasma-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --plasma-font-size-base: 14px;
+    --plasma-font-size-sm: 12px;
+    --plasma-font-size-lg: 16px;
+    --plasma-font-size-xl: 18px;
+    --plasma-font-size-2xl: 24px;
+    
+    /* Border Radius */
+    --plasma-radius-sm: 6px;
+    --plasma-radius-md: 8px;
+    --plasma-radius-lg: 12px;
+    --plasma-radius-xl: 16px;
+    
+    /* Shadows & Glows */
+    --plasma-glow-teal: 0 0 20px rgba(0, 255, 198, 0.3);
+    --plasma-glow-teal-strong: 0 0 30px rgba(0, 255, 198, 0.5);
+    --plasma-shadow-elevated: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+/* ============================================
+   Base Styles & Reset
+   ============================================ */
+
+.nova-plasma-admin {
+    font-family: var(--plasma-font-family);
+    font-size: var(--plasma-font-size-base);
+    line-height: 1.6;
+    color: var(--plasma-text-primary);
+    background: var(--plasma-bg-primary);
+    min-height: 100vh;
+}
+
+.nova-plasma-admin * {
+    box-sizing: border-box;
+}
+
+/* ============================================
+   Button Components
+   ============================================ */
+
+.nova-ui__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--plasma-spacing-sm);
+    padding: var(--plasma-spacing-sm) var(--plasma-spacing-md);
+    font-family: var(--plasma-font-family);
+    font-size: var(--plasma-font-size-base);
+    font-weight: 600;
+    line-height: 1.5;
+    border: 2px solid transparent;
+    border-radius: var(--plasma-radius-md);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-decoration: none;
+    outline: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.nova-ui__button--small {
+    padding: 6px var(--plasma-spacing-sm);
+    font-size: var(--plasma-font-size-sm);
+}
+
+.nova-ui__button--medium {
+    padding: var(--plasma-spacing-sm) var(--plasma-spacing-md);
+    font-size: var(--plasma-font-size-base);
+}
+
+.nova-ui__button--large {
+    padding: var(--plasma-spacing-md) var(--plasma-spacing-lg);
+    font-size: var(--plasma-font-size-lg);
+}
+
+/* Primary Button */
+.nova-ui__button--primary {
+    background: transparent;
+    border-color: var(--plasma-neon-teal);
+    color: var(--plasma-neon-teal);
+    box-shadow: var(--plasma-glow-teal);
+}
+
+.nova-ui__button--primary:hover:not(:disabled) {
+    background: rgba(0, 255, 198, 0.1);
+    box-shadow: var(--plasma-glow-teal-strong);
+    transform: translateY(-2px);
+}
+
+.nova-ui__button--primary:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: var(--plasma-glow-teal);
+}
+
+/* Secondary Button */
+.nova-ui__button--secondary {
+    background: var(--plasma-bg-elevated);
+    border-color: var(--plasma-border-default);
+    color: var(--plasma-text-primary);
+}
+
+.nova-ui__button--secondary:hover:not(:disabled) {
+    background: var(--plasma-bg-tertiary);
+    border-color: var(--plasma-text-secondary);
+    transform: scale(1.02);
+}
+
+/* Danger Button */
+.nova-ui__button--danger {
+    background: transparent;
+    border-color: var(--plasma-pink);
+    color: var(--plasma-pink);
+    box-shadow: 0 0 20px rgba(255, 60, 172, 0.3);
+}
+
+.nova-ui__button--danger:hover:not(:disabled) {
+    background: rgba(255, 60, 172, 0.1);
+    box-shadow: 0 0 30px rgba(255, 60, 172, 0.5);
+}
+
+/* Ghost Button */
+.nova-ui__button--ghost {
+    background: transparent;
+    border-color: transparent;
+    color: var(--plasma-text-secondary);
+}
+
+.nova-ui__button--ghost:hover:not(:disabled) {
+    color: var(--plasma-text-primary);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Disabled & Loading States */
+.nova-ui__button--disabled,
+.nova-ui__button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.nova-ui__button--loading {
+    cursor: wait;
+}
+
+.nova-ui__button__spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: nova-spin 0.8s linear infinite;
+}
+
+@keyframes nova-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ============================================
+   Input Components
+   ============================================ */
+
+.nova-ui__input-wrapper {
+    margin-bottom: var(--plasma-spacing-md);
+}
+
+.nova-ui__input-label {
+    display: block;
+    font-size: var(--plasma-font-size-sm);
+    font-weight: 600;
+    color: var(--plasma-text-primary);
+    margin-bottom: var(--plasma-spacing-sm);
+}
+
+.nova-ui__input-required {
+    color: var(--plasma-pink);
+    margin-left: 2px;
+}
+
+.nova-ui__input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.nova-ui__input {
+    width: 100%;
+    padding: var(--plasma-spacing-sm) var(--plasma-spacing-md);
+    background: var(--plasma-bg-secondary);
+    border: 2px solid var(--plasma-border-default);
+    border-radius: var(--plasma-radius-md);
+    color: var(--plasma-text-primary);
+    font-family: var(--plasma-font-family);
+    font-size: var(--plasma-font-size-base);
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+.nova-ui__input::placeholder {
+    color: var(--plasma-text-tertiary);
+}
+
+.nova-ui__input--focused {
+    border-color: var(--plasma-neon-teal);
+    box-shadow: var(--plasma-glow-teal);
+    background: var(--plasma-bg-tertiary);
+}
+
+.nova-ui__input--error {
+    border-color: var(--plasma-pink);
+    box-shadow: 0 0 20px rgba(255, 60, 172, 0.3);
+}
+
+.nova-ui__input--disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: var(--plasma-bg-primary);
+}
+
+.nova-ui__input[type="password"] {
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
+}
+
+.nova-ui__input-error-icon {
+    position: absolute;
+    right: var(--plasma-spacing-md);
+    color: var(--plasma-pink);
+    font-size: 18px;
+}
+
+.nova-ui__input-error-text {
+    margin-top: var(--plasma-spacing-xs);
+    font-size: var(--plasma-font-size-sm);
+    color: var(--plasma-pink);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.nova-ui__input-helper {
+    margin-top: var(--plasma-spacing-xs);
+    font-size: var(--plasma-font-size-sm);
+    color: var(--plasma-text-secondary);
+}
+
+/* ============================================
+   Select Components
+   ============================================ */
+
+.nova-ui__select-wrapper {
+    margin-bottom: var(--plasma-spacing-md);
+}
+
+.nova-ui__select-label {
+    display: block;
+    font-size: var(--plasma-font-size-sm);
+    font-weight: 600;
+    color: var(--plasma-text-primary);
+    margin-bottom: var(--plasma-spacing-sm);
+}
+
+.nova-ui__select-required {
+    color: var(--plasma-pink);
+    margin-left: 2px;
+}
+
+.nova-ui__select-container {
+    position: relative;
+}
+
+.nova-ui__select {
+    width: 100%;
+    padding: var(--plasma-spacing-sm) var(--plasma-spacing-md);
+    padding-right: 40px;
+    background: var(--plasma-bg-secondary);
+    border: 2px solid var(--plasma-border-default);
+    border-radius: var(--plasma-radius-md);
+    color: var(--plasma-text-primary);
+    font-family: var(--plasma-font-family);
+    font-size: var(--plasma-font-size-base);
+    cursor: pointer;
+    appearance: none;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.nova-ui__select:focus {
+    border-color: var(--plasma-neon-teal);
+    box-shadow: var(--plasma-glow-teal);
+    background: var(--plasma-bg-tertiary);
+}
+
+.nova-ui__select--error {
+    border-color: var(--plasma-pink);
+    box-shadow: 0 0 20px rgba(255, 60, 172, 0.3);
+}
+
+.nova-ui__select--disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.nova-ui__select-arrow {
+    position: absolute;
+    right: var(--plasma-spacing-md);
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: var(--plasma-text-secondary);
+    font-size: 12px;
+}
+
+.nova-ui__select-error-text,
+.nova-ui__select-helper {
+    margin-top: var(--plasma-spacing-xs);
+    font-size: var(--plasma-font-size-sm);
+}
+
+.nova-ui__select-error-text {
+    color: var(--plasma-pink);
+}
+
+.nova-ui__select-helper {
+    color: var(--plasma-text-secondary);
+}
+
+/* ============================================
+   Card Components
+   ============================================ */
+
+.nova-ui__card {
+    background: var(--plasma-bg-secondary);
+    border-radius: var(--plasma-radius-lg);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.nova-ui__card--elevated {
+    background: var(--plasma-bg-elevated);
+    box-shadow: var(--plasma-shadow-elevated);
+}
+
+.nova-ui__card--outlined {
+    border: 2px solid var(--plasma-border-default);
+}
+
+.nova-ui__card__header {
+    padding: var(--plasma-spacing-lg);
+    border-bottom: 1px solid var(--plasma-border-default);
+}
+
+.nova-ui__card__title {
+    margin: 0 0 var(--plasma-spacing-xs) 0;
+    font-size: var(--plasma-font-size-xl);
+    font-weight: 700;
+    color: var(--plasma-text-primary);
+}
+
+.nova-ui__card__subtitle {
+    margin: 0;
+    font-size: var(--plasma-font-size-sm);
+    color: var(--plasma-text-secondary);
+}
+
+.nova-ui__card__body {
+    padding: var(--plasma-spacing-lg);
+}
+
+.nova-ui__card__footer {
+    padding: var(--plasma-spacing-lg);
+    border-top: 1px solid var(--plasma-border-default);
+    background: var(--plasma-bg-primary);
+}
+
+/* ============================================
+   Step Indicator Component
+   ============================================ */
+
+.nova-ui__steps {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    padding: var(--plasma-spacing-lg) 0;
+    margin-bottom: var(--plasma-spacing-xl);
+}
+
+.nova-ui__steps__track {
+    position: absolute;
+    top: 50%;
+    left: 10%;
+    right: 10%;
+    height: 2px;
+    background: var(--plasma-border-default);
+    z-index: 0;
+    transform: translateY(-50%);
+}
+
+.nova-ui__steps__step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    transition: all 0.3s ease;
+}
+
+.nova-ui__steps__step-number {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--plasma-bg-secondary);
+    border: 2px solid var(--plasma-border-default);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: var(--plasma-font-size-lg);
+    color: var(--plasma-text-secondary);
+    margin-bottom: var(--plasma-spacing-sm);
+    transition: all 0.3s ease;
+}
+
+.nova-ui__steps__step--active .nova-ui__steps__step-number {
+    background: transparent;
+    border-color: var(--plasma-neon-teal);
+    color: var(--plasma-neon-teal);
+    box-shadow: var(--plasma-glow-teal);
+    transform: scale(1.1);
+}
+
+.nova-ui__steps__step--completed .nova-ui__steps__step-number {
+    background: var(--plasma-neon-teal);
+    border-color: var(--plasma-neon-teal);
+    color: var(--plasma-bg-primary);
+    box-shadow: var(--plasma-glow-teal);
+}
+
+.nova-ui__steps__step-label {
+    font-size: var(--plasma-font-size-sm);
+    color: var(--plasma-text-secondary);
+    font-weight: 500;
+    text-align: center;
+    transition: color 0.3s ease;
+}
+
+.nova-ui__steps__step--active .nova-ui__steps__step-label {
+    color: var(--plasma-neon-teal);
+    font-weight: 600;
+}
+
+.nova-ui__steps__step--completed .nova-ui__steps__step-label {
+    color: var(--plasma-text-primary);
+}
+
+/* ============================================
+   Layout & Container Styles
+   ============================================ */
+
+.nova-plasma-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--plasma-spacing-xl);
+}
+
+.nova-plasma-header {
+    margin-bottom: var(--plasma-spacing-2xl);
+    text-align: center;
+}
+
+.nova-plasma-header__title {
+    font-size: var(--plasma-font-size-2xl);
+    font-weight: 700;
+    color: var(--plasma-text-primary);
+    margin: 0 0 var(--plasma-spacing-sm) 0;
+    background: linear-gradient(135deg, var(--plasma-neon-teal), var(--plasma-violet));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.nova-plasma-header__subtitle {
+    font-size: var(--plasma-font-size-base);
+    color: var(--plasma-text-secondary);
+    margin: 0;
+}
+
+/* ============================================
+   Form Layout
+   ============================================ */
+
+.nova-plasma-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--plasma-spacing-lg);
+}
+
+.nova-plasma-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--plasma-spacing-sm);
+}
+
+.nova-plasma-form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--plasma-spacing-md);
+}
+
+/* ============================================
+   Stats & Metrics
+   ============================================ */
+
+.nova-plasma-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--plasma-spacing-md);
+    margin-bottom: var(--plasma-spacing-xl);
+}
+
+.nova-plasma-stat {
+    background: var(--plasma-bg-secondary);
+    border: 2px solid var(--plasma-border-default);
+    border-radius: var(--plasma-radius-lg);
+    padding: var(--plasma-spacing-lg);
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.nova-plasma-stat:hover {
+    border-color: var(--plasma-neon-teal);
+    box-shadow: var(--plasma-glow-teal);
+    transform: translateY(-4px);
+}
+
+.nova-plasma-stat__value {
+    font-size: var(--plasma-font-size-2xl);
+    font-weight: 700;
+    color: var(--plasma-neon-teal);
+    margin: 0 0 var(--plasma-spacing-xs) 0;
+}
+
+.nova-plasma-stat__label {
+    font-size: var(--plasma-font-size-sm);
+    color: var(--plasma-text-secondary);
+    margin: 0;
+}
+
+/* ============================================
+   Table Styles
+   ============================================ */
+
+.nova-plasma-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--plasma-bg-secondary);
+    border-radius: var(--plasma-radius-lg);
+    overflow: hidden;
+}
+
+.nova-plasma-table th,
+.nova-plasma-table td {
+    padding: var(--plasma-spacing-md);
+    text-align: left;
+    border-bottom: 1px solid var(--plasma-border-default);
+}
+
+.nova-plasma-table th {
+    background: var(--plasma-bg-primary);
+    font-weight: 600;
+    color: var(--plasma-text-primary);
+    font-size: var(--plasma-font-size-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.nova-plasma-table td {
+    color: var(--plasma-text-secondary);
+}
+
+.nova-plasma-table tr:hover {
+    background: var(--plasma-bg-tertiary);
+}
+
+.nova-plasma-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* ============================================
+   Badge & Status Indicators
+   ============================================ */
+
+.nova-plasma-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px var(--plasma-spacing-sm);
+    border-radius: var(--plasma-radius-sm);
+    font-size: var(--plasma-font-size-sm);
+    font-weight: 600;
+}
+
+.nova-plasma-badge--success {
+    background: rgba(0, 255, 198, 0.1);
+    color: var(--plasma-neon-teal);
+    border: 1px solid var(--plasma-neon-teal);
+}
+
+.nova-plasma-badge--error {
+    background: rgba(255, 60, 172, 0.1);
+    color: var(--plasma-pink);
+    border: 1px solid var(--plasma-pink);
+}
+
+.nova-plasma-badge--warning {
+    background: rgba(255, 188, 37, 0.1);
+    color: var(--plasma-sunburst);
+    border: 1px solid var(--plasma-sunburst);
+}
+
+.nova-plasma-badge--info {
+    background: rgba(88, 100, 255, 0.1);
+    color: var(--plasma-violet);
+    border: 1px solid var(--plasma-violet);
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+
+@media screen and (max-width: 782px) {
+    .nova-plasma-container {
+        padding: var(--plasma-spacing-md);
+    }
+    
+    .nova-plasma-stats {
+        grid-template-columns: 1fr;
+    }
+    
+    .nova-plasma-form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .nova-ui__steps {
+        flex-direction: column;
+        gap: var(--plasma-spacing-md);
+    }
+    
+    .nova-ui__steps__track {
+        display: none;
+    }
+    
+    .nova-ui__steps__step {
+        width: 100%;
+        flex-direction: row;
+        justify-content: flex-start;
+        gap: var(--plasma-spacing-md);
+    }
+}
+
+/* ============================================
+   WordPress Admin Overrides
+   ============================================ */
+
+.nova-plasma-admin .wrap {
+    background: transparent;
+    margin: 0;
+    padding: 0;
+}
+
+.nova-plasma-admin .form-table {
+    display: none !important; /* Hide WordPress default form tables */
+}
+
+.nova-plasma-admin .form-table th,
+.nova-plasma-admin .form-table td {
+    display: none !important;
+}
+
+/* Hide WordPress default buttons in favor of Nova UI */
+.nova-plasma-admin .button:not(.nova-ui__button):not(.wizard-prev):not(.wizard-next):not(.wizard-skip):not(.wizard-save):not(.wizard-complete),
+.nova-plasma-admin .button-primary:not(.nova-ui__button):not(.wizard-prev):not(.wizard-next):not(.wizard-skip):not(.wizard-save):not(.wizard-complete),
+.nova-plasma-admin .button-secondary:not(.nova-ui__button):not(.wizard-prev):not(.wizard-next):not(.wizard-skip):not(.wizard-save):not(.wizard-complete) {
+    display: none !important;
+}
+
+/* Settings sections styling */
+.nova-plasma-admin .form-table {
+    margin: 0;
+}
+
+.nova-plasma-admin .form-table tr {
+    display: block;
+    margin-bottom: var(--plasma-spacing-lg);
+}
+
+/* Success/Error Messages */
+.nova-plasma-admin .notice,
+.nova-plasma-admin .updated,
+.nova-plasma-admin .error {
+    background: var(--plasma-bg-secondary);
+    border-left: 4px solid var(--plasma-neon-teal);
+    color: var(--plasma-text-primary);
+    padding: var(--plasma-spacing-md);
+    margin: var(--plasma-spacing-md) 0;
+    border-radius: var(--plasma-radius-sm);
+}
+
+.nova-plasma-admin .notice.notice-error,
+.nova-plasma-admin .error {
+    border-left-color: var(--plasma-pink);
+}
+
+.nova-plasma-admin .notice.notice-warning {
+    border-left-color: var(--plasma-sunburst);
+}
+
+.nova-plasma-admin .notice.notice-info {
+    border-left-color: var(--plasma-violet);
+}
+
+/* Links */
+.nova-plasma-admin a {
+    color: var(--plasma-neon-teal);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.nova-plasma-admin a:hover {
+    color: var(--plasma-violet);
+    text-decoration: underline;
+}
+
+/* Textarea styling */
+.nova-plasma-admin textarea.nova-ui__input {
+    min-height: 120px;
+    resize: vertical;
+    font-family: var(--plasma-font-family);
+}
+
+/* Loading states */
+.nova-plasma-admin .spinner {
+    border-color: var(--plasma-neon-teal);
+    border-top-color: transparent;
+}

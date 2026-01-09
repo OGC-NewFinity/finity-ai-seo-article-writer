@@ -80,7 +80,14 @@ const PublishModal = ({ isOpen, onClose, metadata, sections }) => {
               <div className="mt-10 space-y-3">
                 <a 
                   href="#" 
-                  onClick=${(e) => { e.preventDefault(); alert("Preparing your content for WordPress. This will open the WordPress editor with your generated article."); }}
+                  onClick=${(e) => { 
+                    e.preventDefault(); 
+                    // Show informational notification
+                    const notification = document.createElement('div');
+                    notification.innerHTML = '<div class="fixed top-4 right-4 bg-blue-600 text-white px-6 py-4 rounded-xl shadow-lg z-50 max-w-md font-bold text-xs">Preparing your content for WordPress. This will open the WordPress editor with your generated article.</div>';
+                    document.body.appendChild(notification);
+                    setTimeout(() => notification.remove(), 4000);
+                  }}
                   className="block w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-black transition-all shadow-xl shadow-slate-200"
                 >
                   <i className="fa-solid fa-arrow-up-right-from-square mr-2"></i> View in WordPress

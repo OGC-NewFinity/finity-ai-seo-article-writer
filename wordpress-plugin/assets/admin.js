@@ -44,18 +44,18 @@
             }
             
             // Disable button and show loading state
-            $button.prop('disabled', true);
-            $status.html('<span style="color: #0073aa;">' + finityAI.strings.generating + '</span>');
+            $button.prop('disabled', true).addClass('nova-ui__button--loading');
+            $status.html('<span class="nova-plasma-badge nova-plasma-badge--info">' + novaXFinityAI.strings.generating + '</span>');
             $result.hide();
             $output.html('');
             
             // Make AJAX request to generate content
             $.ajax({
-                url: finityAI.ajaxUrl,
+                url: novaXFinityAI.ajaxUrl,
                 type: 'POST',
                 data: {
-                    action: 'finity_ai_generate_content',
-                    nonce: finityAI.nonce,
+                    action: 'nova_xfinity_ai_generate_content',
+                    nonce: novaXFinityAI.nonce,
                     prompt: prompt,
                     provider: provider
                 },
@@ -65,7 +65,7 @@
                     
                     if (response.success) {
                         // Show success message
-                        $status.html('<span style="color: #46b450;">' + finityAI.strings.success + '</span>');
+                        $status.html('<span class="nova-plasma-badge nova-plasma-badge--success">✓ ' + novaXFinityAI.strings.success + '</span>');
                         
                         // Display generated content
                         var content = response.data.content;
@@ -78,15 +78,15 @@
                         }, 500);
                     } else {
                         // Show error message
-                        $status.html('<span style="color: #dc3232;">' + (response.data.message || finityAI.strings.error) + '</span>');
+                        $status.html('<span class="nova-plasma-badge nova-plasma-badge--error">✗ ' + (response.data.message || novaXFinityAI.strings.error) + '</span>');
                     }
                 },
                 error: function(xhr, status, error) {
                     // Re-enable button
-                    $button.prop('disabled', false);
+                    $button.prop('disabled', false).removeClass('nova-ui__button--loading');
                     
                     // Show error message
-                    $status.html('<span style="color: #dc3232;">' + finityAI.strings.error + '</span>');
+                    $status.html('<span class="nova-plasma-badge nova-plasma-badge--error">✗ ' + novaXFinityAI.strings.error + '</span>');
                     console.error('Content generation error:', error);
                 }
             });
@@ -118,11 +118,11 @@
             
             // Make AJAX request to test API key
             $.ajax({
-                url: finityAI.ajaxUrl,
+                url: novaXFinityAI.ajaxUrl,
                 type: 'POST',
                 data: {
-                    action: 'finity_ai_test_api_key',
-                    nonce: finityAI.nonce,
+                    action: 'nova_xfinity_ai_test_api_key',
+                    nonce: novaXFinityAI.nonce,
                     provider: 'openai',
                     api_key: apiKey
                 },
@@ -131,11 +131,17 @@
                     $button.prop('disabled', false).text(originalText);
                     
                     if (response.success) {
-                        // Show success message
-                        alert(finityAI.strings.keyValid);
+                        // Show success message with badge
+                        $input.after('<span class="nova-plasma-badge nova-plasma-badge--success" style="margin-left: var(--plasma-spacing-sm);">✓ ' + novaXFinityAI.strings.keyValid + '</span>');
+                        setTimeout(function() {
+                            $input.next('.nova-plasma-badge').fadeOut(function() { $(this).remove(); });
+                        }, 3000);
                     } else {
                         // Show error message
-                        alert(response.data.message || finityAI.strings.keyInvalid);
+                        $input.after('<span class="nova-plasma-badge nova-plasma-badge--error" style="margin-left: var(--plasma-spacing-sm);">✗ ' + (response.data.message || novaXFinityAI.strings.keyInvalid) + '</span>');
+                        setTimeout(function() {
+                            $input.next('.nova-plasma-badge').fadeOut(function() { $(this).remove(); });
+                        }, 5000);
                     }
                 },
                 error: function(xhr, status, error) {
@@ -143,7 +149,10 @@
                     $button.prop('disabled', false).text(originalText);
                     
                     // Show error message
-                    alert(finityAI.strings.keyInvalid);
+                    $input.after('<span class="nova-plasma-badge nova-plasma-badge--error" style="margin-left: var(--plasma-spacing-sm);">✗ ' + novaXFinityAI.strings.keyInvalid + '</span>');
+                    setTimeout(function() {
+                        $input.next('.nova-plasma-badge').fadeOut(function() { $(this).remove(); });
+                    }, 5000);
                     console.error('API key test error:', error);
                 }
             });
@@ -164,15 +173,15 @@
             
             // Show loading state
             var originalText = $button.text();
-            $button.prop('disabled', true).text(finityAI.strings.testing);
+            $button.prop('disabled', true).text(novaXFinityAI.strings.testing);
             
             // Make AJAX request to test API key
             $.ajax({
-                url: finityAI.ajaxUrl,
+                url: novaXFinityAI.ajaxUrl,
                 type: 'POST',
                 data: {
-                    action: 'finity_ai_test_api_key',
-                    nonce: finityAI.nonce,
+                    action: 'nova_xfinity_ai_test_api_key',
+                    nonce: novaXFinityAI.nonce,
                     provider: 'gemini',
                     api_key: apiKey
                 },
@@ -181,11 +190,17 @@
                     $button.prop('disabled', false).text(originalText);
                     
                     if (response.success) {
-                        // Show success message
-                        alert(finityAI.strings.keyValid);
+                        // Show success message with badge
+                        $input.after('<span class="nova-plasma-badge nova-plasma-badge--success" style="margin-left: var(--plasma-spacing-sm);">✓ ' + novaXFinityAI.strings.keyValid + '</span>');
+                        setTimeout(function() {
+                            $input.next('.nova-plasma-badge').fadeOut(function() { $(this).remove(); });
+                        }, 3000);
                     } else {
                         // Show error message
-                        alert(response.data.message || finityAI.strings.keyInvalid);
+                        $input.after('<span class="nova-plasma-badge nova-plasma-badge--error" style="margin-left: var(--plasma-spacing-sm);">✗ ' + (response.data.message || novaXFinityAI.strings.keyInvalid) + '</span>');
+                        setTimeout(function() {
+                            $input.next('.nova-plasma-badge').fadeOut(function() { $(this).remove(); });
+                        }, 5000);
                     }
                 },
                 error: function(xhr, status, error) {
@@ -193,7 +208,10 @@
                     $button.prop('disabled', false).text(originalText);
                     
                     // Show error message
-                    alert(finityAI.strings.keyInvalid);
+                    $input.after('<span class="nova-plasma-badge nova-plasma-badge--error" style="margin-left: var(--plasma-spacing-sm);">✗ ' + novaXFinityAI.strings.keyInvalid + '</span>');
+                    setTimeout(function() {
+                        $input.next('.nova-plasma-badge').fadeOut(function() { $(this).remove(); });
+                    }, 5000);
                     console.error('API key test error:', error);
                 }
             });

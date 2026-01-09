@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks';
 import api from '../../services/api.js';
 import AuthLayout from './AuthLayout.js';
+import { getErrorMessage } from '../../utils/errorHandler.js';
 
 const html = htm.bind(React.createElement);
 
@@ -20,7 +21,7 @@ const Login = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const error = urlParams.get('error');
     if (error) {
-      setError(`OAuth login failed: ${error}`);
+      setError(getErrorMessage(error, 'OAUTH_FAILED'));
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, []);
@@ -44,7 +45,7 @@ const Login = () => {
           const token = document.cookie.split('; ').find(row => row.startsWith('access_token='));
           if (!token) {
             console.error('No token found after login, this should not happen');
-            setError('Login succeeded but authentication token was not set. Please try again.');
+            setError(getErrorMessage('Authentication token was not set after login', 'AUTH_TOKEN_MISSING'));
             return;
           }
           
@@ -61,12 +62,12 @@ const Login = () => {
         // Start navigation process
         waitForAuthAndNavigate();
       } else {
-        setError(result.error || 'Login failed. Please check your credentials and try again.');
+        setError(result.error || getErrorMessage('Invalid email or password', 'AUTH_FAILED'));
         setLoading(false);
       }
     } catch (error) {
       console.error('Login form error:', error);
-      setError(error.message || 'An unexpected error occurred. Please try again.');
+      setError(getErrorMessage(error, 'AUTH_FAILED'));
       setLoading(false);
     }
   };
@@ -86,7 +87,7 @@ const Login = () => {
     if (loginWithProvider) {
       loginWithProvider(provider);
     } else {
-      setError('Social login is not available. Please use email and password.');
+      setError(getErrorMessage('Social login is not available', 'OAUTH_FAILED'));
     }
   };
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import subscriptionApi from '../services/subscriptionApi.js';
 import { checkFeatureQuota } from '@/utils';
+import { getErrorMessage } from '../utils/errorHandler.js';
 
 /**
  * React hook for checking quota status
@@ -22,7 +23,7 @@ export const useQuota = () => {
       }
     } catch (err) {
       console.error('Failed to load usage:', err);
-      setError(err.response?.data?.error?.message || 'Failed to load usage data');
+      setError(getErrorMessage(err, 'NETWORK_ERROR'));
     } finally {
       setLoading(false);
     }
