@@ -1,8 +1,8 @@
 
 import React from 'react';
 import htm from 'htm';
-import CustomDropdown from '../../../../components/common/CustomDropdown.js';
-import { ASPECT_RATIO_OPTIONS, VIDEO_ASPECT_RATIO_OPTIONS, IMAGE_STYLE_OPTIONS } from '../../../../constants.js';
+import CustomDropdown from '@/components/common/CustomDropdown.js';
+import { ASPECT_RATIO_OPTIONS, VIDEO_ASPECT_RATIO_OPTIONS, IMAGE_STYLE_OPTIONS } from '@/constants.js';
 import MediaUpload from './MediaUpload.js';
 import VideoEditor from './VideoEditor.js';
 

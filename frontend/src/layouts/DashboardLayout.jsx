@@ -1,7 +1,7 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-import Sidebar from '../../../components/Sidebar.js';
-import NotificationManager from '../../../components/common/Notification.js';
+import Sidebar from '@/components/Sidebar.js';
+import NotificationManager from '@/components/common/Notification.js';
 
 const DashboardLayout = () => {
   return (

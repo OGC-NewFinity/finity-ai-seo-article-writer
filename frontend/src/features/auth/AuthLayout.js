@@ -31,10 +31,15 @@ const AuthLayout = ({ title, subtitle, children, error, message }) => {
           </div>
         `}
 
-        ${error && html`
+        ${error && error.trim() && html`
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
-            <strong className="font-semibold">Error: </strong>
-            <span>${error}</span>
+            <div className="flex items-center space-x-2">
+              <i className="fa-solid fa-circle-exclamation text-red-500"></i>
+              <div>
+                <strong className="font-semibold block">Error: </strong>
+                <span className="block mt-1">${error}</span>
+              </div>
+            </div>
           </div>
         `}
 

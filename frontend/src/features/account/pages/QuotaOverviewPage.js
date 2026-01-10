@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import htm from 'htm';
 import { useNavigate } from 'react-router-dom';
-import { useQuota } from '../../../hooks/useQuota.js';
-import subscriptionApi from '../../../services/subscriptionApi.js';
-import { getErrorMessage } from '../../../utils/errorHandler.js';
+import { useQuota } from '@/hooks';
+import subscriptionApi from '@/services/subscriptionApi';
+import { getErrorMessage } from '@/utils/errorHandler.js';
 
 const html = htm.bind(React.createElement);
 

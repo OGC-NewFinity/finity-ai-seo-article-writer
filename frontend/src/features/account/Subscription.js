@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import htm from 'htm';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks';
-import subscriptionApi from '../../services/subscriptionApi.js';
-import { showError, getErrorMessage } from '../../utils/errorHandler.js';
-import SubscriptionCard from '../../../../components/Account/SubscriptionCard.js';
+import subscriptionApi from '@/services/subscriptionApi.js';
+import { showError, getErrorMessage } from '@/utils/errorHandler.js';
+import SubscriptionCard from '@/components/Account/SubscriptionCard.js';
 import UsageStats from './UsageStats.js';
 import PlanComparison from './PlanComparison.js';
 import UpgradeModal from './UpgradeModal.js';
-import PlanBadge from '../../../../components/common/PlanBadge.js';
+import PlanBadge from '@/components/common/PlanBadge.js';
 import { checkFeatureQuota, getQuotaWarningMessage } from '@/utils';
 
 const html = htm.bind(React.createElement);

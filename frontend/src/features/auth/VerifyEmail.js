@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import htm from 'htm';
-import api from '../../services/api.js';
+import api from '@/services/api.js';
 import AuthLayout from './AuthLayout.js';
-import { getErrorMessage } from '../../utils/errorHandler.js';
+import { getErrorMessage } from '@/utils/errorHandler.js';
 
 const html = htm.bind(React.createElement);
 

@@ -1,13 +1,13 @@
 
 import React, { useState, useRef } from 'react';
 import htm from 'htm';
-import { generateImage, editImage, generateVideo, generateAudio, decodeBase64, decodeAudioData } from '../../services/geminiMediaService.js';
-import { transcribeAudio, summarizeVideo } from '../../services/geminiResearchService.js';
+import { generateImage, editImage, generateVideo, generateAudio, decodeBase64, decodeAudioData } from '@/services/geminiMediaService.js';
+import { transcribeAudio, summarizeVideo } from '@/services/geminiResearchService.js';
 import MediaHubHeader from './MediaHubHeader.js';
 import MediaHubParameters from './MediaHubParameters.js';
 import MediaOutput from './MediaOutput.js';
 import MediaPresets from './MediaPresets.js';
-import { showError, getErrorMessage } from '../../utils/errorHandler.js';
+import { showError, getErrorMessage } from '@/utils/errorHandler.js';
 
 const html = htm.bind(React.createElement);
 

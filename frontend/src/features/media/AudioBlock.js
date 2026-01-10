@@ -1,7 +1,7 @@
 
 import React, { useRef } from 'react';
 import htm from 'htm';
-import { decodeBase64, decodeAudioData } from '../../services/geminiMediaService.js';
+import { decodeBase64, decodeAudioData } from '@/services/geminiMediaService.js';
 
 const html = htm.bind(React.createElement);
 

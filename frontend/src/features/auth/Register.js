@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import htm from 'htm';
 import { useAuth } from '@/hooks';
 import AuthLayout from './AuthLayout.js';
-import { getErrorMessage } from '../../utils/errorHandler.js';
+import { getErrorMessage } from '@/utils/errorHandler.js';
 
 const html = htm.bind(React.createElement);
 

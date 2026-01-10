@@ -459,6 +459,25 @@ export const getUsageStats = async (userId) => {
   const usage = await getCurrentUsage(userId);
   const plan = usage.subscription.plan;
   
+  // Get current token usage from TokenUsage records (monthly)
+  const today = new Date();
+  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+  
+  const tokenUsageRecords = await prisma.tokenUsage.findMany({
+    where: {
+      userId,
+      createdAt: {
+        gte: monthStart
+      }
+    },
+    select: {
+      tokensUsed: true
+    }
+  });
+  
+  const currentTokenUsage = tokenUsageRecords.reduce((sum, record) => sum + (record.tokensUsed || 0), 0);
+  const tokenLimit = getFeatureLimit(plan, 'tokenLimit');
+  
   return {
     plan,
     articles: {
@@ -495,6 +514,13 @@ export const getUsageStats = async (userId) => {
       remaining: getFeatureLimit(plan, 'wordpress') === -1 
         ? -1 
         : Math.max(0, getFeatureLimit(plan, 'wordpress') - usage.articlesPublished)
+    },
+    tokens: {
+      used: currentTokenUsage,
+      limit: tokenLimit,
+      remaining: tokenLimit === -1 
+        ? -1 
+        : Math.max(0, tokenLimit - currentTokenUsage)
     }
   };
 };

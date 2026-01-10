@@ -4,7 +4,7 @@
  */
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { SYSTEM_INSTRUCTIONS } from "../../../constants.js";
+import { SYSTEM_INSTRUCTIONS } from "../../constants.js";
 
 /**
  * Get API key from environment

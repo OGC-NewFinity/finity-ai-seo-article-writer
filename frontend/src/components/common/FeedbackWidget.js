@@ -7,7 +7,7 @@
 
 import React, { useState } from 'react';
 import htm from 'htm';
-import { submitFeedback } from '../../services/feedbackService.js';
+import { submitFeedback } from '@/services/feedbackService.js';
 
 const html = htm.bind(React.createElement);
 

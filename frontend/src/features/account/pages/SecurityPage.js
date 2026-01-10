@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import htm from 'htm';
 import { useAuth } from '@/hooks';
-import api from '../../../services/api.js';
-import { getErrorMessage, showError } from '../../../utils/errorHandler.js';
+import api from '@/services/api';
+import { getErrorMessage, showError } from '@/utils/errorHandler.js';
 
 const html = htm.bind(React.createElement);
 

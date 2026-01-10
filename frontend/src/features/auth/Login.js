@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import htm from 'htm';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks';
-import api from '../../services/api.js';
+import api from '@/services/api.js';
 import AuthLayout from './AuthLayout.js';
-import { getErrorMessage } from '../../utils/errorHandler.js';
+import { getErrorMessage } from '@/utils/errorHandler.js';
 
 const html = htm.bind(React.createElement);
 
@@ -31,11 +31,21 @@ const Login = () => {
     setError('');
     setLoading(true);
 
+    // Validate input
+    if (!email || !password) {
+      setError(getErrorMessage('Email and password are required', 'VALIDATION_ERROR'));
+      setLoading(false);
+      return;
+    }
+
     try {
+      console.log('🔐 Login attempt started for:', email);
       const result = await login(email, password);
       
-      if (result.success) {
-        console.log('Login successful, preparing navigation...');
+      console.log('📋 Login result:', { success: result?.success, hasError: !!result?.error });
+      
+      if (result && result.success) {
+        console.log('✅ Login successful, preparing navigation...');
         setLoading(false);
         
         // Wait for auth state to propagate, then navigate
@@ -44,30 +54,53 @@ const Login = () => {
           // Check both cookie and wait a bit for React state to update
           const token = document.cookie.split('; ').find(row => row.startsWith('access_token='));
           if (!token) {
-            console.error('No token found after login, this should not happen');
+            console.error('❌ No token found after login, this should not happen');
             setError(getErrorMessage('Authentication token was not set after login', 'AUTH_TOKEN_MISSING'));
             return;
           }
           
-          console.log('Token confirmed in cookie, waiting for React state update...');
+          console.log('✅ Token confirmed in cookie, waiting for React state update...');
           
           // Give React time to process the state update from AuthContext
           await new Promise(resolve => setTimeout(resolve, 300));
           
           // Now navigate - the useEffect hook will handle redirect if needed
-          console.log('Navigating to dashboard...');
+          console.log('🚀 Navigating to dashboard...');
           navigate('/dashboard', { replace: true });
         };
         
         // Start navigation process
         waitForAuthAndNavigate();
       } else {
-        setError(result.error || getErrorMessage('Invalid email or password', 'AUTH_FAILED'));
+        // Handle failed login
+        const errorMsg = result?.error || result?.message || 'Invalid email or password';
+        console.error('❌ Login failed:', errorMsg);
+        setError(getErrorMessage(errorMsg, 'AUTH_FAILED'));
         setLoading(false);
       }
     } catch (error) {
-      console.error('Login form error:', error);
-      setError(getErrorMessage(error, 'AUTH_FAILED'));
+      console.error('❌ Login form error:', error);
+      console.error('Error details:', {
+        message: error?.message,
+        response: error?.response?.data,
+        status: error?.response?.status,
+        statusText: error?.response?.statusText,
+        fullError: error
+      });
+      
+      // Extract error message from various possible formats
+      let errorMessage = 'Invalid email or password';
+      if (error?.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      } else if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      
+      setError(getErrorMessage(errorMessage, 'AUTH_FAILED'));
       setLoading(false);
     }
   };

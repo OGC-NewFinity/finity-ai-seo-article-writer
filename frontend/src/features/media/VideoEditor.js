@@ -1,7 +1,7 @@
 
 import React from 'react';
 import htm from 'htm';
-import { VIDEO_DURATION_OPTIONS } from '../../../../constants.js';
+import { VIDEO_DURATION_OPTIONS } from '@/constants.js';
 
 const html = htm.bind(React.createElement);
 

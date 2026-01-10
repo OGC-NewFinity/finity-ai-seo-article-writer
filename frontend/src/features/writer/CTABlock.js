@@ -1,9 +1,9 @@
 
 import React, { useState } from 'react';
 import htm from 'htm';
-import { generateCTA } from '../../services/geminiArticleService.js';
-import FeedbackWidget from '../../components/common/FeedbackWidget.js';
-import { showError } from '../../utils/errorHandler.js';
+import { generateCTA } from '@/services/geminiArticleService.js';
+import FeedbackWidget from '@/components/common/FeedbackWidget.js';
+import { showError } from '@/utils/errorHandler.js';
 
 const html = htm.bind(React.createElement);
 

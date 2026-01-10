@@ -83,6 +83,7 @@ services:
     volumes:
       - ./backend:/app
       - backend_node_modules:/app/node_modules
+    command: sh -c "npx prisma generate && npm run dev"
     networks:
       - finity-network
     healthcheck:

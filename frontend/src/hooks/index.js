@@ -43,7 +43,7 @@ export { useQuota } from './useQuota.js';
  * Usage:
  * const { user, isAuthenticated, login, logout } = useAuth();
  */
-export { useAuth } from '../../../context/AuthContext.js';
+export { useAuth } from '@/context/AuthContext.js';
 
 /**
  * useTheme - Hook for theme management (dark/light mode)
@@ -58,7 +58,7 @@ export { useAuth } from '../../../context/AuthContext.js';
  * Usage:
  * const { theme, toggleTheme } = useTheme();
  */
-export { useTheme } from '../context/ThemeContext.js';
+export { useTheme } from '@/context/ThemeContext.js';
 
 /**
  * useSettings - Hook for application settings management
@@ -76,4 +76,4 @@ export { useTheme } from '../context/ThemeContext.js';
  * const { settings, updateSettings } = useSettings();
  * updateSettings({ language: 'es' });
  */
-export { useSettings } from '../context/SettingsContext.js';
+export { useSettings } from '@/context/SettingsContext.js';

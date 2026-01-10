@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import htm from 'htm';
-import { generateImage, editImage } from '../../services/geminiMediaService.js';
-import { showError } from '../../utils/errorHandler.js';
+import { generateImage, editImage } from '@/services/geminiMediaService.js';
+import { showError } from '@/utils/errorHandler.js';
 
 const html = htm.bind(React.createElement);
 

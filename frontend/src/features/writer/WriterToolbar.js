@@ -1,8 +1,8 @@
 
 import React from 'react';
 import htm from 'htm';
-import { PROVIDER_OPTIONS } from '../../../../constants.js';
-import { showError } from '../../utils/errorHandler.js';
+import { PROVIDER_OPTIONS } from '@/constants.js';
+import { showError } from '@/utils/errorHandler.js';
 
 const html = htm.bind(React.createElement);
 

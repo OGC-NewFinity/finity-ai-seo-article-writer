@@ -8,6 +8,9 @@ COPY package*.json ./
 # Install dependencies with legacy peer deps for React 19 compatibility
 RUN npm install --legacy-peer-deps
 
+# Verify critical dependencies are installed
+RUN node --input-type=module -e "import('react-helmet-async').then(() => console.log('✅ react-helmet-async verified')).catch(() => { console.error('❌ ERROR: react-helmet-async not found!'); process.exit(1); })"
+
 # Copy application code
 COPY . .
 

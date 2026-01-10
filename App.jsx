@@ -2,10 +2,10 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
-import { AuthProvider, useAuth } from './context/AuthContext.js';
+import { AuthProvider, useAuth } from '@/context/AuthContext.js';
 import { ThemeProvider } from '@/context/ThemeContext.js';
 import { SettingsProvider } from '@/context/SettingsContext.js';
-import Loading from './components/common/Loading.js';
+import Loading from '@/components/common/Loading.js';
 import { Login, Register, ForgotPassword, ResetPassword, VerifyEmail, Unauthorized } from '@/features/auth';
 import LandingPage from '@/pages/LandingPage/LandingPage.jsx';
 
@@ -25,18 +25,19 @@ import ProtectedRoute from '@/components/routing/ProtectedRoute.jsx';
 
 // Dashboard Components
 const Dashboard = lazy(() => import('@/features/dashboard/Dashboard.js'));
+const AIAssistant = lazy(() => import('@/features/ai-assistant').then(module => ({ default: module.AIAssistant })));
 const Writer = lazy(() => import('@/features/writer').then(module => ({ default: module.WriterMain })));
-const Research = lazy(() => import('./components/Research.js'));
+const Research = lazy(() => import('@/components/Research.js'));
 const MediaHub = lazy(() => import('@/features/media').then(module => ({ default: module.MediaHubMain })));
 const MediaLayout = lazy(() => import('@/features/media/MediaLayout.js'));
-const SettingsPanel = lazy(() => import('./components/Settings/SettingsPanel.js'));
+const SettingsPanel = lazy(() => import('@/components/Settings/SettingsPanel.js'));
 
 // Admin Components
 const AdminSettingsPage = lazy(() => import('@/features/admin/pages/AdminSettingsPage.js').catch(() => ({ default: () => React.createElement('div', null, 'Admin Settings Page Not Found') })));
 const AdminDashboard = lazy(() => import('@/features/admin-dashboard/AdminDashboard.js'));
 
 // Account Components
-const AccountPage = lazy(() => import('./components/Account/AccountPage.js'));
+const AccountPage = lazy(() => import('@/components/Account/AccountPage.js'));
 const Subscription = lazy(() => import('@/features/account').then(module => ({ default: module.Subscription })));
 const AccountDashboardLayout = lazy(() => import('@/layouts/AccountDashboardLayout.js'));
 
@@ -140,11 +141,16 @@ const App = () => {
                     </Suspense>
                   </ProtectedRoute>
                 }>
-                  {/* Default dashboard redirects to agent */}
-                  <Route path="/dashboard" element={<Navigate to="/dashboard/agent" replace />} />
+                  {/* Default dashboard redirects to AI Assistant */}
+                  <Route path="/dashboard" element={<Navigate to="/dashboard/assistant" replace />} />
                   
                   {/* Dashboard feature routes */}
-                  <Route path="/dashboard/agent" element={
+                  <Route path="/dashboard/assistant" element={
+                    <Suspense fallback={<Loading />}>
+                      <AIAssistant />
+                    </Suspense>
+                  } />
+                  <Route path="/dashboard/overview" element={
                     <Suspense fallback={<Loading />}>
                       <Dashboard />
                     </Suspense>

@@ -1,13 +1,13 @@
 import React, { useState, useRef } from 'react';
 import htm from 'htm';
-import { editImage } from '../../services/geminiMediaService.js';
-import CustomDropdown from '../../../../components/common/CustomDropdown.js';
-import { ASPECT_RATIO_OPTIONS, IMAGE_STYLE_OPTIONS } from '../../../../constants.js';
+import { editImage } from '@/services/geminiMediaService.js';
+import CustomDropdown from '@/components/common/CustomDropdown.js';
+import { ASPECT_RATIO_OPTIONS, IMAGE_STYLE_OPTIONS } from '@/constants.js';
 import MediaUpload from './MediaUpload.js';
 import MediaOutput from './MediaOutput.js';
-import OnboardingBanner from '../../../../components/common/OnboardingBanner.js';
-import Tooltip from '../../../../components/common/Tooltip.js';
-import { showError } from '../../utils/errorHandler.js';
+import OnboardingBanner from '@/components/common/OnboardingBanner.js';
+import Tooltip from '@/components/common/Tooltip.js';
+import { showError } from '@/utils/errorHandler.js';
 
 const html = htm.bind(React.createElement);
 

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import htm from 'htm';
 import { useAuth } from '@/hooks';
-import api from '../../../services/api.js';
-import { PROVIDER_OPTIONS } from '../../../../../constants.js';
-import OnboardingBanner from '../../../../../components/common/OnboardingBanner.js';
-import Tooltip from '../../../../../components/common/Tooltip.js';
-import { getErrorMessage, showError } from '../../../utils/errorHandler.js';
+import api from '@/services/api';
+import { PROVIDER_OPTIONS } from '@/constants.js';
+import OnboardingBanner from '@/components/common/OnboardingBanner.js';
+import Tooltip from '@/components/common/Tooltip.js';
+import { getErrorMessage, showError } from '@/utils/errorHandler.js';
 
 const html = htm.bind(React.createElement);
 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import htm from 'htm';
-import subscriptionApi from '../../services/subscriptionApi.js';
-import { getErrorMessage } from '../../utils/errorHandler.js';
+import subscriptionApi from '@/services/subscriptionApi.js';
+import { getErrorMessage } from '@/utils/errorHandler.js';
 
 const html = htm.bind(React.createElement);
 

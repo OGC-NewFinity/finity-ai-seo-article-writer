@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import htm from 'htm';
 import { useNavigate } from 'react-router-dom';
-import subscriptionApi from '../../../services/subscriptionApi.js';
-import { getErrorMessage, showError } from '../../../utils/errorHandler.js';
-import PlanBadge from '../../../../../components/common/PlanBadge.js';
+import subscriptionApi from '@/services/subscriptionApi';
+import { getErrorMessage, showError } from '@/utils/errorHandler.js';
+import PlanBadge from '@/components/common/PlanBadge.js';
 
 const html = htm.bind(React.createElement);
 

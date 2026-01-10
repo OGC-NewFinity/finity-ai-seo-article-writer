@@ -2,7 +2,7 @@
 import React from 'react';
 import htm from 'htm';
 import ImageBlock from './ImageBlock.js';
-import FeedbackWidget from '../../components/common/FeedbackWidget.js';
+import FeedbackWidget from '@/components/common/FeedbackWidget.js';
 
 const html = htm.bind(React.createElement);
 

@@ -3,8 +3,8 @@ import htm from 'htm';
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Suspense } from 'react';
 import { useAuth } from '@/hooks';
-import Loading from '../../components/common/Loading.js';
-import NotificationManager from '../../components/common/Notification.js';
+import Loading from '@/components/common/Loading.js';
+import NotificationManager from '@/components/common/Notification.js';
 
 const html = htm.bind(React.createElement);
 

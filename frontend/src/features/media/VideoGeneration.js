@@ -1,17 +1,16 @@
 import React, { useState, useRef } from 'react';
 import htm from 'htm';
-import { generateVideo, generateAudio, decodeBase64, decodeAudioData } from '../../services/geminiMediaService.js';
-import CustomDropdown from '../../../../components/common/CustomDropdown.js';
-import { VIDEO_ASPECT_RATIO_OPTIONS, IMAGE_STYLE_OPTIONS } from '../../../../constants.js';
-import { VIDEO_DURATION_OPTIONS } from '../../../../constants.js';
+import { generateVideo, generateAudio, decodeBase64, decodeAudioData } from '@/services/geminiMediaService.js';
+import CustomDropdown from '@/components/common/CustomDropdown.js';
+import { VIDEO_ASPECT_RATIO_OPTIONS, IMAGE_STYLE_OPTIONS, VIDEO_DURATION_OPTIONS } from '@/constants.js';
 import MediaUpload from './MediaUpload.js';
 import VideoEditor from './VideoEditor.js';
 import MediaOutput from './MediaOutput.js';
 import MediaPresets from './MediaPresets.js';
 import AudioBlock from './AudioBlock.js';
-import OnboardingBanner from '../../../../components/common/OnboardingBanner.js';
-import Tooltip from '../../../../components/common/Tooltip.js';
-import { showError } from '../../utils/errorHandler.js';
+import OnboardingBanner from '@/components/common/OnboardingBanner.js';
+import Tooltip from '@/components/common/Tooltip.js';
+import { showError } from '@/utils/errorHandler.js';
 
 const html = htm.bind(React.createElement);
 

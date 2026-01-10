@@ -2,8 +2,8 @@
 import React from 'react';
 import htm from 'htm';
 import { useAuth } from '@/hooks';
-import { ROADMAP_DATA } from '../../../../constants.js';
-import OnboardingBanner from '../../../../components/common/OnboardingBanner.js';
+import { ROADMAP_DATA } from '@/constants.js';
+import OnboardingBanner from '@/components/common/OnboardingBanner.js';
 
 const html = htm.bind(React.createElement);
 

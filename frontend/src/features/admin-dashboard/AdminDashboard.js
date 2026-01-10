@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import htm from 'htm';
 import Cookies from 'js-cookie';
 import { useAuth } from '@/hooks';
-import api from '../../services/api.js';
+import api from '@/services/api.js';
 import {
   BarChart,
   Bar,

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import subscriptionApi from '../services/subscriptionApi.js';
+import subscriptionApi from '@/services/subscriptionApi';
 import { checkFeatureQuota } from '@/utils';
-import { getErrorMessage } from '../utils/errorHandler.js';
+import { getErrorMessage } from '@/utils/errorHandler.js';
 
 /**
  * React hook for checking quota status

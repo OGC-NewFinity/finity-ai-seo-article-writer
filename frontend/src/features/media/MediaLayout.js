@@ -1,10 +1,10 @@
 import React from 'react';
 import htm from 'htm';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import Sidebar from '../../../../components/Sidebar.js';
-import NotificationManager from '../../../../components/common/Notification.js';
+import Sidebar from '@/components/Sidebar.js';
+import NotificationManager from '@/components/common/Notification.js';
 import { Suspense } from 'react';
-import Loading from '../../../../components/common/Loading.js';
+import Loading from '@/components/common/Loading.js';
 
 const html = htm.bind(React.createElement);
 

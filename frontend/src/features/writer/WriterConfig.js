@@ -1,14 +1,14 @@
 
 import React from 'react';
 import htm from 'htm';
-import CustomDropdown from '../../../../components/common/CustomDropdown.js';
-import Tooltip from '../../../../components/common/Tooltip.js';
-import OnboardingBanner from '../../../../components/common/OnboardingBanner.js';
+import CustomDropdown from '@/components/common/CustomDropdown.js';
+import Tooltip from '@/components/common/Tooltip.js';
+import OnboardingBanner from '@/components/common/OnboardingBanner.js';
 import { 
   TONE_OPTIONS, LANGUAGE_OPTIONS, ARTICLE_TYPE_OPTIONS, ARTICLE_SIZE_OPTIONS, 
   POV_OPTIONS, IMAGE_QUANTITY_OPTIONS, ASPECT_RATIO_OPTIONS, IMAGE_STYLE_OPTIONS,
   CATEGORY_OPTIONS, PROVIDER_OPTIONS
-} from '../../../../constants.js';
+} from '@/constants.js';
 
 const html = htm.bind(React.createElement);
 
